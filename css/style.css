@@ -1,0 +1,144 @@
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    min-height: 100vh;
+    font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+    background-color: #f4f7f6;
+    color: #1a2e2a;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1.5rem;
+}
+
+.signup-card {
+    width: 100%;
+    max-width: 420px;
+    background: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 4px 24px rgba(26, 46, 42, 0.08);
+    padding: 2rem;
+}
+
+.signup-card h1 {
+    margin: 0 0 0.25rem;
+    font-size: 1.75rem;
+    font-weight: 700;
+}
+
+.signup-card .subtitle {
+    margin: 0 0 1.75rem;
+    color: #5a726c;
+    font-size: 0.95rem;
+}
+
+.form-group {
+    margin-bottom: 1.25rem;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 0.4rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+}
+
+.form-group input {
+    width: 100%;
+    padding: 0.65rem 0.85rem;
+    border: 1px solid #c5d4cf;
+    border-radius: 8px;
+    font-size: 1rem;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.form-group input:focus {
+    outline: none;
+    border-color: #2d8f6f;
+    box-shadow: 0 0 0 3px rgba(45, 143, 111, 0.15);
+}
+
+.form-group input:invalid:not(:placeholder-shown) {
+    border-color: #c0392b;
+}
+
+.error-message {
+    display: none;
+    margin-top: 0.4rem;
+    font-size: 0.8125rem;
+    color: #c0392b;
+}
+
+.error-message.visible {
+    display: block;
+}
+
+button[type="submit"] {
+    width: 100%;
+    margin-top: 0.5rem;
+    padding: 0.75rem;
+    background-color: #2d8f6f;
+    color: #ffffff;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+button[type="submit"]:hover:not(:disabled) {
+    background-color: #247a5e;
+}
+
+button[type="submit"]:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
+button[type="submit"]:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(45, 143, 111, 0.3);
+}
+
+.status-message {
+    margin-top: 1rem;
+    padding: 0.75rem 1rem;
+    border-radius: 8px;
+    font-size: 0.875rem;
+    line-height: 1.4;
+}
+
+.status-message.success {
+    background-color: #e8f5ef;
+    color: #1e6b52;
+    border: 1px solid #b8dfc8;
+}
+
+.status-message.error {
+    background-color: #fdecea;
+    color: #922b21;
+    border: 1px solid #f5c6cb;
+}
+
+.login-link {
+    margin-top: 1.5rem;
+    text-align: center;
+    font-size: 0.875rem;
+    color: #5a726c;
+}
+
+.login-link a {
+    color: #2d8f6f;
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.login-link a:hover {
+    text-decoration: underline;
+}
