@@ -155,3 +155,75 @@ button[type="submit"]:focus {
     color: #922b21;
     border: 1px solid #f5c6cb;
 }
+
+.role-cards-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    margin-top: 12px;
+    margin-bottom: 24px;
+}
+
+/* Stile base di ogni singola Card Ruolo */
+.role-card {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px;
+    background-color: #ffffff;
+    border: 2px solid #e2e8f0; /* Bordo grigio chiaro neutro */
+    border-radius: 16px;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    text-align: left;
+}
+
+/* Effetto Hover sulla card */
+.role-card:hover {
+    transform: translateY(-2px);
+    border-color: #cbd5e1;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+/* Testo principale dentro la card */
+.role-card-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #1e293b;
+    margin: 0 0 4px 0;
+}
+
+/* Sottotitoli/Descrizioni dentro la card */
+.role-card-desc {
+    font-size: 0.85rem;
+    color: #64748b;
+    margin: 0;
+}
+
+/* Icona della freccetta a destra (>) */
+.role-card-arrow {
+    font-size: 1.2rem;
+    color: #94a3b8;
+    font-weight: bold;
+    transition: transform 0.2s ease;
+}
+
+/* STATO SELEZIONATO: Quando l'utente clicca sulla card */
+.role-card.selected {
+    border-color: #0284c7; /* Usa il colore principale del tuo bottone (es. azzurro/verde) */
+    background-color: #f0f9ff; /* Sfondo leggermente colorato per evidenziare la selezione */
+    box-shadow: 0 4px 12px rgba(2, 132, 199, 0.1);
+}
+
+.role-card.selected .role-card-arrow {
+    color: #0284c7;
+    transform: translateX(4px);
+}
+
+/* Titolo della sezione */
+.section-title {
+    font-weight: 600;
+    margin-bottom: 8px;
+    display: block;
+    color: #0f172a;
+}

@@ -9,17 +9,18 @@
 <body>
     <main class="signup-card">
         <h1>Completa Profilo</h1>
-        <p class="subtitle">Inserisci i dati per attivare il tuo profilo sulla piattaforma.</p>
+        <p class="subtitle">Scegli un profilo per esplorare la demo dell'app ed attivare il tuo account.</p>
 
         <form id="completeProfileForm" action="#" method="post">
             
+            <!-- Contenitore delle Card Ruolo Dinamiche -->
             <div class="form-group">
-                <label for="roleSelect">Chi sei?</label>
-                <select id="roleSelect" name="role" required>
-                    <option value="" disabled selected>Caricamento ruoli...</option>
-                </select>
+                <label class="section-title">Chi sei?</label>
+                <div id="role-cards-container" class="role-cards-grid"></div>
+                <input type="hidden" id="roleSelect" name="role" required>
             </div>
 
+            <!-- Questo blocco si mostra dopo aver cliccato su una Card -->
             <div id="dynamicFormFields" class="hidden">
                 
                 <div class="form-row">
@@ -38,11 +39,13 @@
                     <input type="tel" id="phone" name="phone" required>
                 </div>
 
+                <!-- Campo Città (Comune a tutti) -->
                 <div class="form-group">
                     <label for="city">Città</label>
                     <input type="text" id="city" name="city" required>
                 </div>
 
+                <!-- Campi specifici per ALTRO PROFESSIONISTA -->
                 <div id="professionalFields" class="form-group hidden">
                     <label for="specificProfession">La tua Professione Specifica</label>
                     <select id="specificProfession" name="specificProfession">
@@ -53,30 +56,14 @@
                         <option value="Nutrizionista Animale">Nutrizionista Animale</option>
                         <option value="Altro">Altro / Freelance Pet</option>
                     </select>
-                </div>
 
-                <div id="vetFields" class="hidden">
-    <div class="form-group">
-        <label for="vetOrderNumber">Numero Iscrizione Ordine</label>
-        <input type="text" id="vetOrderNumber" name="vetOrderNumber">
-    </div>
-    <div class="form-group">
-        <label for="vetClinicAddress">Indirizzo Clinica / Studio</label>
-        <input type="text" id="vetClinicAddress" name="vetClinicAddress">
-    </div>
-</div>
-
-                <div id="sponsorFields" class="hidden">
-                    <div class="form-group">
-                        <label for="sponsorCompanyName">Nome Società</label>
-                        <input type="text" id="sponsorCompanyName" name="sponsorCompanyName">
-                    </div>
-                    <div class="form-group">
-                        <label for="sponsorVat">Partita IVA</label>
-                        <input type="text" id="sponsorVat" name="sponsorVat">
+                    <div id="specificProfessionOtherGroup" class="form-group hidden" style="margin-top: 15px;">
+                        <label for="specificProfessionOther">Specifica il Tipo di Professionista</label>
+                        <input type="text" id="specificProfessionOther" name="specificProfessionOther" placeholder="Es. Ostetrica Animale, Consulente Nutrizionale...">
                     </div>
                 </div>
 
+                <!-- Campi specifici per PROPRIETARIO -->
                 <div id="clientFields" class="hidden">
                     <div class="form-row">
                         <div class="form-group">
@@ -89,11 +76,42 @@
                                 <option value="" disabled selected>Scegli...</option>
                                 <option value="Cane">Cane</option>
                                 <option value="Gatto">Gatto</option>
+                                <option value="Coniglio">Coniglio</option>
                                 <option value="Uccello">Uccello</option>
                                 <option value="Rettile">Rettile</option>
-                                <option value="Altro">Altro</option>
+                                <option value="Altro">Altro (Specifica...)</option>
                             </select>
                         </div>
+                    </div>
+
+                    <!-- Campo di testo nascosto che compare SOLO se selezioni "Altro" come Tipo di Animale -->
+                    <div id="specificPetTypeGroup" class="form-group hidden" style="margin-top: 15px;">
+                        <label for="petSpecieSpecific">Specifica il Tipo di Animale</label>
+                        <input type="text" id="petSpecieSpecific" name="petSpecieSpecific" placeholder="Es. Criceto, Furetto, Cavallo...">
+                    </div>
+                </div>
+
+                <!-- Campi specifici per VETERINARIO -->
+                <div id="vetFields" class="hidden">
+                    <div class="form-group">
+                        <label for="vetOrderNumber">Numero Iscrizione Ordine</label>
+                        <input type="text" id="vetOrderNumber" name="vetOrderNumber" placeholder="Es. Ordine di Milano n. 1842">
+                    </div>
+                    <div class="form-group">
+                        <label for="vetClinicAddress">Indirizzo Clinica / Studio</label>
+                        <input type="text" id="vetClinicAddress" name="vetClinicAddress" placeholder="Via Dante 18, Milano">
+                    </div>
+                </div>
+
+                <!-- Campi specifici per SPONSOR -->
+                <div id="sponsorFields" class="hidden">
+                    <div class="form-group">
+                        <label for="sponsorCompanyName">Nome Azienda / Brand</label>
+                        <input type="text" id="sponsorCompanyName" name="sponsorCompanyName" placeholder="Es. PetCare Milano">
+                    </div>
+                    <div class="form-group">
+                        <label for="sponsorVat">Partita IVA</label>
+                        <input type="text" id="sponsorVat" name="sponsorVat" placeholder="11 cifre">
                     </div>
                 </div>
 
