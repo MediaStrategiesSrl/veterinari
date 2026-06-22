@@ -227,3 +227,13 @@ button[type="submit"]:focus {
     display: block;
     color: #0f172a;
 }
+
+.login-card {
+    width: 100%;
+    max-width: 420px;
+    background: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 4px 24px rgba(26, 46, 42, 0.08);
+    padding: 2rem;
+    text-align: center;
+}
