@@ -1,4 +1,4 @@
-*,
+* ,
 *::before,
 *::after {
     box-sizing: border-box;
@@ -41,6 +41,14 @@ body {
     margin-bottom: 1.25rem;
 }
 
+/* Griglia per Nome e Cognome affiancati */
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin-bottom: 1.25rem;
+}
+
 .form-group label {
     display: block;
     margin-bottom: 0.4rem;
@@ -48,16 +56,33 @@ body {
     font-weight: 600;
 }
 
-.form-group input {
+/* Stile unificato per Input e Select */
+.form-group input,
+.form-group select {
     width: 100%;
     padding: 0.65rem 0.85rem;
     border: 1px solid #c5d4cf;
     border-radius: 8px;
     font-size: 1rem;
+    font-family: inherit;
+    color: #1a2e2a;
+    background-color: #ffffff;
     transition: border-color 0.2s, box-shadow 0.2s;
 }
 
-.form-group input:focus {
+/* Ottimizzazione estetica per i menu a tendina */
+.form-group select {
+    cursor: pointer;
+    appearance: none; /* Rimuove lo stile nativo brutto */
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%235a726c' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 0.85rem center;
+    background-size: 1rem;
+    padding-right: 2.5rem;
+}
+
+.form-group input:focus,
+.form-group select:focus {
     outline: none;
     border-color: #2d8f6f;
     box-shadow: 0 0 0 3px rgba(45, 143, 111, 0.15);
@@ -65,6 +90,11 @@ body {
 
 .form-group input:invalid:not(:placeholder-shown) {
     border-color: #c0392b;
+}
+
+/* Classe utilitaria per nascondere dinamicamente il container della qualifica */
+.hidden {
+    display: none !important;
 }
 
 .error-message {
@@ -124,21 +154,4 @@ button[type="submit"]:focus {
     background-color: #fdecea;
     color: #922b21;
     border: 1px solid #f5c6cb;
-}
-
-.login-link {
-    margin-top: 1.5rem;
-    text-align: center;
-    font-size: 0.875rem;
-    color: #5a726c;
-}
-
-.login-link a {
-    color: #2d8f6f;
-    font-weight: 600;
-    text-decoration: none;
-}
-
-.login-link a:hover {
-    text-decoration: underline;
 }

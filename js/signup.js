@@ -70,6 +70,9 @@ form.addEventListener("submit", async function (event) {
     const { data, error } = await supabase.auth.signUp({
         email: emailInput.value.trim(),
         password: passwordInput.value,
+        options: {
+            redirectTo: window.location.origin + "/completeprofile.html",
+        },
     });
 
     setLoading(false);

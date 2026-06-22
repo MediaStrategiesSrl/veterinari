@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Completa Profilo — Veterinari.it</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <main class="signup-card">
+        <h1>Completa Profilo</h1>
+        <p class="subtitle">Inserisci i dati per attivare il tuo profilo sulla piattaforma.</p>
+
+        <form id="completeProfileForm" action="#" method="post">
+            
+            <div class="form-group">
+                <label for="roleSelect">Chi sei?</label>
+                <select id="roleSelect" name="role" required>
+                    <option value="" disabled selected>Caricamento ruoli...</option>
+                </select>
+            </div>
+
+            <div id="dynamicFormFields" class="hidden">
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="firstName">Nome</label>
+                        <input type="text" id="firstName" name="firstName" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="lastName">Cognome</label>
+                        <input type="text" id="lastName" name="lastName" required>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="phone">Telefono</label>
+                    <input type="tel" id="phone" name="phone" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="city">Città</label>
+                    <input type="text" id="city" name="city" required>
+                </div>
+
+                <div id="professionalFields" class="form-group hidden">
+                    <label for="specificProfession">La tua Professione Specifica</label>
+                    <select id="specificProfession" name="specificProfession">
+                        <option value="" disabled selected>Seleziona la tua specializzazione...</option>
+                        <option value="Pet Sitter">Pet Sitter</option>
+                        <option value="Addestratore Cinofilo">Addestratore Cinofilo</option>
+                        <option value="Toelettatore">Toelettatore</option>
+                        <option value="Nutrizionista Animale">Nutrizionista Animale</option>
+                        <option value="Altro">Altro / Freelance Pet</option>
+                    </select>
+                </div>
+
+                <div id="vetFields" class="hidden">
+    <div class="form-group">
+        <label for="vetOrderNumber">Numero Iscrizione Ordine</label>
+        <input type="text" id="vetOrderNumber" name="vetOrderNumber">
+    </div>
+    <div class="form-group">
+        <label for="vetClinicAddress">Indirizzo Clinica / Studio</label>
+        <input type="text" id="vetClinicAddress" name="vetClinicAddress">
+    </div>
+</div>
+
+                <div id="sponsorFields" class="hidden">
+                    <div class="form-group">
+                        <label for="sponsorCompanyName">Nome Società</label>
+                        <input type="text" id="sponsorCompanyName" name="sponsorCompanyName">
+                    </div>
+                    <div class="form-group">
+                        <label for="sponsorVat">Partita IVA</label>
+                        <input type="text" id="sponsorVat" name="sponsorVat">
+                    </div>
+                </div>
+
+                <div id="clientFields" class="hidden">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="petName">Nome Animale</label>
+                            <input type="text" id="petName" name="petName">
+                        </div>
+                        <div class="form-group">
+                            <label for="petSpecie">Tipo di Animale</label>
+                            <select id="petSpecie" name="petSpecie">
+                                <option value="" disabled selected>Scegli...</option>
+                                <option value="Cane">Cane</option>
+                                <option value="Gatto">Gatto</option>
+                                <option value="Uccello">Uccello</option>
+                                <option value="Rettile">Rettile</option>
+                                <option value="Altro">Altro</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <button type="submit" id="submitButton">Salva e Continua</button>
+            </div>
+        </form>
+
+        <p id="statusMessage" class="status-message" role="status" hidden></p>
+    </main>
+
+    <script type="module" src="js/completeprofile.js"></script>
+</body>
+</html>
