@@ -1,8 +1,16 @@
 import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./config.js";
 
-const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+// Inizializza client Supabase
+const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+    auth: {
+        persistSession: true,
+        storage: localStorage,
+        autoRefreshToken: true,
+    },
+});
 
+// Elementi DOM
 const form = document.getElementById("completeProfileForm");
 const roleCardsContainer = document.getElementById("role-cards-container");
 const roleSelectHidden = document.getElementById("roleSelect");
@@ -13,7 +21,7 @@ const clientFields = document.getElementById("clientFields");
 const vetFields = document.getElementById("vetFields");
 const sponsorFields = document.getElementById("sponsorFields");
 
-// Elementi dinamici per la specifica del tipo di animale
+// Elementi dinamici
 const petSpecieSelect = document.getElementById("petSpecie");
 const specificPetTypeGroup = document.getElementById("specificPetTypeGroup");
 const petSpecieSpecific = document.getElementById("petSpecieSpecific");
@@ -33,7 +41,31 @@ const roleDescriptions = {
     "sponsor": "Campagne geolocalizzate e statistiche"
 };
 
-// 1. CARICAMENTO DINAMICO DELLE CARD RUOLI DAL DB
+// ==========================================
+// 1. INIZIALIZZAZIONE SICURA DELLA PAGINA
+// ==========================================
+async function initializePage() {
+    const { data: { session }, error } = await supabase.auth.getSession();
+    
+    if (error || !session) {
+        console.warn("Nessuna sessione attiva. Reindirizzo al login/signup.");
+        window.location.href = "signup.html";
+        return;
+    }
+    
+    console.log("Utente autenticato. ID:", session.user.id);
+    await loadRoles();
+}
+
+supabase.auth.onAuthStateChange((event, session) => {
+    if (event === "SIGNED_OUT" || (!session && event === "INITIAL_SESSION")) {
+        window.location.href = "signup.html";
+    }
+});
+
+// ==========================================
+// 2. CARICAMENTO RUOLI
+// ==========================================
 async function loadRoles() {
     try {
         const { data: roles, error } = await supabase
@@ -42,6 +74,11 @@ async function loadRoles() {
             .order('id', { ascending: true });
 
         if (error) throw error;
+
+        if (!roleCardsContainer) {
+            console.error("ID 'role-cards-container' non trovato nell'HTML!");
+            return;
+        }
 
         roleCardsContainer.innerHTML = '';
         
@@ -70,7 +107,9 @@ async function loadRoles() {
     }
 }
 
-// 2. GESTIONE DELLA SELEZIONE DELLA CARD
+// ==========================================
+// 3. GESTIONE INTERFACCIA
+// ==========================================
 function handleRoleSelection(selectedCard, roleName) {
     document.querySelectorAll('.role-card').forEach(c => c.classList.remove('selected'));
     selectedCard.classList.add('selected');
@@ -78,7 +117,7 @@ function handleRoleSelection(selectedCard, roleName) {
 
     dynamicFormFields.classList.remove("hidden");
     
-    // Reset di tutti i blocchi visivi e parametri obbligatori
+    // Reset blocchi visivi e parametri
     [professionalFields, clientFields, vetFields, sponsorFields, specificPetTypeGroup, specificProfessionOtherGroup].forEach(el => { if(el) el.classList.add("hidden"); });
     setRequired("specificProfession", false);
     setRequired("specificProfessionOther", false);
@@ -108,7 +147,7 @@ function handleRoleSelection(selectedCard, roleName) {
     }
 }
 
-// Evento per ascoltare se il tipo di animale è impostato su "Altro"
+// Eventi campi "Altro"
 if (petSpecieSelect) {
     petSpecieSelect.addEventListener("change", function() {
         if (this.value === "Altro") {
@@ -122,7 +161,6 @@ if (petSpecieSelect) {
     });
 }
 
-// Evento per ascoltare se la professione specifica è impostata su "Altro"
 if (specificProfessionSelect) {
     specificProfessionSelect.addEventListener("change", function() {
         if (this.value === "Altro") {
@@ -136,7 +174,9 @@ if (specificProfessionSelect) {
     });
 }
 
-// 3. SALVATAGGIO RELAZIONALE DEI DATI
+// ==========================================
+// 4. SALVATAGGIO DATI E REDIRECT
+// ==========================================
 form.addEventListener("submit", async function (event) {
     event.preventDefault();
     hideStatus();
@@ -153,7 +193,7 @@ form.addEventListener("submit", async function (event) {
     const selectedRoleName = roleSelectHidden.value;
     const selectedRoleId = rolesMap[selectedRoleName];
 
-    // --- STEP 1: Aggiornamento dati anagrafici in 'profiles' ---
+    // STEP 1: Profilo Base
     const profileData = {
         id: user.id,
         nome: document.getElementById("firstName").value.trim(),
@@ -170,7 +210,7 @@ form.addEventListener("submit", async function (event) {
         return;
     }
 
-    // --- STEP 2: Inserimento riga nella tabella ponte 'user_roles' ---
+    // STEP 2: Assegnazione Ruolo
     const { error: roleError } = await supabase.from("user_roles").upsert({ user_id: user.id, role_id: selectedRoleId });
     if (roleError) {
         showStatus("Errore assegnazione ruolo: " + roleError.message, "error");
@@ -178,14 +218,11 @@ form.addEventListener("submit", async function (event) {
         return;
     }
 
-    // --- STEP 3: Scrittura nelle tabelle specifiche ---
+    // STEP 3: Tabelle Specifiche
     if (selectedRoleName === "altro professionista") {
-        let finalTipoProfessione;
-        if (specificProfessionSelect?.value === "Altro") {
-            finalTipoProfessione = specificProfessionOther?.value.trim() || "Altro";
-        } else {
-            finalTipoProfessione = specificProfessionSelect?.value || "";
-        }
+        let finalTipoProfessione = (specificProfessionSelect?.value === "Altro") 
+            ? specificProfessionOther?.value.trim() || "Altro" 
+            : specificProfessionSelect?.value || "";
 
         const { error: profError } = await supabase.from("professionals").upsert({
             user_id: user.id,
@@ -196,19 +233,14 @@ form.addEventListener("submit", async function (event) {
 
     } else if (selectedRoleName === "proprietario") {
         const generatedQrHash = "QR-" + crypto.randomUUID().substring(0, 8).toUpperCase();
-
-        // Determina se salvare il valore standard o quello scritto a mano nel campo specifico
-        let finalSpecie;
-        if (document.getElementById("petSpecie").value === "Altro") {
-            finalSpecie = document.getElementById("petSpecieSpecific").value.trim();
-        } else {
-            finalSpecie = document.getElementById("petSpecie").value;
-        }
+        let finalSpecie = (document.getElementById("petSpecie").value === "Altro") 
+            ? document.getElementById("petSpecieSpecific").value.trim() 
+            : document.getElementById("petSpecie").value;
 
         const { error: petError } = await supabase.from("pets").insert({
             owner_id: user.id,
             nome: document.getElementById("petName").value.trim(),
-            specie: finalSpecie, // <--- Salva la stringa corretta nella colonna specie del tuo DB
+            specie: finalSpecie,
             qr_code_hash: generatedQrHash
         });
         if (petError) return handleSpecificError(petError.message);
@@ -231,10 +263,25 @@ form.addEventListener("submit", async function (event) {
         if (sponsorError) return handleSpecificError(sponsorError.message);
     }
 
-    showStatus("Profilo completato con successo! Reindirizzamento...", "success");
-    setTimeout(() => { window.location.href = "dashboard.html"; }, 2000);
+    // STEP 4: Redirect Dinamico
+    showStatus("Profilo completato con successo! Reindirizzamento in corso...", "success");
+    
+    setTimeout(() => {
+        if (selectedRoleName === "proprietario") {
+            window.location.href = "dashboard-proprietario.html";
+        } else if (selectedRoleName === "veterinario") {
+            window.location.href = "dashboard-veterinario.html";
+        } else if (selectedRoleName === "altro professionista") {
+            window.location.href = "dashboard-professionista.html";
+        } else if (selectedRoleName === "sponsor") {
+            window.location.href = "dashboard-sponsor.html";
+        } else {
+            window.location.href = "index.html";
+        }
+    }, 2000);
 });
 
+// Funzioni di utilità
 function handleSpecificError(msg) {
     showStatus("Errore salvataggio dati specifici: " + msg, "error");
     enableSubmit();
@@ -256,6 +303,9 @@ function showStatus(message, type) {
     statusMessage.hidden = false;
 }
 
-function hideStatus() { statusMessage.hidden = true; }
+function hideStatus() { 
+    statusMessage.hidden = true; 
+}
 
-loadRoles();
+// Avvio
+initializePage();

@@ -2,8 +2,14 @@
 import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./config.js";
 
-// Inizializza client Supabase con credenziali
-const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+// Inizializza client Supabase con credenziali e memorizzazione della sessione
+const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+    auth: {
+        persistSession: true,
+        storage: localStorage,
+        autoRefreshToken: true,
+    },
+});
 
 // Seleziona elementi del DOM del form di registrazione
 const form = document.getElementById("signupForm");
@@ -66,15 +72,22 @@ form.addEventListener("submit", async function (event) {
 
     setLoading(true);
 
-    // Invia richiesta di registrazione a Supabase
-    const { data, error } = await supabase.auth.signUp({
-        email: emailInput.value.trim(),
-        password: passwordInput.value,
-        options: {
-            redirectTo: window.location.origin + "/completeprofile.html",
-        },
-    });
+   // 1. Rileva automaticamente se sei sul PC in locale o sul server online
+const isLocal = window.location.hostname === "127.0.0.1" || window.location.hostname === "localhost";
 
+// 2. Crea il link corretto aggiungendo la cartella /VeterinariApp/ solo se sei online
+const targetRedirectUrl = isLocal 
+    ? window.location.origin + "/completeprofile.html"
+    : window.location.origin + "/VeterinariApp/completeprofile.html";
+
+// 3. Invia la richiesta di registrazione passando l'URL dinamico appena calcolato
+const { data, error } = await supabase.auth.signUp({
+    email: emailInput.value.trim(),
+    password: passwordInput.value,
+    options: {
+        redirectTo: targetRedirectUrl, 
+    },
+});
     setLoading(false);
 
     // Gestisce errori di registrazione
