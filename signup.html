@@ -1,16 +1,20 @@
 <!DOCTYPE html>
 <html lang="it">
 <head>
+    <!-- Metadati di base e titolo della pagina -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Registrazione — VeterinariApp</title>
+    <!-- Collegamento al foglio di stile principale -->
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
+    <!-- Contenuto principale della pagina di registrazione -->
     <main class="signup-card">
         <h1>Registrazione</h1>
         <p class="subtitle">Crea un account con email e password per accedere al servizio veterinario.</p>
 
+        <!-- Form di registrazione con validazione client-side -->
         <form id="signupForm" action="#" method="post">
             <div class="form-group">
                 <label for="email">Email</label>
@@ -25,17 +29,21 @@
             <div class="form-group">
                 <label for="confirmPassword">Conferma password</label>
                 <input type="password" id="confirmPassword" name="confirmPassword" required minlength="8" autocomplete="new-password">
+                <!-- Messaggio di errore mostrato quando le password non coincidono -->
                 <p id="passwordError" class="error-message" role="alert">Le password non corrispondono.</p>
             </div>
 
             <button type="submit">Registrati</button>
         </form>
 
+        <!-- Messaggio di stato per feedback all'utente -->
         <p id="statusMessage" class="status-message" role="status" hidden></p>
 
+        <!-- Link alla pagina di login per utenti esistenti -->
         <p class="login-link">Hai già un account? <a href="login.html">Accedi</a></p>
     </main>
 
+    <!-- Script che gestisce la logica di registrazione -->
     <script type="module" src="js/signup.js"></script>
 </body>
 </html>

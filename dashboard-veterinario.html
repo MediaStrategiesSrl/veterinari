@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <title>Dashboard Veterinario</title>
+</head>
+<body>
+
+    <div class="app-container">
+        
+        <header class="app-header vet-header">
+            <div class="logo">
+                <h2>Veterin<span class="logo-dot">a</span>ri.it</h2>
+            </div>
+            <button id="logoutBtn" class="logout-icon outline-diamond">
+                <i class="fa-solid fa-diamond"></i>
+            </button>
+        </header>
+
+        <main class="main-content">
+            
+            <section id="homeSection">
+                <h3 class="section-title">Strumenti rapidi</h3>
+                
+                <div class="grid-tools">
+                    <div class="tool-card" id="btnScanQr">
+                        <div class="icon-wrapper orange-light"><i class="fa-solid fa-qrcode"></i></div>
+                        <h4>Scansiona QR</h4>
+                        <p>Acquisisci un animale</p>
+                    </div>
+                    <div class="tool-card" id="btnNewVisit">
+                        <div class="icon-wrapper blue-light"><i class="fa-solid fa-plus"></i></div>
+                        <h4>Nuova visita</h4>
+                        <p>Compila la cartella clinica</p>
+                    </div>
+                    <div class="tool-card" id="btnPatients">
+                        <div class="icon-wrapper purple-light"><i class="fa-solid fa-paw"></i></div>
+                        <h4>Pazienti</h4>
+                        <p>Animali autorizzati</p>
+                    </div>
+                    <div class="tool-card" id="btnEarnings">
+                        <div class="icon-wrapper orange-light"><i class="fa-solid fa-euro-sign"></i></div>
+                        <h4>Compensi</h4>
+                        <p>Saldo e fatture centrali</p>
+                    </div>
+                </div>
+            </section>
+
+            <section id="agendaSection" class="hidden">
+                
+                <div class="urgent-banner">
+                    <h3>Ricezione chiamate urgenti</h3>
+                    <p>La priorità va al veterinario disponibile in attesa da più tempo.</p>
+                    
+                    <div class="status-box">
+                        <div class="status-text">
+                            <strong>Sei disponibile</strong>
+                            <span id="waitTimeDisplay">Caricamento...</span>
+                        </div>
+                        <label class="switch">
+                            <input type="checkbox" id="urgencyToggle">
+                            <span class="slider round"></span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="agenda-header">
+                    <h3>Oggi, <span id="currentDateDisplay">--</span></h3>
+                    <a href="#" class="link-agenda">Agenda completa</a>
+                </div>
+
+                <div class="agenda-list" id="agendaList">
+                    <p style="text-align: center; color: #888;">Caricamento appuntamenti...</p>
+                </div>
+
+            </section>
+
+            <div class="petcare-banner bottom-banner">
+                <span class="banner-badge">PETCARE+</span>
+                <span class="banner-text">Protezione completa da €9,90/mese · Scopri</span>
+            </div>
+
+        </main>
+
+        <nav class="bottom-nav">
+            <a href="#" id="navHome" class="nav-item active">
+                <i class="fa-solid fa-house"></i>
+                <span>Home</span>
+            </a>
+            <a href="#" id="navAgenda" class="nav-item">
+                <i class="fa-solid fa-table-cells"></i>
+                <span>Agenda</span>
+            </a>
+            <a href="#" id="navScan" class="nav-item">
+                <i class="fa-regular fa-square"></i>
+                <span>Scansiona</span>
+            </a>
+            <a href="#" id="navPatients" class="nav-item">
+                <i class="fa-solid fa-paw"></i>
+                <span>Pazienti</span>
+            </a>
+            <a href="#" id="navProfile" class="nav-item">
+                <i class="fa-solid fa-circle-user"></i>
+                <span>Profilo</span>
+            </a>
+        </nav>
+
+    </div>
+
+    <script type="module" src="js/dashboard-veterinario.js"></script>
+</body>
+</html>

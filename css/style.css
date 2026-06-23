@@ -237,3 +237,245 @@ button[type="submit"]:focus {
     padding: 2rem;
     text-align: center;
 }
+
+.app-container {
+    width: 100%;
+    max-width: 410px;
+    height: 100vh;
+    background-color: #ffffff;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+}
+
+/* Header */
+.app-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px;
+    background-color: #ffffff;
+    border-bottom: 1px solid #f0f0f2;
+}
+
+.profile-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.avatar {
+    width: 45px;
+    height: 45px;
+    background-color: #f0f0f2;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: #666;
+    font-size: 1.2rem;
+}
+
+.user-text .welcome {
+    font-size: 0.8rem;
+    color: #8e8e93;
+}
+
+.user-text h2 {
+    font-size: 1.1rem;
+    color: #1c1c1e;
+    font-weight: 700;
+}
+
+.logout-icon {
+    background: none;
+    border: none;
+    font-size: 1.2rem;
+    color: #8e8e93;
+    cursor: pointer;
+}
+
+/* Area Contenuto (Scrollabile) */
+.main-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    /* FIX: Spazio in fondo per non far finire la roba sotto la barra */
+    padding-bottom: 110px; 
+}
+
+/* Nasconde la barra di scroll visivamente (opzionale) */
+.main-content::-webkit-scrollbar {
+    width: 0;
+}
+
+/* Card Grandi (Azioni) */
+.quick-actions {
+    display: flex;
+    gap: 15px;
+}
+
+.action-card {
+    flex: 1;
+    height: 140px;
+    border-radius: 20px;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+
+.action-card:active {
+    transform: scale(0.96);
+}
+
+.action-card.orange {
+    background-color: #ff7a00; /* Arancione esatto */
+    color: #ffffff;
+}
+
+.action-card.dark {
+    background-color: #181818; /* Antracite scuro esatto */
+    color: #ffffff;
+}
+
+.action-icon {
+    font-size: 2rem;
+}
+
+.action-card span {
+    font-weight: 600;
+    font-size: 1rem;
+    line-height: 1.2;
+}
+
+/* Sezione Animale */
+.pet-section h3 {
+    font-size: 1.1rem;
+    margin-bottom: 10px;
+    color: #1c1c1e;
+}
+
+.pet-card {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 15px;
+    background-color: #f8f8fa;
+    border-radius: 16px;
+    border: 1px solid #f0f0f2;
+}
+
+.pet-avatar {
+    font-size: 1.8rem;
+    background-color: #ffffff;
+    width: 50px;
+    height: 50px;
+    border-radius: 12px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+}
+
+.pet-details h4 {
+    font-size: 1rem;
+    color: #1c1c1e;
+}
+
+.pet-details p {
+    font-size: 0.85rem;
+    color: #8e8e93;
+}
+
+/* Elementi Extra per lo scroll test */
+.extra-content {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.dummy-item {
+    background-color: #ffffff;
+    border: 2px dashed #e5e5ea;
+    border-radius: 16px;
+    padding: 25px;
+    text-align: center;
+    color: #aeaea3;
+    font-weight: 500;
+}
+
+/* Banner PETCARE+ */
+.petcare-banner {
+    background-color: #ffe600; /* Giallo acceso */
+    border: 2px solid #000000;
+    border-radius: 16px;
+    padding: 15px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.banner-badge {
+    background-color: #000000;
+    color: #ffe600;
+    padding: 2px 6px;
+    font-size: 0.7rem;
+    border-radius: 6px;
+}
+
+.banner-text {
+    flex: 1;
+    margin-left: 10px;
+    font-size: 0.9rem;
+    color: #000000;
+}
+
+.banner-arrow {
+    color: #000000;
+}
+
+/* Tab Bar Inferiore Fissa */
+.bottom-nav {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 75px;
+    background-color: #ffffff; /* FIX: Sfondo pieno obbligatorio */
+    border-top: 1px solid #f0f0f2;
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    z-index: 999; /* FIX: Passa sopra allo scroll dei contenuti */
+    padding-bottom: 10px; /* Ottimizzazione per le tacche degli iPhone */
+}
+
+.nav-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    color: #8e8e93;
+    text-decoration: none;
+    font-size: 0.75rem;
+    font-weight: 500;
+    flex: 1;
+}
+
+.nav-item i {
+    font-size: 1.2rem;
+}
+
+.nav-item.active {
+    color: #ff7a00; /* Colore attivo Arancione */
+}

@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- Metadati di base e stile generale per la dashboard -->
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="css/style.css">
+    <title>Dashboard</title>
+</head>
+<body>
+
+    <!-- Contenitore principale dell'app dashboard proprietario -->
+    <div class="app-container">
+        
+        <!-- Header con informazioni utente e logout -->
+        <header class="app-header">
+            <div class="profile-info">
+                <div class="avatar">
+                    <!-- Icona avatar utente -->
+                    <i class="fa-solid fa-user"></i>
+                </div>
+                <div class="user-text">
+                    <p class="welcome">Benvenuto</p>
+                    <h2 id="username">Caricamento...</h2>
+                </div>
+            </div>
+            <button id="logoutBtn" class="logout-icon">
+                <!-- Pulsante uscita dall'account -->
+                <i class="fa-solid fa-right-from-bracket"></i>
+            </button>
+        </header>
+
+        <!-- Contenuto principale della dashboard -->
+        <main class="main-content">
+            
+            <!-- Sezione azioni rapide per accesso immediato -->
+            <section class="quick-actions">
+                <div class="action-card orange" id="actionVet">
+                    <div class="action-icon">
+                        <i class="fa-solid fa-user-doctor"></i>
+                    </div>
+                    <span>Veterinario subito</span>
+                </div>
+                <div class="action-card dark" id="actionQr">
+                    <div class="action-icon">
+                        <i class="fa-solid fa-qrcode"></i>
+                    </div>
+                    <span>Mostra QR</span>
+                </div>
+            </section>
+
+            <!-- Sezione dedicata agli animali dell'utente -->
+            <section class="pet-section">
+                <h3>I tuoi animali</h3>
+                <div class="pet-card" id="petCard">
+                    <div class="pet-avatar">🐾</div>
+                    <div class="pet-details">
+                        <h4 id="petNameDisplay">Caricamento...</h4>
+                        <p id="petSpecieDisplay">---</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Contenuti aggiuntivi e funzioni extra -->
+            <section class="extra-content">
+                <div class="dummy-item">Shop</div>
+                <div class="dummy-item">Mercatino</div>
+                <div class="dummy-item">Articoli Utili</div>
+            </section>
+
+            <!-- Banner promozionale o informativo -->
+            <div class="petcare-banner">
+                <span class="banner-badge">NEW</span>
+                <span class="banner-text">PETCARE+ Scopri i vantaggi</span>
+                <span class="banner-arrow">➔</span>
+            </div>
+
+        </main>
+
+        <!-- Navigazione inferiore dell'app -->
+        <nav class="bottom-nav">
+            <a href="#" class="nav-item active">
+                <i class="fa-solid fa-house"></i>
+                <span>Home</span>
+            </a>
+            <a href="#" class="nav-item">
+                <i class="fa-solid fa-calendar-days"></i>
+                <span>Visite</span>
+            </a>
+            <a href="#" class="nav-item">
+                <i class="fa-solid fa-notes-medical"></i>
+                <span>Cartella</span>
+            </a>
+            <a href="#" class="nav-item">
+                <i class="fa-solid fa-gear"></i>
+                <span>Impostazioni</span>
+            </a>
+        </nav>
+
+    </div>
+
+    <!-- Script che gestisce la dashboard proprietario -->
+    <script type="module" src="js/dashboard-proprietario.js"></script>
+</body>
+</html>
