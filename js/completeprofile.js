@@ -66,6 +66,14 @@ supabase.auth.onAuthStateChange((event, session) => {
 // ==========================================
 // 2. CARICAMENTO RUOLI
 // ==========================================
+
+const roleIcons = {
+    "proprietario": '<div class="profile-icon icon-paw"><i class="fa-solid fa-paw"></i></div>',
+    "veterinario": '<div class="profile-icon icon-plus"><i class="fa-solid fa-plus"></i></div>',
+    "altro professionista": '<div class="profile-icon icon-scissors"><i class="fa-solid fa-scissors"></i></div>',
+    "sponsor": '<div class="profile-icon icon-arrow"><i class="fa-solid fa-arrow-right-long" style="transform: rotate(-45deg);"></i></div>'
+};
+
 async function loadRoles() {
     try {
         const { data: roles, error } = await supabase
@@ -75,28 +83,25 @@ async function loadRoles() {
 
         if (error) throw error;
 
-        if (!roleCardsContainer) {
-            console.error("ID 'role-cards-container' non trovato nell'HTML!");
-            return;
-        }
-
         roleCardsContainer.innerHTML = '';
         
         roles.forEach(role => {
             rolesMap[role.nome] = role.id;
 
             const card = document.createElement('div');
-            card.className = 'role-card';
+            card.className = 'profile-row-card'; // <-- NUOVA CLASSE DEL MOCKUP
             card.dataset.value = role.nome;
 
             const descText = roleDescriptions[role.nome] || "Esplora le funzionalità dedicate";
+            const iconHtml = roleIcons[role.nome.toLowerCase()] || '<div class="profile-icon"><i class="fa-solid fa-user"></i></div>';
 
             card.innerHTML = `
-                <div>
-                    <h3 class="role-card-title">${role.label}</h3>
-                    <p class="role-card-desc">${descText}</p>
+                ${iconHtml}
+                <div class="profile-text">
+                    <h3>${role.label || role.nome}</h3>
+                    <p>${descText}</p>
                 </div>
-                <div class="role-card-arrow">➔</div>
+                <div class="profile-arrow"><i class="fa-solid fa-chevron-right"></i></div>
             `;
 
             card.addEventListener('click', () => handleRoleSelection(card, role.nome));
@@ -111,24 +116,22 @@ async function loadRoles() {
 // 3. GESTIONE INTERFACCIA
 // ==========================================
 function handleRoleSelection(selectedCard, roleName) {
-    document.querySelectorAll('.role-card').forEach(c => c.classList.remove('selected'));
+    // Rimuove la selezione visiva dalle altre card e l'aggiunge a quella cliccata
+    document.querySelectorAll('.profile-row-card').forEach(c => c.classList.remove('selected'));
     selectedCard.classList.add('selected');
+    
     roleSelectHidden.value = roleName;
 
+    // MOSTRA IL FORM NASCOSTO CON UN'ANIMAZIONE (se vogliamo)
     dynamicFormFields.classList.remove("hidden");
     
-    // Reset blocchi visivi e parametri
+    // Reset di tutti i sottomenu specifici
     [professionalFields, clientFields, vetFields, sponsorFields, specificPetTypeGroup, specificProfessionOtherGroup].forEach(el => { if(el) el.classList.add("hidden"); });
-    setRequired("specificProfession", false);
-    setRequired("specificProfessionOther", false);
-    setRequired("petName", false);
-    setRequired("petSpecie", false);
-    setRequired("petSpecieSpecific", false);
-    setRequired("vetOrderNumber", false);
-    setRequired("vetClinicAddress", false);
-    setRequired("sponsorCompanyName", false);
-    setRequired("sponsorVat", false);
+    
+    // Rimuovi required da tutto per resettare
+    ["specificProfession", "specificProfessionOther", "petName", "petSpecie", "petSpecieSpecific", "vetOrderNumber", "vetClinicAddress", "sponsorCompanyName", "sponsorVat"].forEach(id => setRequired(id, false));
 
+    // Mostra solo i campi del ruolo scelto
     if (roleName === "altro professionista" && professionalFields) {
         professionalFields.classList.remove("hidden");
         setRequired("specificProfession", true);
@@ -146,34 +149,6 @@ function handleRoleSelection(selectedCard, roleName) {
         setRequired("sponsorVat", true);
     }
 }
-
-// Eventi campi "Altro"
-if (petSpecieSelect) {
-    petSpecieSelect.addEventListener("change", function() {
-        if (this.value === "Altro") {
-            if (specificPetTypeGroup) specificPetTypeGroup.classList.remove("hidden");
-            setRequired("petSpecieSpecific", true);
-        } else {
-            if (specificPetTypeGroup) specificPetTypeGroup.classList.add("hidden");
-            setRequired("petSpecieSpecific", false);
-            if (petSpecieSpecific) petSpecieSpecific.value = "";
-        }
-    });
-}
-
-if (specificProfessionSelect) {
-    specificProfessionSelect.addEventListener("change", function() {
-        if (this.value === "Altro") {
-            if (specificProfessionOtherGroup) specificProfessionOtherGroup.classList.remove("hidden");
-            setRequired("specificProfessionOther", true);
-        } else {
-            if (specificProfessionOtherGroup) specificProfessionOtherGroup.classList.add("hidden");
-            setRequired("specificProfessionOther", false);
-            if (specificProfessionOther) specificProfessionOther.value = "";
-        }
-    });
-}
-
 // ==========================================
 // 4. SALVATAGGIO DATI E REDIRECT
 // ==========================================

@@ -1,29 +1,32 @@
 <!DOCTYPE html>
 <html lang="it">
 <head>
-    <!-- Metadati di base e stile per la pagina di completamento profilo -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Completa Profilo — Veterinari.it</title>
     <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
-    <!-- Pagina per completare il profilo utente dopo la registrazione -->
-    <main class="signup-card">
-        <h1>Completa Profilo</h1>
-        <p class="subtitle">Scegli un profilo per esplorare la demo dell'app ed attivare il tuo account.</p>
+    
+    <main class="login-card">
+        <div class="logo-container">
+    <img src="img/Logo-Veterinari-wp1-1-1024x190.webp" alt="Logo Veterinari.it" class="app-logo">
+</div>
+        <p class="subtitle">Scegli un profilo per completare la registrazione.</p>
 
         <form id="completeProfileForm" action="#" method="post">
             
-            <!-- Contenitore delle Card Ruolo Dinamiche -->
             <div class="form-group">
-                <label class="section-title">Chi sei?</label>
-                <div id="role-cards-container" class="role-cards-grid"></div>
+                <h2 class="section-title">CHI SEI?</h2>
+                <div id="role-cards-container" class="profile-selectors">
+                    </div>
                 <input type="hidden" id="roleSelect" name="role" required>
             </div>
 
-            <!-- Questo blocco si mostra dopo aver cliccato su una Card -->
             <div id="dynamicFormFields" class="hidden">
+                
+                <h2 class="section-title" style="margin-top: 2rem;">I TUOI DATI</h2>
                 
                 <div class="form-row">
                     <div class="form-group">
@@ -41,13 +44,11 @@
                     <input type="tel" id="phone" name="phone" required>
                 </div>
 
-                <!-- Campo Città (Comune a tutti) -->
                 <div class="form-group">
                     <label for="city">Città</label>
                     <input type="text" id="city" name="city" required>
                 </div>
 
-                <!-- Campi specifici per ALTRO PROFESSIONISTA -->
                 <div id="professionalFields" class="form-group hidden">
                     <label for="specificProfession">La tua Professione Specifica</label>
                     <select id="specificProfession" name="specificProfession">
@@ -61,11 +62,10 @@
 
                     <div id="specificProfessionOtherGroup" class="form-group hidden" style="margin-top: 15px;">
                         <label for="specificProfessionOther">Specifica il Tipo di Professionista</label>
-                        <input type="text" id="specificProfessionOther" name="specificProfessionOther" placeholder="Es. Ostetrica Animale, Consulente Nutrizionale...">
+                        <input type="text" id="specificProfessionOther" name="specificProfessionOther" placeholder="Es. Ostetrica Animale...">
                     </div>
                 </div>
 
-                <!-- Campi specifici per PROPRIETARIO -->
                 <div id="clientFields" class="hidden">
                     <div class="form-row">
                         <div class="form-group">
@@ -86,14 +86,12 @@
                         </div>
                     </div>
 
-                    <!-- Campo di testo nascosto che compare SOLO se selezioni "Altro" come Tipo di Animale -->
                     <div id="specificPetTypeGroup" class="form-group hidden" style="margin-top: 15px;">
                         <label for="petSpecieSpecific">Specifica il Tipo di Animale</label>
                         <input type="text" id="petSpecieSpecific" name="petSpecieSpecific" placeholder="Es. Criceto, Furetto, Cavallo...">
                     </div>
                 </div>
 
-                <!-- Campi specifici per VETERINARIO -->
                 <div id="vetFields" class="hidden">
                     <div class="form-group">
                         <label for="vetOrderNumber">Numero Iscrizione Ordine</label>
@@ -105,7 +103,6 @@
                     </div>
                 </div>
 
-                <!-- Campi specifici per SPONSOR -->
                 <div id="sponsorFields" class="hidden">
                     <div class="form-group">
                         <label for="sponsorCompanyName">Nome Azienda / Brand</label>

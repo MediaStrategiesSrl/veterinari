@@ -4,165 +4,217 @@
     box-sizing: border-box;
 }
 
-body {
+:root {
+    --bg-gradient-start: #FFFFFF; /* Il centro della sfumatura è quasi bianco/panna */
+    --bg-gradient-end: #FCEFD5;  
+    --white: #FFFFFF;
+    --orange-accent: #EE8A2A;
+    --text-main: #222222;
+    --text-muted: #7A7A7A;
+    --border-color: #EAE5DC;
+}
+
+* {
+    box-sizing: border-box;
     margin: 0;
+    padding: 0;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+body {
+    background: radial-gradient(circle, var(--bg-gradient-start) 0%, var(--bg-gradient-end) 100%);
+    background-attachment: fixed; /* Impedisce al gradiente di spezzarsi se la pagina scorre */
+    color: var(--text-main);
+    display: flex;
+    justify-content: center;
+    align-items: center;
     min-height: 100vh;
-    font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
-    background-color: #f4f7f6;
-    color: #1a2e2a;
+    padding: 1rem;
+}
+
+.login-card {
+    background: var(--white);
+    width: 100%;
+    max-width: 430px; /* Dimensione ideale smartphone/mockup */
+    border-radius: 32px;
+    padding: 2.5rem 1.75rem;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.03);
+}
+
+/* LOGO VETERINARI.IT */
+.logo {
+    font-size: 2.25rem;
+    font-weight: 800;
+    color: #1E88E5;
+    text-align: center;
+    margin-bottom: 0.75rem;
+    box-shadow: 0 10px 40px rgba(122, 100, 70, 0.06);
+}
+
+.logo span {
+    color: var(--orange-accent);
+}
+
+.subtitle {
+    font-size: 0.95rem;
+    color: var(--text-muted);
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.section-title {
+    font-size: 0.8rem;
+    font-weight: 800;
+    color: var(--orange-accent);
+    letter-spacing: 1px;
+    margin-bottom: 1rem;
+}
+
+/* GRIGLIA SELEZIONE RUOLO */
+.profile-selectors {
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+    margin-bottom: 2rem;
+}
+
+.profile-row-card {
     display: flex;
     align-items: center;
+    background: var(--white);
+    border: 1px solid var(--border-color);
+    border-radius: 20px;
+    padding: 1rem;
+    cursor: pointer;
+    transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.profile-row-card:hover {
+    border-color: var(--orange-accent);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.02);
+}
+
+.profile-row-card:active, .profile-row-card.selected {
+    transform: scale(0.98);
+    border-color: var(--orange-accent);
+    background-color: #FFFDF9;
+}
+
+.profile-icon {
+    width: 46px;
+    height: 46px;
+    border-radius: 14px;
+    display: flex;
     justify-content: center;
-    padding: 1.5rem;
+    align-items: center;
+    font-size: 1.25rem;
+    margin-right: 1rem;
 }
 
-.signup-card {
-    width: 100%;
-    max-width: 420px;
-    background: #ffffff;
-    border-radius: 12px;
-    box-shadow: 0 4px 24px rgba(26, 46, 42, 0.08);
-    padding: 2rem;
+/* Palette colori icone mockup */
+.icon-paw { background: #FDF2E2; color: #7B6148; }
+.icon-plus { background: #E6F4FA; color: #1E88E5; }
+.icon-scissors { background: #FDF2E2; color: #7B6148; }
+.icon-arrow { background: #E6F4FA; color: #1E88E5; }
+
+.profile-text {
+    flex: 1;
 }
 
-.signup-card h1 {
-    margin: 0 0 0.25rem;
-    font-size: 1.75rem;
+.profile-text h3 {
+    font-size: 1rem;
     font-weight: 700;
+    margin-bottom: 0.2rem;
 }
 
-.signup-card .subtitle {
-    margin: 0 0 1.75rem;
-    color: #5a726c;
-    font-size: 0.95rem;
+.profile-text p {
+    font-size: 0.8rem;
+    color: var(--text-muted);
 }
 
+.profile-arrow {
+    color: #CCC;
+    font-size: 0.85rem;
+}
+
+/* STRUTTURA FORM */
 .form-group {
-    margin-bottom: 1.25rem;
-}
-
-/* Griglia per Nome e Cognome affiancati */
-.form-row {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 1rem;
     margin-bottom: 1.25rem;
 }
 
 .form-group label {
     display: block;
     margin-bottom: 0.4rem;
-    font-size: 0.875rem;
-    font-weight: 600;
+    font-size: 0.85rem;
+    font-weight: 700;
 }
 
-/* Stile unificato per Input e Select */
-.form-group input,
-.form-group select {
+.form-group input {
     width: 100%;
-    padding: 0.65rem 0.85rem;
-    border: 1px solid #c5d4cf;
-    border-radius: 8px;
-    font-size: 1rem;
-    font-family: inherit;
-    color: #1a2e2a;
-    background-color: #ffffff;
-    transition: border-color 0.2s, box-shadow 0.2s;
+    padding: 0.8rem 1rem;
+    border: 1px solid var(--border-color);
+    border-radius: 14px;
+    font-size: 0.95rem;
+    background-color: #FAFAFA;
+    transition: border-color 0.2s, background-color 0.2s;
 }
 
-/* Ottimizzazione estetica per i menu a tendina */
-.form-group select {
-    cursor: pointer;
-    appearance: none; /* Rimuove lo stile nativo brutto */
-    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%235a726c' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
-    background-repeat: no-repeat;
-    background-position: right 0.85rem center;
-    background-size: 1rem;
-    padding-right: 2.5rem;
-}
-
-.form-group input:focus,
-.form-group select:focus {
+.form-group input:focus {
     outline: none;
-    border-color: #2d8f6f;
-    box-shadow: 0 0 0 3px rgba(45, 143, 111, 0.15);
-}
-
-.form-group input:invalid:not(:placeholder-shown) {
-    border-color: #c0392b;
-}
-
-/* Classe utilitaria per nascondere dinamicamente il container della qualifica */
-.hidden {
-    display: none !important;
-}
-
-.error-message {
-    display: none;
-    margin-top: 0.4rem;
-    font-size: 0.8125rem;
-    color: #c0392b;
-}
-
-.error-message.visible {
-    display: block;
+    border-color: var(--orange-accent);
+    background-color: var(--white);
 }
 
 button[type="submit"] {
     width: 100%;
-    margin-top: 0.5rem;
-    padding: 0.75rem;
-    background-color: #2d8f6f;
-    color: #ffffff;
+    margin-top: 0.75rem;
+    padding: 0.9rem;
+    background-color: #2D8F6F; /* Mantengo il verde per contrasto submit, o converti in var(--orange-accent) */
+    color: var(--white);
     border: none;
-    border-radius: 8px;
+    border-radius: 14px;
     font-size: 1rem;
-    font-weight: 600;
+    font-weight: 700;
     cursor: pointer;
-    transition: background-color 0.2s;
+    transition: background-color 0.15s, transform 0.15s;
 }
 
-button[type="submit"]:hover:not(:disabled) {
-    background-color: #247a5e;
+button[type="submit"]:active {
+    transform: scale(0.98);
 }
 
-button[type="submit"]:disabled {
-    opacity: 0.7;
-    cursor: not-allowed;
+.signup-link {
+    text-align: center;
+    margin-top: 1.5rem;
+    font-size: 0.9rem;
+    color: var(--text-muted);
 }
 
-button[type="submit"]:focus {
-    outline: none;
-    box-shadow: 0 0 0 3px rgba(45, 143, 111, 0.3);
+.signup-link a {
+    color: var(--blue-link);
+    text-decoration: none;
+    font-weight: 600;
 }
 
+.admin-link {
+    text-align: center;
+    font-size: 0.8rem;
+    color: #B2AFA7;
+    margin-top: 2rem;
+    text-decoration: underline;
+    cursor: pointer;
+}
+
+/* MESSAGGI DI STATO */
 .status-message {
     margin-top: 1rem;
     padding: 0.75rem 1rem;
-    border-radius: 8px;
-    font-size: 0.875rem;
-    line-height: 1.4;
+    border-radius: 12px;
+    font-size: 0.85rem;
+    text-align: center;
 }
-
-.status-message.success {
-    background-color: #e8f5ef;
-    color: #1e6b52;
-    border: 1px solid #b8dfc8;
-}
-
-.status-message.error {
-    background-color: #fdecea;
-    color: #922b21;
-    border: 1px solid #f5c6cb;
-}
-
-.role-cards-grid {
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-    margin-top: 12px;
-    margin-bottom: 24px;
-}
+.status-message.success { background: #E8F5EF; color: #1E6B52; }
+.status-message.error { background: #FDECEA; color: #922B21; }
 
 /* Stile base di ogni singola Card Ruolo */
 .role-card {
@@ -478,4 +530,54 @@ button[type="submit"]:focus {
 
 .nav-item.active {
     color: #ff7a00; /* Colore attivo Arancione */
+}
+
+/* Fondamentale per nascondere e mostrare dinamicamente i form */
+.hidden {
+    display: none !important;
+}
+
+/* Griglia per affiancare Nome e Cognome */
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin-bottom: 1.25rem;
+}
+
+/* Stile per i menu a tendina (select) coordinato con gli input */
+.form-group select {
+    width: 100%;
+    padding: 0.8rem 1rem;
+    border: 1px solid var(--border-color);
+    border-radius: 14px;
+    font-size: 0.95rem;
+    background-color: #FAFAFA;
+    transition: border-color 0.2s, background-color 0.2s;
+    cursor: pointer;
+    appearance: none; /* Rimuove freccia nativa brutta */
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23EE8A2A' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 1rem center;
+    background-size: 1rem;
+}
+
+.form-group select:focus {
+    outline: none;
+    border-color: var(--orange-accent);
+    background-color: var(--white);
+}
+
+.logo-container {
+    display: flex;
+    justify-content: center; /* Centra il logo orizzontalmente */
+    align-items: center;
+    margin-bottom: 1.5rem;   /* Spazio tra il logo e il sottotitolo */
+}
+
+.app-logo {
+    width: 100%;
+    max-width: 220px;        /* Dimensione massima ideale per il mockup */
+    height: auto;            /* Mantiene le proporzioni originali senza distorcere */
+    object-fit: contain;
 }
