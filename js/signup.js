@@ -18,12 +18,18 @@ const passwordInput = document.getElementById("password");
 const confirmPasswordInput = document.getElementById("confirmPassword");
 const passwordError = document.getElementById("passwordError");
 const statusMessage = document.getElementById("statusMessage");
-const submitButton = form.querySelector('button[type="submit"]');
+const submitButton = document.getElementById("submitButton");
 
-// Gestisce lo stato di caricamento del pulsante
+// Gestisce lo stato di caricamento del pulsante (mantenendo le icone!)
 function setLoading(isLoading) {
     submitButton.disabled = isLoading;
-    submitButton.textContent = isLoading ? "Registrazione in corso..." : "Registrati";
+    if (isLoading) {
+        // Mostra un'icona di caricamento che gira
+        submitButton.innerHTML = `Registrazione in corso... <i class="fa-solid fa-spinner fa-spin" style="margin-left: 5px;"></i>`;
+    } else {
+        // Ripristina la freccia originale
+        submitButton.innerHTML = `Registrati ora <i class="fa-solid fa-arrow-right" style="margin-left: 5px;"></i>`;
+    }
 }
 
 function showStatus(message, type) {
@@ -72,22 +78,24 @@ form.addEventListener("submit", async function (event) {
 
     setLoading(true);
 
-   // 1. Rileva automaticamente se sei sul PC in locale o sul server online
-const isLocal = window.location.hostname === "127.0.0.1" || window.location.hostname === "localhost";
+    // 1. Rileva automaticamente se sei sul PC in locale o sul server online
+    const isLocal = window.location.hostname === "127.0.0.1" || window.location.hostname === "localhost";
 
-// 2. Crea il link corretto aggiungendo la cartella /VeterinariApp/ solo se sei online
-const targetRedirectUrl = isLocal 
-    ? window.location.origin + "/completeprofile.html"
-    : window.location.origin + "/VeterinariApp/completeprofile.html";
+    // 2. Crea il link corretto aggiungendo la cartella /VeterinariApp/ solo se sei online
+    const targetRedirectUrl = isLocal 
+        ? window.location.origin + "/completeprofile.html"
+        : window.location.origin + "/VeterinariApp/completeprofile.html";
 
-// 3. Invia la richiesta di registrazione passando l'URL dinamico appena calcolato
-const { data, error } = await supabase.auth.signUp({
-    email: emailInput.value.trim(),
-    password: passwordInput.value,
-    options: {
-        redirectTo: targetRedirectUrl, 
-    },
-});
+    // 3. Invia la richiesta di registrazione passando l'URL dinamico calcolato
+    const { data, error } = await supabase.auth.signUp({
+        email: emailInput.value.trim(),
+        password: passwordInput.value,
+        options: {
+            // CORREZIONE: parametro esatto per la conferma via email su Supabase V2
+            emailRedirectTo: targetRedirectUrl, 
+        },
+    });
+    
     setLoading(false);
 
     // Gestisce errori di registrazione

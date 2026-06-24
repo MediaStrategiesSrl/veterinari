@@ -581,3 +581,75 @@ button[type="submit"]:active {
     height: auto;            /* Mantiene le proporzioni originali senza distorcere */
     object-fit: contain;
 }
+
+/* Stile specifico per il bottone di registrazione (Arancione arrotondato del mockup) */
+#signupForm button[type="submit"] {
+    width: 100%;
+    margin-top: 1.5rem;
+    padding: 1rem;
+    background-color: var(--orange-accent); /* Colore arancione nativo del brand */
+    color: var(--white);
+    border: none;
+    border-radius: 30px; /* Completamente arrotondato come da mockup */
+    font-size: 1.05rem;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    box-shadow: 0 4px 15px rgba(238, 138, 42, 0.2);
+    transition: background-color 0.15s, transform 0.15s, box-shadow 0.15s;
+}
+
+#signupForm button[type="submit"]:hover {
+    background-color: #db761b;
+}
+
+#signupForm button[type="submit"]:active {
+    transform: scale(0.97);
+    box-shadow: 0 2px 8px rgba(238, 138, 42, 0.1);
+}
+
+/* Gestione degli errori di validazione input (es. password non corrispondenti) */
+.error-message {
+    display: none;
+    margin-top: 0.5rem;
+    font-size: 0.85rem;
+    color: #c0392b;
+    font-weight: 500;
+    padding-left: 0.25rem;
+}
+
+.error-message.visible {
+    display: block;
+}
+
+#signupForm button[type="submit"],
+#loginForm button[type="submit"] {
+    width: 100%;
+    margin-top: 1.5rem;
+    padding: 1rem;
+    background-color: var(--orange-accent); /* Colore arancione nativo del brand */
+    color: var(--white);
+    border: none;
+    border-radius: 30px; /* Completamente arrotondato come da mockup */
+    font-size: 1.05rem;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    box-shadow: 0 4px 15px rgba(238, 138, 42, 0.2);
+    transition: background-color 0.15s, transform 0.15s, box-shadow 0.15s;
+}
+
+#signupForm button[type="submit"]:hover,
+#loginForm button[type="submit"]:hover {
+    background-color: #db761b;
+}
+
+#signupForm button[type="submit"]:active,
+#loginForm button[type="submit"]:active {
+    transform: scale(0.97);
+    box-shadow: 0 2px 8px rgba(238, 138, 42, 0.1);
+}

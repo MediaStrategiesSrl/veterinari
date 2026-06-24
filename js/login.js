@@ -14,7 +14,17 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
 // Elementi DOM
 const form = document.getElementById("loginForm");
 const statusMessage = document.getElementById("statusMessage");
-const submitButton = form.querySelector('button[type="submit"]');
+const submitButton = document.getElementById("submitButton");
+
+// Gestisce lo stato di caricamento del pulsante (mantenendo le icone)
+function setLoading(isLoading) {
+    submitButton.disabled = isLoading;
+    if (isLoading) {
+        submitButton.innerHTML = `Accesso in corso... <i class="fa-solid fa-spinner fa-spin" style="margin-left: 5px;"></i>`;
+    } else {
+        submitButton.innerHTML = `Accedi <i class="fa-solid fa-arrow-right" style="margin-left: 5px;"></i>`;
+    }
+}
 
 // Gestione dell'invio del form di Login
 form.addEventListener("submit", async function (event) {
@@ -30,8 +40,7 @@ form.addEventListener("submit", async function (event) {
         return;
     }
 
-    submitButton.disabled = true;
-    submitButton.textContent = "Accesso in corso...";
+    setLoading(true);
 
     try {
         // 1. Esegui il Login con Supabase
@@ -42,19 +51,19 @@ form.addEventListener("submit", async function (event) {
 
         if (authError) {
             showStatus("Credenziali non valide: " + authError.message, "error");
-            enableSubmit();
+            setLoading(false);
             return;
         }
 
         const user = authData.user;
 
         // 2. Scopri il ruolo dell'utente per il redirect dinamico
-        // Interroghiamo la tabella user_roles e facciamo un join con roles
         const { data: roleData, error: roleError } = await supabase
             .from('user_roles')
             .select(`
                 roles (
-                    nome_ruolo
+                    nome_ruolo,
+                    nome
                 )
             `)
             .eq('user_id', user.id)
@@ -69,8 +78,8 @@ form.addEventListener("submit", async function (event) {
         
         // 3. Esegui il reindirizzamento in base al ruolo trovato
         setTimeout(() => {
-            // Estrapoliamo il nome del ruolo (se esiste, altrimenti null) e lo mettiamo in minuscolo per sicurezza
-            const userRole = roleData?.roles?.nome_ruolo?.toLowerCase();
+            // Controlliamo sia 'nome_ruolo' che 'nome' nel caso in cui la colonna nel DB si chiami diversamente
+            const userRole = roleData?.roles?.nome_ruolo?.toLowerCase() || roleData?.roles?.nome?.toLowerCase();
 
             switch (userRole) {
                 case 'veterinario':
@@ -87,7 +96,7 @@ form.addEventListener("submit", async function (event) {
                     window.location.href = "dashboard-proprietario.html";
                     break;
                 default:
-                    // Fallback di sicurezza: se il ruolo non è definito o è diverso, mandalo a una pagina predefinita (es. proprietario o completamento profilo)
+                    // Fallback di sicurezza: se il ruolo non è definito
                     console.log("Ruolo non riconosciuto o mancante, fallback attivato.");
                     window.location.href = "dashboard-proprietario.html"; 
                     break;
@@ -97,19 +106,13 @@ form.addEventListener("submit", async function (event) {
     } catch (err) {
         console.error("Errore generico durante il login:", err);
         showStatus("Errore imprevisto durante il login.", "error");
-        enableSubmit();
+        setLoading(false);
     }
 });
 
 // Funzioni di utilità
-function enableSubmit() {
-    submitButton.disabled = false;
-    submitButton.textContent = "Accedi";
-}
-
 function showStatus(message, type) {
     statusMessage.textContent = message;
-    // Pulisce le classi precedenti e aggiunge quella corretta (es. 'success' o 'error')
     statusMessage.className = `status-message ${type}`;
     statusMessage.hidden = false;
 }
