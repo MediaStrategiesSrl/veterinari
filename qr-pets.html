@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QR Passaporto — Veterinari.it</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+
+    <main class="app-container">
+
+    <header class="header-nav">
+        <a href="dashboard-proprietario.html" class="back-btn"><i class="fa-solid fa-chevron-left"></i></a>
+        <div class="header-title">
+            <h2 id="qrTitle">QR di ...</h2>
+            <p>Mostralo al veterinario</p>
+        </div>
+        <div class="header-icon"><i class="fa-solid fa-diamond"></i></div>
+    </header>
+
+    <div class="qr-container">
+        <div class="qr-box">
+            <img id="qrImage" src="https://via.placeholder.com/200?text=Caricamento..." alt="QR Code">
+        </div>
+    </div>
+
+    <div class="qr-info">
+        <h3>Passaporto digitale</h3>
+        <p>Il QR identifica <span id="petNameText">il tuo animale</span>, ma non contiene dati sanitari. Dovrai confermare ogni nuovo accesso.</p>
+    </div>
+
+    <div class="security-card">
+        <div class="security-text">
+            <h4><i class="fa-regular fa-circle-dot"></i> QR dinamico protetto</h4>
+            <p>Si aggiorna automaticamente per la tua sicurezza</p>
+        </div>
+        <div class="badge-active">Attivo</div>
+    </div>
+
+    <button class="btn-simulate" id="btnSimulate">Simula scansione veterinario</button>
+    </main>
+
+    <script type="module" src="js/qr-pets.js"></script>
+</body>
+</html>

@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Aggiungi Animale - Veterinari.it</title>
+    
+    <link rel="stylesheet" href="css/style.css">
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+
+    <main class="app-container">
+        
+        <header class="header-nav">
+            <a href="dashboard-proprietario.html" class="back-btn">
+                <i class="fas fa-arrow-left"></i>
+            </a>
+            <div class="header-title">
+                <h2>Nuovo Animale</h2>
+                <p>Inserisci i dati del tuo pet</p>
+            </div>
+            <div style="width: 40px;"></div> 
+        </header>
+
+        <section class="login-card" style="margin-top: 1rem;">
+            <form id="addPetForm">
+                
+                <div class="avatar-upload-container" id="avatarUploadArea">
+                    <div class="avatar-preview" id="avatarPreview">
+                        <i class="fa-solid fa-camera camera-icon"></i>
+                    </div>
+                    <p class="upload-text">Tocca per caricare la foto</p>
+                    
+                    <input type="file" id="petAvatar" accept="image/*" style="display: none;">
+                </div>
+
+                <div class="form-group">
+                    <label for="petName">Nome</label>
+                    <input type="text" id="petName" placeholder="Es. Romeo" required>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="petSpecies">Specie</label>
+                        <select id="petSpecies" required>
+                            <option value="Cane">Cane</option>
+                            <option value="Gatto">Gatto</option>
+                            <option value="Altro">Altro</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="petBreed">Razza</label>
+                        <input type="text" id="petBreed" placeholder="Es. Beagle">
+                    </div>
+                </div>
+
+                <button type="submit" id="submitBtn">
+                    Salva Animale <i class="fa-solid fa-check" style="margin-left: 8px;"></i>
+                </button>
+                
+                <div id="statusMessage" class="status-message"></div>
+                
+            </form>
+        </section>
+
+    </main>
+
+    <script type="module" src="js/aggiungi-animale.js"></script>
+</body>
+</html>

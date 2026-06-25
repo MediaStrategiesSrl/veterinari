@@ -1,105 +1,136 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="it">
 <head>
-    <!-- Metadati di base e stile generale per la dashboard -->
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Dashboard — Veterinari.it</title>
     <link rel="stylesheet" href="css/style.css">
-    <title>Dashboard</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
 
-    <!-- Contenitore principale dell'app dashboard proprietario -->
-    <div class="app-container">
+    <main class="app-container">
         
-        <!-- Header con informazioni utente e logout -->
-        <header class="app-header">
-            <div class="profile-info">
-                <div class="avatar">
-                    <!-- Icona avatar utente -->
-                    <i class="fa-solid fa-user"></i>
-                </div>
-                <div class="user-text">
-                    <p class="welcome">Benvenuto</p>
-                    <h2 id="username">Caricamento...</h2>
-                </div>
+        <header class="dash-header">
+            <div class="logo-container" style="margin-bottom: 0;">
+                <img src="img/Logo-Veterinari-wp1-1-1024x190.webp" alt="Veterinari.it" class="app-logo">
             </div>
-            <button id="logoutBtn" class="logout-icon">
-                <!-- Pulsante uscita dall'account -->
-                <i class="fa-solid fa-right-from-bracket"></i>
-            </button>
+            <div class="header-icon">
+                <i class="fa-regular fa-bell"></i>
+            </div>
         </header>
 
-        <!-- Contenuto principale della dashboard -->
-        <main class="main-content">
-            
-            <!-- Sezione azioni rapide per accesso immediato -->
-            <section class="quick-actions">
-                <div class="action-card orange" id="actionVet">
-                    <div class="action-icon">
-                        <i class="fa-solid fa-user-doctor"></i>
-                    </div>
-                    <span>Veterinario subito</span>
-                </div>
-                <div class="action-card dark" id="actionQr">
-                    <div class="action-icon">
-                        <i class="fa-solid fa-qrcode"></i>
-                    </div>
-                    <span>Mostra QR</span>
-                </div>
-            </section>
+        <div class="section-header">
+            <div class="section-title">I TUOI ANIMALI</div>
+        </div>
 
-            <!-- Sezione dedicata agli animali dell'utente -->
-            <section class="pet-section">
-                <h3>I tuoi animali</h3>
-                <div class="pet-card" id="petCard">
-                    <div class="pet-avatar">🐾</div>
-                    <div class="pet-details">
-                        <h4 id="petNameDisplay">Caricamento...</h4>
-                        <p id="petSpecieDisplay">---</p>
+        <div class="hero-card">
+            <div class="hero-header">
+                
+                <div class="dash-avatar-wrapper" id="dashAvatarWrapper">
+                    <img src="assets/default-pet.png" alt="Pet Avatar" class="pet-avatar" id="petImage">
+                    
+                    <div class="avatar-overlay" id="avatarOverlay">
+                        <i class="fa-solid fa-camera"></i>
                     </div>
+                    
+                    <input type="file" id="dashboardAvatarUpload" accept="image/*" class="hidden">
                 </div>
-            </section>
 
-            <!-- Contenuti aggiuntivi e funzioni extra -->
-            <section class="extra-content">
-                <div class="dummy-item">Shop</div>
-                <div class="dummy-item">Mercatino</div>
-                <div class="dummy-item">Articoli Utili</div>
-            </section>
-
-            <!-- Banner promozionale o informativo -->
-            <div class="petcare-banner">
-                <span class="banner-badge">NEW</span>
-                <span class="banner-text">PETCARE+ Scopri i vantaggi</span>
-                <span class="banner-arrow">➔</span>
+                <div>
+                    <div class="hero-title">Ciao, <span id="userNameDisplay">...</span>!</div>
+                    <div class="hero-title"><span id="petNameDisplay">...</span> ti aspetta.</div>
+                </div>
             </div>
+            
+            <div class="hero-subtitle" id="vaccineStatusContainer">
+                Caricamento dati medici...
+            </div>
+            
+            <div class="hero-btn" id="btnOpenProfile">
+                Apri la scheda <i class="fa-solid fa-paw"></i>
+            </div>
+        </div>
 
-        </main>
+        <div class="pagination-wrapper">
+            <div class="pagination-dots" id="petPaginationDots">
+                </div>
+            
+            <button class="add-pet-small-btn" id="btnAddPet" title="Aggiungi Animale">
+                <i class="fa-solid fa-plus"></i>
+            </button>
+        </div>
 
-        <!-- Navigazione inferiore dell'app -->
+        <div class="section-header">
+            <div class="section-title">COSA VUOI FARE?</div>
+        </div>
+        
+        <div class="actions-grid">
+            <div class="action-card" id="btnVetSubito">
+                <div class="icon-wrapper icon-orange"><i class="fa-solid fa-play"></i></div>
+                <div class="action-title">Veterinario subito</div>
+                <div class="action-desc">Video-consulto urgente di 15 min</div>
+            </div>
+            <div class="action-card" id="btnMostraQR">
+                <div class="icon-wrapper icon-blue"><i class="fa-solid fa-qrcode"></i></div>
+                <div class="action-title">Mostra QR Code</div>
+                <div class="action-desc">Condividi la cartella di <span id="qrPetName">...</span></div>
+            </div>
+            <div class="action-card" id="btnPrenota">
+                <div class="icon-wrapper icon-blue"><i class="fa-solid fa-plus"></i></div>
+                <div class="action-title">Prenota una visita</div>
+                <div class="action-desc">Trova il professionista</div>
+            </div>
+            <div class="action-card" id="btnPasseggiata">
+                <div class="icon-wrapper icon-orange"><i class="fa-solid fa-tree"></i></div>
+                <div class="action-title">Fai una passeggiata</div>
+                <div class="action-desc">Incontra nuovi amici</div>
+            </div>
+            <div class="action-card" id="btnShop">
+                <div class="icon-wrapper icon-orange"><i class="fa-solid fa-bag-shopping"></i></div>
+                <div class="action-title">Visita lo Shop</div>
+                <div class="action-desc">Con prodotti selezionati</div>
+            </div>
+            <div class="action-card" id="btnMercatino">
+                <div class="icon-wrapper icon-blue"><i class="fa-solid fa-box-open"></i></div>
+                <div class="action-title">Mercatino</div>
+                <div class="action-desc">Cessione tra privati</div>
+            </div>
+        </div>
+
+        <div class="section-header">
+            <div class="section-title">PROSSIMI IMPEGNI</div>
+        </div>
+
+        <div class="agenda-container" id="agendaContainer">
+            <p style="text-align:center; color:#888; font-size: 0.9rem;">Caricamento agenda...</p>
+        </div>
+
         <nav class="bottom-nav">
-            <a href="#" class="nav-item active">
+            <a href="dashboard-proprietario.html" class="nav-item active">
                 <i class="fa-solid fa-house"></i>
                 <span>Home</span>
             </a>
-            <a href="#" class="nav-item">
-                <i class="fa-solid fa-calendar-days"></i>
-                <span>Visite</span>
+            <a href="animali.html" class="nav-item">
+                <i class="fa-solid fa-paw"></i>
+                <span>Animali</span>
+            </a>
+            <a href="cerca.html" class="nav-item">
+                <i class="fa-solid fa-magnifying-glass"></i>
+                <span>Cerca</span>
             </a>
             <a href="#" class="nav-item">
-                <i class="fa-solid fa-notes-medical"></i>
-                <span>Cartella</span>
+                <i class="fa-solid fa-euro-sign"></i>
+                <span>Wallet</span>
             </a>
             <a href="#" class="nav-item">
-                <i class="fa-solid fa-gear"></i>
-                <span>Impostazioni</span>
+                <i class="fa-solid fa-user"></i>
+                <span>Profilo</span>
             </a>
         </nav>
 
-    </div>
+    </main>
 
-    <!-- Script che gestisce la dashboard proprietario -->
     <script type="module" src="js/dashboard-proprietario.js"></script>
 </body>
 </html>

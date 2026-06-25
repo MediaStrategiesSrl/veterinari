@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>I miei animali — Veterinari.it</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body style="background-color: #F8F7F4;">
+
+    <main class="app-container">
+
+        <header class="header-nav" style="background: transparent;">
+            <a href="dashboard-proprietario.html" class="back-btn"><i class="fas fa-chevron-left"></i></a>
+            <div class="header-title">
+                <h2>I miei animali</h2>
+                <p id="activeProfilesCount">Caricamento...</p>
+            </div>
+            <div class="header-icon"><i class="fa-solid fa-diamond"></i></div>
+        </header>
+
+        <div class="simple-profile-header">
+            <div class="simple-avatar-box">
+                <img id="petMainAvatar" src="assets/default-pet.png" alt="Avatar" onerror="this.onerror=null; this.src='https://via.placeholder.com/150/E2E8F0/E2E8F0';">
+            </div>
+            <div class="pet-titles">
+                <h1 id="petMainName">...</h1>
+                <p id="petMainDesc">Caricamento dati...</p>
+            </div>
+        </div>
+
+        <div class="section-container">
+            
+            <div class="menu-action-card" id="btnProfiloCompleto">
+                <div class="info-icon icon-orange"><i class="fa-solid fa-circle"></i></div>
+                <div class="menu-action-text">
+                    <div class="menu-action-title">Profilo completo</div>
+                    <div class="menu-action-desc">Anagrafica, passaporto, dettagli</div>
+                </div>
+                <i class="fa-solid fa-chevron-right chevron-icon"></i>
+            </div>
+
+            <div class="menu-action-card" id="btnCartellaSanitaria">
+                <div class="info-icon icon-blue"><i class="fa-solid fa-plus"></i></div>
+                <div class="menu-action-text">
+                    <div class="menu-action-title">Cartella sanitaria</div>
+                    <div class="menu-action-desc">Visite, farmaci, interventi e referti</div>
+                </div>
+                <i class="fa-solid fa-chevron-right chevron-icon"></i>
+            </div>
+
+            <div class="menu-action-card" id="btnQRCode">
+                <div class="info-icon icon-orange"><i class="fa-solid fa-qrcode"></i></div>
+                <div class="menu-action-text">
+                    <div class="menu-action-title">QR Code personale</div>
+                    <div class="menu-action-desc">Accesso veterinario con conferma</div>
+                </div>
+                <i class="fa-solid fa-chevron-right chevron-icon"></i>
+            </div>
+
+        </div>
+
+        <div style="height: 100px;"></div>
+
+        <nav class="bottom-nav">
+            <a href="dashboard-proprietario.html" class="nav-item">
+                <i class="fa-solid fa-house"></i><span>Home</span>
+            </a>
+            <a href="animali.html" class="nav-item active">
+                <i class="fa-solid fa-paw"></i><span>Animali</span>
+            </a>
+            <a href="cerca.html" class="nav-item">
+                <i class="fa-solid fa-magnifying-glass"></i><span>Cerca</span>
+            </a>
+            <a href="#" class="nav-item">
+                <i class="fa-solid fa-euro-sign"></i><span>Wallet</span>
+            </a>
+            <a href="#" class="nav-item">
+                <i class="fa-solid fa-user"></i><span>Profilo</span>
+            </a>
+        </nav>
+
+    </main>
+
+    <script type="module" src="js/animali.js"></script>
+</body>
+</html>
