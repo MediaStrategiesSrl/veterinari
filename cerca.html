@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cerca — Veterinari.it</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- CSS di Leaflet per la mappa interattiva -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+</head>
+<body>
+
+    <main class="app-container">
+        
+        <!-- Header -->
+        <header class="header-nav">
+            <a href="dashboard-proprietario.html" class="back-btn"><i class="fa-solid fa-chevron-left"></i></a>
+            <div class="header-title">
+                <h2>Cerca</h2>
+                <p>Professionisti e attività</p>
+            </div>
+            <div class="header-icon"><i class="fa-solid fa-diamond"></i></div>
+        </header>
+
+        <!-- Barra di Ricerca -->
+        <div class="search-bar-container">
+            <div class="search-input-wrapper">
+                <i class="fa-solid fa-magnifying-glass"></i>
+                <input type="text" id="searchInput" placeholder="Veterinario">
+            </div>
+        </div>
+
+        <!-- Filtri Dinamici (Pillole) -->
+        <div class="filter-scroll" id="categoryFilters">
+            <!-- Il JS inserirà qui i filtri: Veterinari, Toelettatori, ecc. -->
+        </div>
+
+        <!-- Mappa Interattiva -->
+        <div class="map-container">
+            <div id="map"></div>
+            <div class="map-badge">Entro 5 km · Milano</div>
+        </div>
+
+        <!-- Lista Professionisti -->
+        <div class="list-header">
+            <h3>Consigliati vicino a te</h3>
+            <a href="#" class="filter-link">Filtri</a>
+        </div>
+
+        <div class="professionals-list" id="professionalsList">
+            <p style="text-align:center; color:var(--text-muted); padding: 2rem;">Caricamento professionisti in corso...</p>
+        </div>
+
+    </main>
+
+    <!-- Script di Leaflet per la mappa -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <!-- Il tuo Script -->
+    <script type="module" src="js/cerca.js"></script>
+</body>
+</html>

@@ -935,3 +935,65 @@ button[type="submit"]:active, .btn-simulate:active {
     color: var(--text-muted, #64748b);
     margin-top: 0.2rem;
 }
+
+/* Stile per distanziare multipli animali nella lista */
+.pet-block {
+    margin-bottom: 2.5rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid #E2E8F0;
+}
+
+/* L'ultimo animale della lista non deve avere la linea sotto */
+.pet-block:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+}
+
+/* =========================================
+   CAROSELLO ANIMALI A SCORRIMENTO (FIX DEFINITIVO)
+   ========================================= */
+
+.pets-carousel {
+    display: flex;
+    flex-wrap: nowrap; /* FONDAMENTALE: Forza gli elementi a stare su una riga e attiva lo scroll */
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    scroll-behavior: smooth; /* Rende fluido il passaggio se clicchi i pallini */
+    -webkit-overflow-scrolling: touch; /* Attiva lo swipe fluido su iPhone/Android */
+    width: 100%;
+    scrollbar-width: none; 
+}
+
+.pets-carousel::-webkit-scrollbar {
+    display: none; 
+}
+
+.pet-slide {
+    flex: 0 0 100%; /* FONDAMENTALE: Impedisce alle slide di rimpicciolirsi */
+    width: 100%;
+    scroll-snap-align: center;
+    padding: 0 1.5rem;
+    box-sizing: border-box;
+}
+
+/* Pallini indicatori sotto il carosello */
+.carousel-dots {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 1.5rem;
+    margin-bottom: 1rem;
+}
+
+.dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background-color: #cbd5e1;
+    transition: background-color 0.3s;
+    cursor: pointer; /* Fa capire che sono cliccabili */
+}
+
+.dot.active {
+    background-color: #F39C12; 
+}
