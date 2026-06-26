@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Mercatino dell'usato — Veterinari.it</title>
+    <link rel="stylesheet" href="css/global.css">
+    <link rel="stylesheet" href="css/mercatino.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body style="background-color: #F8F7F4;">
+
+    <main class="app-container">
+
+        <header class="header-nav" style="background: transparent; padding-bottom: 0;">
+            <a href="dashboard-proprietario.html" class="back-btn"><i class="fas fa-chevron-left"></i></a>
+            <div class="header-title">
+                <h2>Mercatino dell'usato</h2>
+                <p>Cessione gratuita tra privati</p>
+            </div>
+            <div class="header-icon"><i class="fa-solid fa-diamond"></i></div>
+        </header>
+
+        <div class="market-search-container">
+            <div class="search-bar">
+                <i class="fa-solid fa-magnifying-glass"></i>
+                <input type="text" id="searchInput" placeholder="Cerca oggetti disponibili">
+            </div>
+
+            <div class="market-categories" id="categoryFilters">
+            </div>
+        </div>
+
+        <div class="market-section-header">
+            <h3>Vicino a te</h3>
+            <a href="#" class="btn-pubblica" id="btnPubblica">Pubblica</a>
+        </div>
+
+        <div class="market-grid" id="marketGrid">
+            <div style="grid-column: span 2; text-align: center; color: #888; padding: 2rem;">
+                Caricamento oggetti...
+            </div>
+        </div>
+
+        <div class="market-info-banner">
+            <p>Nessun pagamento: gli oggetti vengono ceduti gratuitamente.</p>
+        </div>
+
+    </main>
+
+    <script type="module" src="js/mercatino.js"></script>
+</body>
+</html>

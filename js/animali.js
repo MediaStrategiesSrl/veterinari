@@ -6,6 +6,8 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 const activeProfilesCount = document.getElementById("activeProfilesCount");
 const petsCarousel = document.getElementById("petsCarousel");
 const carouselDots = document.getElementById("carouselDots");
+const btnPrevProfile = document.getElementById("btnPrevProfile");
+const btnNextProfile = document.getElementById("btnNextProfile");
 
 async function loadAnimaliData() {
     try {
@@ -26,6 +28,16 @@ async function loadAnimaliData() {
         if (pets && pets.length > 0) {
             activeProfilesCount.textContent = pets.length === 1 ? "1 profilo attivo" : `${pets.length} profili attivi`;
             
+            // --- GESTIONE VISIBILITÀ FRECCE ---
+            if (pets.length > 1) {
+                if (btnPrevProfile) btnPrevProfile.classList.remove("hidden");
+                if (btnNextProfile) btnNextProfile.classList.remove("hidden");
+            } else {
+                if (btnPrevProfile) btnPrevProfile.classList.add("hidden");
+                if (btnNextProfile) btnNextProfile.classList.add("hidden");
+            }
+            
+
             petsCarousel.innerHTML = "";
             carouselDots.innerHTML = "";
 
@@ -151,6 +163,34 @@ async function loadAnimaliData() {
         console.error("ERRORE COMPLETO:", err);
         activeProfilesCount.textContent = "Errore di caricamento";
     }
+}
+
+// ==========================================
+// FUNZIONI DI SCORRIMENTO CON FRECCE
+// ==========================================
+function scrollPetsCarousel(direction) {
+    if (!petsCarousel) return;
+    
+    const slideWidth = petsCarousel.offsetWidth;
+    const currentScroll = petsCarousel.scrollLeft;
+    
+    // Calcola la nuova posizione arrotondando alla slide più vicina
+    let newScroll = direction === 'next' 
+        ? currentScroll + slideWidth 
+        : currentScroll - slideWidth;
+        
+    petsCarousel.scrollTo({
+        left: newScroll,
+        behavior: 'smooth'
+    });
+}
+
+if (btnPrevProfile) {
+    btnPrevProfile.addEventListener("click", () => scrollPetsCarousel('prev'));
+}
+
+if (btnNextProfile) {
+    btnNextProfile.addEventListener("click", () => scrollPetsCarousel('next'));
 }
 
 loadAnimaliData();

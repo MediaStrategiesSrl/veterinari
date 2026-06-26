@@ -22,7 +22,12 @@ const vaccineStatusContainer = document.getElementById("vaccineStatusContainer")
 const paginationContainer = document.getElementById("petPaginationDots");
 const petImage = document.getElementById("petImage");
 const btnAddPet = document.getElementById("btnAddPet");
+const btnPrevPet = document.getElementById("btnPrevPet");
+const btnNextPet = document.getElementById("btnNextPet");
 
+// Nuove variabili per la gestione dello scorrimento
+let userPetsList = [];
+let currentPetIndex = 0;
 // Elementi per l'upload dell'avatar dalla Dashboard
 const dashAvatarWrapper = document.getElementById("dashAvatarWrapper");
 const dashboardAvatarUpload = document.getElementById("dashboardAvatarUpload");
@@ -56,6 +61,16 @@ async function loadDashboardData(user) {
 
         // --- 3. GESTIONE PALLINI E CARD ---
         if (pets && pets.length > 0) {
+            userPetsList = pets; // Salviamo l'array globale
+
+            // Gestione visibilità frecce
+            if (pets.length > 1) {
+                if (btnPrevPet) btnPrevPet.classList.remove("hidden");
+                if (btnNextPet) btnNextPet.classList.remove("hidden");
+            } else {
+                if (btnPrevPet) btnPrevPet.classList.add("hidden");
+                if (btnNextPet) btnNextPet.classList.add("hidden");
+            }
             if (paginationContainer) paginationContainer.innerHTML = ''; 
             
             if (pets.length > 1) {
@@ -72,6 +87,9 @@ async function loadDashboardData(user) {
             updateHeroCard(pets[0], 0);
 
         } else {
+            userPetsList = [];
+            if (btnPrevPet) btnPrevPet.classList.add("hidden");
+            if (btnNextPet) btnNextPet.classList.add("hidden");
             // Nessun animale registrato
             if (petNameDisplay) petNameDisplay.textContent = "Nessun animale";
             if (btnOpenProfile) btnOpenProfile.innerHTML = `Aggiungi un cucciolo <i class="fa-solid fa-plus"></i>`;
@@ -162,7 +180,8 @@ async function loadDashboardData(user) {
 // FUNZIONE PER AGGIORNARE LA HERO CARD
 // ==========================================
 async function updateHeroCard(pet, index) {
-    currentActivePetId = pet.id; // Salviamo l'ID attivo per l'upload dell'avatar
+    currentActivePetId = pet.id;
+    currentPetIndex = index; // Salviamo l'indice attivo per l'upload dell'avatar
 
     if (petNameDisplay) petNameDisplay.textContent = pet.nome;
     if (btnOpenProfile) btnOpenProfile.innerHTML = `Apri la scheda <i class="fa-solid fa-paw"></i>`;
@@ -314,13 +333,36 @@ const btnShop = document.getElementById("btnShop");
 if (btnShop) btnShop.addEventListener("click", () => alert("Shop Veterinario in sviluppo..."));
 
 const btnMercatino = document.getElementById("btnMercatino");
-if (btnMercatino) btnMercatino.addEventListener("click", () => alert("Mercatino dell'usato in sviluppo..."));
+if (btnMercatino) btnMercatino.addEventListener("click", () => window.location.href = "mercatino.html");
 
 if (agendaContainer) {
     agendaContainer.addEventListener("click", (e) => {
         const clickedCard = e.target.closest(".agenda-card");
         if (clickedCard) {
             alert("Apertura dettagli appuntamento...");
+        }
+    });
+}
+
+// ==========================================
+// SCORRIMENTO ANIMALI TRAMITE FRECCE
+// ==========================================
+if (btnPrevPet) {
+    btnPrevPet.addEventListener("click", () => {
+        if (userPetsList.length > 1) {
+            // Calcola l'indice precedente (con ciclo circolare)
+            const newIndex = (currentPetIndex - 1 + userPetsList.length) % userPetsList.length;
+            updateHeroCard(userPetsList[newIndex], newIndex);
+        }
+    });
+}
+
+if (btnNextPet) {
+    btnNextPet.addEventListener("click", () => {
+        if (userPetsList.length > 1) {
+            // Calcola l'indice successivo (con ciclo circolare)
+            const newIndex = (currentPetIndex + 1) % userPetsList.length;
+            updateHeroCard(userPetsList[newIndex], newIndex);
         }
     });
 }

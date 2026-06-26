@@ -16,7 +16,8 @@
     display: block;
 }
 
-.hero-card { background: linear-gradient(135deg, #F08A27 0%, #E39944 100%); 
+.hero-card { 
+    background: linear-gradient(135deg, #F08A27 0%, #E39944 100%); 
     border-radius: 24px; 
     padding: 1.5rem; color: var(--white); 
     box-shadow: 0 10px 25px rgba(238, 138, 42, 0.25); 
@@ -31,6 +32,48 @@
 .hero-subtitle { font-size: 0.95rem; margin-top: 1rem; padding-top: 1rem; border-top: 1px solid rgba(255, 255, 255, 0.4); margin-bottom: 1.25rem; font-weight: 500; }
 .hero-btn { background: var(--white); color: var(--orange-accent); padding: 0.75rem 1.25rem; border-radius: 30px; font-weight: 800; font-size: 0.95rem; display: inline-flex; align-items: center; gap: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); cursor: pointer; transition: transform 0.15s ease; }
 .hero-btn:active { transform: scale(0.96); }
+
+/* Stili per le frecce dello slider */
+.hero-nav-arrow {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    background: rgba(255, 255, 255, 0.2);
+    border: none;
+    color: #ffffff;
+    font-size: 1rem;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 10;
+    transition: background 0.3s ease, transform 0.2s ease;
+}
+
+.hero-nav-arrow:hover {
+    background: rgba(255, 255, 255, 0.4);
+    transform: translateY(-50%) scale(1.05);
+}
+
+.hero-nav-arrow:active {
+    transform: translateY(-50%) scale(0.95);
+}
+
+.hero-nav-arrow.prev {
+    left: 10px;
+}
+
+.hero-nav-arrow.next {
+    right: 10px;
+}
+
+/* Classe per nascondere le frecce se c'è un solo animale */
+.hero-nav-arrow.hidden {
+    display: none;
+}
 
 /* Avatar Upload */
 .dash-avatar-wrapper { position: relative; width: 80px; height: 80px; flex-shrink: 0; cursor: pointer; }
