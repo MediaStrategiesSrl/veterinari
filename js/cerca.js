@@ -3,136 +3,141 @@ import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./config.js";
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-const categoryFilters = document.getElementById("categoryFilters");
+const categoriesContainer = document.getElementById("categoriesContainer");
 const professionalsList = document.getElementById("professionalsList");
+const locationBadge = document.getElementById("locationBadge");
 
 // ==========================================
-// 1. INIZIALIZZAZIONE MAPPA (Leaflet.js)
+// 1. INIZIALIZZAZIONE MAPPA E GPS
 // ==========================================
-// Centriamo su Milano come da Mockup
-const map = L.map('map', { zoomControl: false }).setView([45.4642, 9.1900], 13);
+function initMap(lat, lng, cityName) {
+    locationBadge.innerHTML = `<i class="fa-solid fa-location-dot" style="color:#F39C12; margin-right:5px;"></i> ${cityName}`;
 
-// Usiamo un tile layer di CartoDB (Positron) che è chiaro, pulito e senza fronzoli
-L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
-    attribution: '',
-    maxZoom: 19
-}).addTo(map);
+    const map = L.map('realMap', {
+        zoomControl: false // Niente tasti + e - per mantenere il design pulito
+    }).setView([lat, lng], 14);
 
-// Aggiungiamo un paio di Pin finti colorati come nel mockup
-const orangeIcon = L.divIcon({ className: 'custom-pin', html: '<i class="fa-solid fa-location-dot" style="color: #EE8A2A; font-size: 30px; filter: drop-shadow(0 4px 4px rgba(0,0,0,0.3));"></i>', iconSize: [30, 30], iconAnchor: [15, 30] });
-const blueIcon = L.divIcon({ className: 'custom-pin', html: '<i class="fa-solid fa-location-dot" style="color: #1E88E5; font-size: 30px; filter: drop-shadow(0 4px 4px rgba(0,0,0,0.3));"></i>', iconSize: [30, 30], iconAnchor: [15, 30] });
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+        attribution: '&copy; OpenStreetMap'
+    }).addTo(map);
 
-L.marker([45.4700, 9.1800], {icon: orangeIcon}).addTo(map);
-L.marker([45.4550, 9.2000], {icon: blueIcon}).addTo(map);
+    L.circleMarker([lat, lng], {
+        radius: 8,
+        fillColor: "#3498db",
+        color: "#fff",
+        weight: 3,
+        opacity: 1,
+        fillOpacity: 1
+    }).addTo(map);
+}
+
+// Chiedi la posizione al browser/telefono
+if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(
+        (position) => {
+            const lat = position.coords.latitude;
+            const lng = position.coords.longitude;
+            initMap(lat, lng, "Posizione attuale");
+        },
+        (error) => {
+            console.warn("GPS negato. Uso Milano.");
+            initMap(45.4642, 9.1900, "Entro 5 km · Milano");
+        }
+    );
+} else {
+    initMap(45.4642, 9.1900, "Milano");
+}
 
 // ==========================================
-// 2. RECUPERO DATI E RENDERIZZAZIONE
+// 2. CARICAMENTO DATI DINAMICI (SU MISURA PER IL TUO DB)
 // ==========================================
-async function loadProfessionals() {
+async function loadSearchData() {
     try {
-        // Estraiamo i Veterinari (con Join su profiles per Nome/Cognome)
-        const { data: vets, error: errVets } = await supabase
-            .from("veterinarians")
-            .select(`*, profiles(nome, cognome, citta)`);
+        // SCARICA I DATI DALLA TUA TABELLA
+        const { data: professionisti, error } = await supabase
+            .from('professionals') 
+            .select(`
+                user_id,
+                tipo_professione,
+                tariffa_oraria,
+                latitudine,
+                longitudine,
+                profiles (nome, avatar_url) 
+            `); 
+            /*'profiles (nome, avatar_url)' per prendere i dati anagrafici 
+               sfruttando la FK*/
 
-        // Estraiamo gli Altri Professionisti (con Join)
-        const { data: profs, error: errProfs } = await supabase
-            .from("professionals")
-            .select(`*, profiles(nome, cognome, citta)`);
+        if (error) throw error;
 
-        if (errVets || errProfs) throw new Error("Errore nel recupero dati");
-
-        // Uniformiamo i dati in un unico Array
-        let allProfessionals = [];
-
-        vets?.forEach(v => {
-            if(v.profiles) {
-                allProfessionals.push({
-                    id: v.user_id,
-                    categoria: 'Veterinario',
-                    nome: `Dott. ${v.profiles.nome} ${v.profiles.cognome}`,
-                    citta: v.profiles.citta || 'Milano',
-                    avatar: 'https://images.unsplash.com/photo-1559839734-2b71ea197ec2?q=80&w=150&auto=format&fit=crop', // Placeholder Medico
-                    distanza: (Math.random() * 5).toFixed(1), // Distanza simulata
-                    rating: (4.5 + Math.random() * 0.5).toFixed(1), // Rating simulato tra 4.5 e 5.0
-                    prezzo: 'da €45'
-                });
-            }
-        });
-
-        profs?.forEach(p => {
-            if(p.profiles) {
-                allProfessionals.push({
-                    id: p.user_id,
-                    categoria: p.tipo_professione || 'Pet Sitter',
-                    nome: `${p.profiles.nome} ${p.profiles.cognome}`,
-                    citta: p.profiles.citta || 'Milano',
-                    avatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?q=80&w=150&auto=format&fit=crop', // Placeholder Ragazza
-                    distanza: (Math.random() * 5).toFixed(1),
-                    rating: (4.5 + Math.random() * 0.5).toFixed(1),
-                    prezzo: p.tariffa_oraria > 0 ? `da €${p.tariffa_oraria}/ora` : 'Contatta'
-                });
-            }
-        });
-
-        // ==========================================
-        // 3. GENERAZIONE FILTRI DINAMICI
-        // ==========================================
-        // Crea un Set unico di categorie estratte dal DB
-        const categorieUniche = ['Tutti', ...new Set(allProfessionals.map(p => p.categoria))];
-        
-        categoryFilters.innerHTML = '';
-        categorieUniche.forEach((cat, index) => {
-            const pill = document.createElement('div');
-            pill.className = `filter-pill ${index === 0 ? 'active' : ''}`;
-            pill.textContent = cat === 'Veterinario' ? 'Veterinari' : cat; // Plurale estetico
+        // --- A. CREAZIONE DINAMICA DELLE CATEGORIE (I BOTTONI) ---
+        categoriesContainer.innerHTML = '';
+        if (professionisti && professionisti.length > 0) {
             
-            // Funzionalità di filtro al click
-            pill.addEventListener('click', () => {
-                document.querySelectorAll('.filter-pill').forEach(p => p.classList.remove('active'));
-                pill.classList.add('active');
-                renderList(cat === 'Tutti' ? allProfessionals : allProfessionals.filter(p => p.categoria === cat));
+            // Estrae un array senza duplicati dei "tipo_professione" trovati
+            const categorieUniche = [...new Set(professionisti.map(p => p.tipo_professione))];
+            
+            categorieUniche.forEach((categoriaTesto, index) => {
+                const pill = document.createElement('div');
+                pill.className = `category-pill ${index === 0 ? 'active' : ''}`;
+                pill.textContent = categoriaTesto;
+                
+                pill.addEventListener('click', () => {
+                    document.querySelectorAll('.category-pill').forEach(p => p.classList.remove('active'));
+                    pill.classList.add('active');
+                    // In futuro qui aggiungerai il filtro per ricaricare la lista sotto
+                });
+                categoriesContainer.appendChild(pill);
             });
-            
-            categoryFilters.appendChild(pill);
-        });
+        } else {
+            categoriesContainer.innerHTML = '<div class="category-pill">Nessuna categoria</div>';
+        }
 
-        // Mostra tutta la lista all'inizio
-        renderList(allProfessionals);
+
+        // --- B. LISTA PROFESSIONISTI ---
+        professionalsList.innerHTML = '';
+        
+        if (professionisti && professionisti.length > 0) {
+            professionisti.forEach(pro => {
+                
+                // Estrae nome e foto dalla tabella 'users' unita
+                const nomePro = pro.profiles?.nome || 'Professionista Anonimo';
+                const avatarUrl = pro.profiles?.avatar_url || 'https://via.placeholder.com/150/E2E8F0/E2E8F0';
+                
+                // Formatta la tua tariffa oraria
+                const prezzo = pro.tariffa_oraria ? `da €${pro.tariffa_oraria}` : 'Prezzo su richiesta';
+
+                // Distanza simulata (in futuro userai pro.latitudine e pro.longitudine rispetto al GPS!)
+                const randomDistance = (Math.random() * 5 + 0.5).toFixed(1);
+
+                const proHTML = `
+                    <a href="#" class="pro-card">
+                        <img src="${avatarUrl}" alt="${nomePro}" class="pro-avatar">
+                        <div class="pro-info">
+                            <div class="pro-name">${nomePro}</div>
+                            <div class="pro-details">
+                                ${randomDistance} km <i class="fa-solid fa-star"></i> 4.9 · ${prezzo}
+                            </div>
+                            <div style="font-size: 0.75rem; color: #F39C12; margin-top: 2px;">
+                                ${pro.tipo_professione}
+                            </div>
+                        </div>
+                        <i class="fa-solid fa-chevron-right chevron-icon"></i>
+                    </a>
+                `;
+                professionalsList.insertAdjacentHTML('beforeend', proHTML);
+            });
+        } else {
+            professionalsList.innerHTML = `
+                <div style="text-align: center; padding: 2rem; color: #64748b;">
+                    Nessun professionista registrato nel sistema.
+                </div>
+            `;
+        }
 
     } catch (error) {
-        console.error(error);
-        professionalsList.innerHTML = `<p style="text-align:center; color:red;">Errore caricamento dati.</p>`;
+        console.error("Errore nel caricamento Cerca:", error);
+        professionalsList.innerHTML = `<div style="text-align:center; padding: 2rem;">Errore di connessione al database.</div>`;
     }
 }
 
-// Funzione che disegna le Card in HTML
-function renderList(lista) {
-    professionalsList.innerHTML = '';
-    
-    if (lista.length === 0) {
-        professionalsList.innerHTML = `<p style="text-align:center; color:var(--text-muted);">Nessun professionista trovato in questa categoria.</p>`;
-        return;
-    }
-
-    // Ordina per distanza crescente (simulata)
-    lista.sort((a, b) => a.distanza - b.distanza);
-
-    lista.forEach(prof => {
-        professionalsList.innerHTML += `
-            <div class="prof-card" onclick="alert('Apertura profilo di ${prof.nome}...')">
-                <img src="${prof.avatar}" alt="${prof.nome}" class="prof-avatar">
-                <div class="prof-info">
-                    <h4>${prof.nome}</h4>
-                    <div class="prof-details">
-                        ${prof.distanza} km · <i class="fa-solid fa-star"></i> ${prof.rating} · ${prof.prezzo}
-                    </div>
-                </div>
-                <div class="prof-arrow"><i class="fa-solid fa-chevron-right"></i></div>
-            </div>
-        `;
-    });
-}
-
-// Avvia tutto
-loadProfessionals();
+loadSearchData();

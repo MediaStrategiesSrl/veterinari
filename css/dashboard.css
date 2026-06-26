@@ -1,0 +1,72 @@
+/* =========================================
+   DASHBOARD PROPRIETARIO
+   ========================================= */
+.dash-header { display: flex; 
+    justify-content: space-between; 
+    align-items: center; 
+    margin-bottom: 1.5rem;
+    padding-top: 0.5rem;
+}
+
+/* Regola ferrea per il logo solo quando è nella barra in alto */
+.dash-header-logo {
+    height: 38px; /* ALTEZZA FISSA: il vero trucco per i loghi nelle navbar */
+    width: auto;  /* La larghezza si adatta da sola senza sgranare */
+    object-fit: contain;
+    display: block;
+}
+
+.hero-card { background: linear-gradient(135deg, #F08A27 0%, #E39944 100%); 
+    border-radius: 24px; 
+    padding: 1.5rem; color: var(--white); 
+    box-shadow: 0 10px 25px rgba(238, 138, 42, 0.25); 
+    position: relative; 
+    overflow: hidden; 
+    margin-bottom: 1.5rem; 
+
+}
+
+.hero-header { display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem; }
+.hero-title { font-size: 1.4rem; font-weight: 800; line-height: 1.2; }
+.hero-subtitle { font-size: 0.95rem; margin-top: 1rem; padding-top: 1rem; border-top: 1px solid rgba(255, 255, 255, 0.4); margin-bottom: 1.25rem; font-weight: 500; }
+.hero-btn { background: var(--white); color: var(--orange-accent); padding: 0.75rem 1.25rem; border-radius: 30px; font-weight: 800; font-size: 0.95rem; display: inline-flex; align-items: center; gap: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); cursor: pointer; transition: transform 0.15s ease; }
+.hero-btn:active { transform: scale(0.96); }
+
+/* Avatar Upload */
+.dash-avatar-wrapper { position: relative; width: 80px; height: 80px; flex-shrink: 0; cursor: pointer; }
+.dash-avatar-wrapper .pet-avatar { width: 100%; height: 100%; margin-right: 0; }
+.pet-avatar { width: 100%; height: 100%; border-radius: 20px; object-fit: cover; border: 3px solid var(--white); box-shadow: 0 4px 10px rgba(0,0,0,0.1); display: block; }
+.avatar-overlay { position: absolute; bottom: -5px; right: -5px; background-color: var(--white); color: var(--orange-accent); width: 26px; height: 26px; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 0.75rem; box-shadow: 0 2px 5px rgba(0,0,0,0.2); z-index: 10; }
+.dash-avatar-wrapper:active .avatar-overlay { transform: scale(0.9); }
+.avatar-upload-container { display: flex; flex-direction: column; align-items: center; margin-bottom: 2rem; cursor: pointer; }
+.avatar-preview { width: 100px; height: 100px; border-radius: 50%; background-color: #F8F8FA; border: 2px dashed #EAE5DC; display: flex; justify-content: center; align-items: center; overflow: hidden; position: relative; }
+.avatar-preview img { width: 100%; height: 100%; object-fit: cover; }
+.camera-icon { font-size: 1.5rem; color: #B2AFA7; }
+.upload-text { font-size: 0.8rem; color: var(--text-muted); margin-top: 0.5rem; font-weight: 600; }
+
+/* Pagination & Action Grid */
+.pagination-wrapper { display: flex; justify-content: center; align-items: center; gap: 12px; margin-bottom: 1.5rem; }
+.pagination-dots { display: flex; align-items: center; gap: 6px; }
+.pagination-dots .dot { width: 6px; height: 6px; background-color: #DCA975; border-radius: 50%; display: inline-block; transition: all 0.3s ease; cursor: pointer; }
+.pagination-dots .dot.active { background-color: var(--orange-accent); width: 16px; border-radius: 10px; }
+.add-pet-small-btn { background-color: #E6F4FA; color: #1E88E5; border: none; width: 26px; height: 26px; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 0.85rem; cursor: pointer; box-shadow: 0 2px 6px rgba(30, 136, 229, 0.15); transition: transform 0.15s ease, background-color 0.15s ease; }
+.add-pet-small-btn:active { transform: scale(0.85); background-color: #d1ecf9; }
+
+.section-header { padding: 0 1.25rem; margin-bottom: 0.75rem; margin-top: 1rem; flex-shrink: 0; }
+.section-title { font-size: 0.85rem; font-weight: 800; color: var(--orange-accent); text-transform: uppercase; letter-spacing: 0.5px; }
+
+.actions-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+.action-card { background: var(--white); border-radius: 20px; padding: 1.25rem; box-shadow: 0 6px 15px rgba(0,0,0,0.04); cursor: pointer; transition: transform 0.15s ease, box-shadow 0.15s ease; display: flex; flex-direction: column; }
+.action-card:active { transform: scale(0.97); box-shadow: 0 2px 8px rgba(0,0,0,0.02); }
+.icon-wrapper { width: 48px; height: 48px; border-radius: 14px; display: flex; justify-content: center; align-items: center; font-size: 1.5rem; margin-bottom: 1rem; }
+.action-title { font-weight: 800; font-size: 0.95rem; margin-bottom: 0.35rem; color: var(--text-main); line-height: 1.2; }
+.action-desc { font-size: 0.8rem; color: var(--text-muted); line-height: 1.3; }
+.action-desc span { font-weight: 700; text-transform: capitalize; }
+
+.agenda-container { padding: 0 1.25rem 1rem; display: flex; flex-direction: column; gap: 0.85rem; }
+.agenda-card { background: var(--white); border-radius: 20px; padding: 1rem; display: flex; align-items: center; box-shadow: 0 4px 15px rgba(0,0,0,0.03); cursor: pointer; transition: transform 0.15s ease; }
+.agenda-card:active { transform: scale(0.98); }
+.agenda-icon { width: 46px; height: 46px; border-radius: 14px; display: flex; justify-content: center; align-items: center; font-size: 1.3rem; margin-right: 1rem; flex-shrink: 0; }
+.agenda-info { flex: 1; }
+.agenda-title { font-weight: 800; font-size: 0.95rem; color: var(--text-main); margin-bottom: 0.2rem; }
+.agenda-desc { font-size: 0.8rem; color: var(--text-muted); }

@@ -1,0 +1,88 @@
+/* =========================================
+   RESET E VARIABILI GLOBALI
+   ========================================= */
+*, *::before, *::after { box-sizing: border-box; }
+
+:root {
+    --bg-gradient-start: #FFFFFF;
+    --bg-gradient-end: #FCEFD5;  
+    --white: #FFFFFF;
+    --orange-accent: #EE8A2A;
+    --text-main: #222222;
+    --text-muted: #7A7A7A;
+    --border-color: #EAE5DC;
+    --bg-main: transparent;
+}
+
+* { margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+
+body {
+    background: radial-gradient(circle, var(--bg-gradient-start) 0%, var(--bg-gradient-end) 100%);
+    background-attachment: fixed;
+    color: var(--text-main);
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    min-height: 100vh;
+}
+
+/* Impediamo alle immagini (come il logo) di sbordare */
+img {
+    max-width: 100%;
+    height: auto;
+}
+
+.app-container {
+    width: 100%;
+    max-width: 430px;
+    background-color: var(--bg-main);
+    position: relative;
+    min-height: 100vh;
+    margin: 0 auto; 
+    overflow-x: hidden; 
+    
+    padding: 1.5rem 1.25rem 110px 1.25rem;
+    box-shadow: 0 0 20px rgba(0,0,0,0.05);
+}
+
+.hidden { display: none !important; }
+
+/* =========================================
+   HEADER NAV (Top)
+   ========================================= */
+.header-nav { display: flex; justify-content: space-between; align-items: center; padding: 1.5rem 1rem; }
+.back-btn { font-size: 1.25rem; color: var(--text-main); text-decoration: none; width: 40px; height: 40px; display: flex; align-items: center; justify-content: flex-start; }
+.header-title { text-align: center; flex: 1; }
+.header-title h2 { font-size: 1.35rem; font-weight: 800; margin-bottom: 0.2rem; }
+.header-title p { font-size: 0.85rem; color: var(--text-muted); }
+.header-icon { width: 44px; height: 44px; background: var(--white); border-radius: 14px; display: flex; justify-content: center; align-items: center; box-shadow: 0 4px 12px rgba(0,0,0,0.06); color: var(--text-main); font-size: 1.2rem; cursor: pointer; }
+
+/* =========================================
+   BOTTOM NAV
+   ========================================= */
+.bottom-nav { 
+    position: fixed; bottom: 0; left: 50%; transform: translateX(-50%);
+    width: 100%; max-width: 430px; background: var(--white); display: flex; 
+    justify-content: space-around; padding: 1rem 0.5rem 1.5rem; 
+    box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.04); 
+    border-top-left-radius: 25px; border-top-right-radius: 25px; z-index: 1000;
+}
+.nav-item { display: flex; flex-direction: column; align-items: center; color: #B0B0B0; font-size: 0.75rem; font-weight: 700; text-decoration: none; transition: color 0.2s; flex: 1; gap: 5px; }
+.nav-item i { font-size: 1.4rem; }
+.nav-item.active, .nav-item:hover { color: var(--orange-accent); }
+
+/* =========================================
+   COMPONENTI CONDIVISI (Card, Container)
+   ========================================= */
+.section-container { padding: 0 1.5rem; margin-bottom: 2rem; }
+.section-container h3 { font-size: 1.1rem; color: var(--text-main); margin-bottom: 1rem; }
+.section-header-flex { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
+
+.menu-action-card { background-color: #fff; border-radius: 16px; padding: 1rem; display: flex; align-items: center; gap: 1rem; margin-bottom: 0.8rem; box-shadow: 0 2px 8px rgba(0,0,0,0.03); cursor: pointer; }
+.menu-action-text { flex: 1; display: flex; flex-direction: column; }
+.menu-action-title { font-weight: 600; color: var(--text-main); font-size: 0.95rem; }
+.menu-action-desc { font-size: 0.8rem; color: var(--text-muted); margin-top: 0.2rem; }
+
+.info-icon { width: 40px; height: 40px; border-radius: 10px; display: flex; justify-content: center; align-items: center; font-size: 1.2rem; }
+.icon-orange { background-color: #FFF3E0; color: #E68A00; }
+.icon-blue { background-color: #E6F4FA; color: #1E88E5; }

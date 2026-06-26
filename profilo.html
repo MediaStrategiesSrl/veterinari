@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Il mio profilo — Veterinari.it</title>
+    <link rel="stylesheet" href="css/global.css">
+    <link rel="stylesheet" href="css/profile.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body style="background-color: #F8F7F4;">
+
+    <main class="app-container">
+
+        <header class="header-nav" style="background: transparent;">
+            <a href="dashboard-proprietario.html" class="back-btn"><i class="fas fa-chevron-left"></i></a>
+            <div class="header-title">
+                <h2>Il mio profilo</h2>
+                <p>Proprietario</p>
+            </div>
+            <div class="header-icon"><i class="fa-solid fa-diamond"></i></div>
+        </header>
+
+        <div class="user-profile-header" id="profileHeaderContainer">
+            <div class="user-initials-avatar" style="background: #e2e8f0; box-shadow: none;">...</div>
+            <h1 id="userNameDisplay">Caricamento...</h1>
+            <p id="userDetailsDisplay">Attendi...</p>
+        </div>
+
+        <div class="section-container">
+            
+            <div class="menu-action-card">
+                <div class="info-icon icon-orange"><i class="fa-solid fa-circle"></i></div>
+                <div class="menu-action-text">
+                    <div class="menu-action-title">Dati personali</div>
+                    <div class="menu-action-desc">Identità, contatti e documenti</div>
+                </div>
+                <i class="fa-solid fa-chevron-right chevron-icon"></i>
+            </div>
+
+            <div class="menu-action-card">
+                <div class="info-icon icon-blue" style="background: #E0F2FE; color: #0284C7;"><i class="fa-solid fa-clover"></i></div>
+                <div class="menu-action-text">
+                    <div class="menu-action-title">Ruoli dell'account</div>
+                    <div class="menu-action-desc">Proprietario · aggiungi un ruolo</div>
+                </div>
+                <i class="fa-solid fa-chevron-right chevron-icon"></i>
+            </div>
+
+            <div class="menu-action-card">
+                <div class="info-icon icon-orange" style="background: #FEF3C7; color: #D97706;"><i class="fa-regular fa-gem"></i></div>
+                <div class="menu-action-text">
+                    <div class="menu-action-title">Privacy e autorizzazioni</div>
+                    <div class="menu-action-desc">Accessi, consensi e sicurezza</div>
+                </div>
+                <i class="fa-solid fa-chevron-right chevron-icon"></i>
+            </div>
+
+            <div class="menu-action-card">
+                <div class="info-icon icon-blue" style="background: #E0F7FA; color: #00838F;"><i class="fa-solid fa-bell"></i></div>
+                <div class="menu-action-text">
+                    <div class="menu-action-title">Notifiche</div>
+                    <div class="menu-action-desc">Promemoria e preferenze</div>
+                </div>
+                <i class="fa-solid fa-chevron-right chevron-icon"></i>
+            </div>
+
+            <div class="menu-action-card">
+                <div class="info-icon icon-orange" style="background: #FFEDD5; color: #C2410C;"><i class="fa-solid fa-xmark"></i></div>
+                <div class="menu-action-text">
+                    <div class="menu-action-title">Rimuovi pubblicità</div>
+                    <div class="menu-action-desc">Acquista una tantum</div>
+                </div>
+                <i class="fa-solid fa-chevron-right chevron-icon"></i>
+            </div>
+
+            <button class="btn-demo" id="btnLogout">Cambia profilo</button>
+
+        </div>
+
+        <div style="height: 100px;"></div>
+
+        <nav class="bottom-nav">
+            <a href="dashboard-proprietario.html" class="nav-item">
+                <i class="fa-solid fa-house"></i><span>Home</span>
+            </a>
+            <a href="animali.html" class="nav-item">
+                <i class="fa-solid fa-paw"></i><span>Animali</span>
+            </a>
+            <a href="cerca.html" class="nav-item">
+                <i class="fa-solid fa-magnifying-glass"></i><span>Cerca</span>
+            </a>
+            <a href="#" class="nav-item">
+                <i class="fa-solid fa-euro-sign"></i><span>Wallet</span>
+            </a>
+            <a href="profilo.html" class="nav-item active">
+                <i class="fa-solid fa-user"></i><span>Profilo</span>
+            </a>
+        </nav>
+
+    </main>
+
+    <script type="module" src="js/profilo.js"></script>
+</body>
+</html>
