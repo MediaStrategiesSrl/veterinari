@@ -82,9 +82,7 @@ form.addEventListener("submit", async function (event) {
     const isLocal = window.location.hostname === "127.0.0.1" || window.location.hostname === "localhost";
 
     // 2. Crea il link corretto aggiungendo la cartella /VeterinariApp/ solo se sei online
-    const targetRedirectUrl = isLocal 
-        ? window.location.origin + "/completeprofile.html"
-        : window.location.origin + "/VeterinariApp/completeprofile.html";
+   const targetRedirectUrl = window.location.origin + "/completeprofile.html";
 
     // 3. Invia la richiesta di registrazione passando l'URL dinamico calcolato
     const { data, error } = await supabase.auth.signUp({

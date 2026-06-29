@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Ruoli Account — Veterinari.it</title>
+    <link rel="stylesheet" href="css/global.css">
+    <link rel="stylesheet" href="css/ruoli.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body style="background-color: #F8F7F4;">
+
+    <main class="app-container">
+        <header class="header-nav" style="background: transparent; display: flex; justify-content: space-between; padding: 20px; align-items: center;">
+            <a href="profilo.html" class="back-btn" style="color: #000; font-size: 1.2rem; text-decoration: none;"><i class="fas fa-chevron-left"></i></a>
+            <div class="header-title" style="text-align: center;">
+                <h2 style="margin: 0; font-size: 1.3rem; color: #1E293B;">Ruoli dell'account</h2>
+                <p style="margin: 2px 0 0 0; font-size: 0.85rem; color: #64748B;">Gestisci i tuoi profili</p>
+            </div>
+            <div class="header-icon" style="font-size: 1rem; color: #1E293B;"><i class="fa-solid fa-diamond"></i></div>
+        </header>
+
+        <div class="roles-container">
+            <div class="roles-section">
+                <h3>I tuoi profili attivi</h3>
+                <p class="section-desc">Seleziona un profilo per accedere alla relativa dashboard.</p>
+                <div id="activeRolesList" class="roles-list">
+                    </div>
+            </div>
+
+            <div class="roles-section" style="margin-top: 30px;">
+                <h3>Aggiungi un nuovo ruolo</h3>
+                <p class="section-desc">Offri i tuoi servizi alla community.</p>
+                <div id="availableRolesList" class="roles-list">
+                    </div>
+            </div>
+        </div>
+    </main>
+
+    <script type="module" src="js/ruoli.js"></script>
+</body>
+</html>

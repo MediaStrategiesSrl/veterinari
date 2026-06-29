@@ -175,6 +175,7 @@ form.addEventListener("submit", async function (event) {
         cognome: document.getElementById("lastName").value.trim(),
         telefono: document.getElementById("phone").value.trim(),
         citta: document.getElementById("city").value.trim(),
+        indirizzo: document.getElementById("address").value.trim(),
         email: user.email
     };
 

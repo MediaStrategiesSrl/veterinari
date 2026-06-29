@@ -30,16 +30,50 @@
     color: var(--text-main);
 }
 
+/* Contenitore delle pillole */
 .market-categories {
     display: flex;
     gap: 10px;
-    overflow-x: auto;
-    scrollbar-width: none;
-    padding-bottom: 5px;
+    overflow-x: auto; /* Abilita lo scroll orizzontale */
+    scroll-behavior: smooth; /* Scorrimento morbido */
+    padding: 5px 0;
+    flex-grow: 1; /* Occupa tutto lo spazio tra le due frecce */
+    
+    /* Regole per nascondere la scrollbar di default nei vari browser */
+    -ms-overflow-style: none;  /* IE e Edge */
+    scrollbar-width: none;  /* Firefox */
 }
 
+/* Nasconde la scrollbar su Chrome, Safari e Opera */
 .market-categories::-webkit-scrollbar {
     display: none;
+}
+
+/* Contenitore principale delle categorie con frecce */
+.categories-wrapper {
+    display: flex;
+    align-items: center;
+    position: relative;
+    margin-top: 15px;
+}
+
+/* Stile delle frecce (ho usato l'arancione del tuo brand) */
+.scroll-arrow {
+    background: transparent;
+    border: none;
+    color: #F58220; 
+    font-size: 1.2rem;
+    cursor: pointer;
+    padding: 0 5px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2;
+    transition: color 0.2s;
+}
+
+.scroll-arrow:active {
+    color: #d96f18; /* Colore più scuro al click */
 }
 
 .cat-pill {

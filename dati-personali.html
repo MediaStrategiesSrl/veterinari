@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Dati Personali — Veterinari.it</title>
+    <link rel="stylesheet" href="css/global.css">
+    <link rel="stylesheet" href="css/dati-personali.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+
+    <main class="app-container">
+        <header class="header-nav">
+            <a href="profilo.html" class="back-btn"><i class="fas fa-chevron-left"></i></a>
+            <div class="header-title">
+                <h2>Dati Personali</h2>
+                <p>Identità, contatti e documenti</p>
+            </div>
+            <div class="header-icon"><i class="fa-regular fa-user"></i></div>
+        </header>
+
+        <form id="profileForm" class="form-container">
+            
+            <div class="data-section">
+                <h3><i class="fa-regular fa-id-card"></i> Identità Registrata</h3>
+                
+                <div class="input-group">
+                    <label>Nome e Cognome</label>
+                    <input type="text" id="nomeCognome" class="readonly-input" readonly>
+                </div>
+
+                <div class="input-group">
+                    <label>Email dell'Account</label>
+                    <input type="email" id="email" class="readonly-input" readonly>
+                </div>
+            </div>
+
+            <div class="data-section">
+                <h3><i class="fa-solid fa-cake-candles"></i> Informazioni Personali</h3>
+                
+                <div class="input-group">
+                    <label for="dataNascita">Data di Nascita</label>
+                    <input type="date" id="dataNascita">
+                </div>
+            </div>
+
+            <div class="data-section">
+                <h3><i class="fa-solid fa-file-shield"></i> Documenti</h3>
+                <p class="section-desc">Carica un documento di identità per verificare il tuo account.</p>
+                
+                <div class="input-group file-upload-group">
+                    <label for="documentoFile" class="file-upload-label">
+                        <i class="fa-solid fa-cloud-arrow-up"></i>
+                        <span id="fileLabelText">Seleziona un documento (PDF o Immagine)</span>
+                    </label>
+                    <input type="file" id="documentoFile" accept="image/*,.pdf" style="display: none;">
+                    
+                    <div id="docStatus" class="doc-status-badge hidden">
+                        <i class="fa-solid fa-circle-check" style="color: #059669;"></i> Documento presente a sistema
+                    </div>
+                </div>
+            </div>
+
+            <button type="submit" id="submitBtn" class="btn-save">Salva informazioni</button>
+            <div id="formMessage" class="form-message"></div>
+        </form>
+
+    </main>
+
+    <script type="module" src="js/dati-personali.js"></script>
+</body>
+</html>

@@ -8,14 +8,20 @@ const userNameDisplay = document.getElementById("userNameDisplay");
 const userDetailsDisplay = document.getElementById("userDetailsDisplay");
 const btnLogout = document.getElementById("btnLogout");
 
-// Funzione utile: Estrae le prime due lettere (Iniziali) da un Nome e Cognome
-function getInitials(name) {
-    if (!name) return "UT"; // Utente generico se non c'è nome
-    const nameParts = name.trim().split(" ");
-    if (nameParts.length >= 2) {
-        return (nameParts[0][0] + nameParts[1][0]).toUpperCase();
+// Funzione utile: Estrae le iniziali da Nome e Cognome
+function getInitials(firstName, lastName) {
+    const firstInitial = firstName?.trim()?.[0] || "";
+    const lastInitial = lastName?.trim()?.[0] || "";
+    if (firstInitial && lastInitial) {
+        return (firstInitial + lastInitial).toUpperCase();
     }
-    return nameParts[0].substring(0, 2).toUpperCase();
+    if (firstInitial) {
+        return firstInitial.toUpperCase();
+    }
+    if (lastInitial) {
+        return lastInitial.toUpperCase();
+    }
+    return "UT"; // Utente generico se non ci sono iniziali
 }
 
 async function loadUserProfile() {
@@ -23,7 +29,7 @@ async function loadUserProfile() {
         // 1. Controlla chi è loggato
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) {
-            window.location.href = "login.html";
+            window.location.href = "index.html";
             return;
         }
 
@@ -37,11 +43,23 @@ async function loadUserProfile() {
         if (error) throw error;
 
         // 3. Popola l'interfaccia
-        const nomeUtente = profileData.nome || "Utente Senza Nome";
+        let nomeUtente = "Utente Senza Nome";
+        if (profileData.nome && profileData.nome.trim() !== "") {
+            nomeUtente = profileData.nome.trim();
+        }
+
+        let cognomeUtente = "";
+        if (profileData.cognome && profileData.cognome.trim() !== "") {
+            cognomeUtente = profileData.cognome.trim();
+        }
+
         userNameDisplay.textContent = nomeUtente;
         
         // Mockup della città (se non l'hai nel db la mettiamo fissa o dinamica)
-        const citta = profileData.citta || "Milano";
+        let citta = "Milano";
+        if (profileData.citta && profileData.citta.trim() !== "") {
+            citta = profileData.citta.trim();
+        }
         userDetailsDisplay.textContent = `Account verificato · ${citta}`;
 
         // 4. Gestione dinamica Avatar (Immagine vs Iniziali)
@@ -52,7 +70,7 @@ async function loadUserProfile() {
             avatarHTML = `<img src="${data.publicUrl}" alt="Avatar" class="user-image-avatar">`;
         } else {
             // Se non c'è, mostra il quadrato arancione con le iniziali
-            const initials = getInitials(nomeUtente);
+            const initials = getInitials(nomeUtente, cognomeUtente);
             avatarHTML = `<div class="user-initials-avatar">${initials}</div>`;
         }
 
@@ -82,7 +100,7 @@ if (btnLogout) {
             alert("Errore durante il logout: " + error.message);
         } else {
             // Riporta alla pagina di Login
-            window.location.href = "login.html";
+            window.location.href = "index.html";
         }
     });
 }

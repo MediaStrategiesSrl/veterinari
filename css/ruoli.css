@@ -1,0 +1,81 @@
+.roles-container {
+    padding: 20px;
+}
+
+.roles-section h3 {
+    font-size: 1.1rem;
+    color: #333;
+    margin-bottom: 5px;
+}
+
+.section-desc {
+    font-size: 0.9rem;
+    color: #64748B;
+    margin-bottom: 15px;
+}
+
+.roles-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+/* Stile Card Ruolo */
+.role-card {
+    background-color: #fff;
+    border-radius: 16px;
+    padding: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    text-decoration: none;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+    border: 1px solid #E2E8F0;
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
+
+.role-card:active {
+    transform: scale(0.98);
+    border-color: #F58220;
+}
+
+.role-info {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.role-icon {
+    width: 45px;
+    height: 45px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+}
+
+/* Colori specifici per i ruoli */
+.role-proprietario .role-icon { background-color: #FFF7ED; color: #F58220; }
+.role-veterinario .role-icon { background-color: #F0F9FF; color: #0284C7; }
+/* Ho corretto questi due per farli combaciare con i nomi del DB! */
+.role-professionista .role-icon { background-color: #ECFDF5; color: #059669; }
+.role-sponsor .role-icon { background-color: #FEE2E2; color: #DC2626; }
+
+.role-texts h4 {
+    color: #1E293B;
+    font-size: 1rem;
+    margin: 0 0 2px 0;
+}
+
+.role-texts p {
+    color: #64748B;
+    font-size: 0.85rem;
+    margin: 0;
+}
+
+.role-action {
+    color: #F58220;
+    font-size: 1.2rem;
+}

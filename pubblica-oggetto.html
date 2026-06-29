@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Pubblica Annuncio — Veterinari.it</title>
+    <link rel="stylesheet" href="css/global.css">
+    <link rel="stylesheet" href="css/pubblica.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body style="background-color: #F8F7F4;">
+
+    <main class="app-container">
+        <header class="header-nav" style="background: transparent; padding-bottom: 0;">
+            <a href="mercatino.html" class="back-btn"><i class="fas fa-chevron-left"></i></a>
+            <div class="header-title">
+                <h2>Regala un oggetto</h2>
+                <p>Inserisci i dettagli</p>
+            </div>
+            <div class="header-icon"><i class="fa-solid fa-diamond"></i></div>
+        </header>
+
+        <form id="pubblicaForm" class="publish-form">
+            
+            <div class="form-group image-upload-group">
+                <label for="itemImage" class="image-upload-box" id="imagePreviewBox">
+                    <i class="fa-solid fa-camera fa-2x"></i>
+                    <span>Aggiungi foto</span>
+                    <img id="imagePreview" src="" alt="Anteprima" style="display: none;">
+                </label>
+                <input type="file" id="itemImage" accept="image/*" style="display: none;">
+            </div>
+
+            <div class="form-group">
+                <label for="itemTitle">Cosa stai regalando?</label>
+                <input type="text" id="itemTitle" placeholder="Es. Cuccia taglia media" required>
+            </div>
+
+            <div class="form-group">
+                <label for="itemCategory">Categoria</label>
+                <div class="select-wrapper">
+                    <select id="itemCategory" required>
+                        <option value="" disabled selected>Caricamento categorie...</option>
+                        </select>
+                    <i class="fa-solid fa-chevron-down select-icon"></i>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="itemDescription">Descrizione</label>
+                <textarea id="itemDescription" rows="4" placeholder="Dettagli sulle condizioni, dimensioni, ecc." required></textarea>
+            </div>
+
+           <div class="form-group">
+                <label for="itemCity">Città di ritiro (dal tuo profilo)</label>
+                <input type="text" id="itemCity" readonly style="background-color: #F1F5F9; color: #64748B;">
+            </div>
+
+            <div class="form-group">
+                <label for="itemAddress">Indirizzo di ritiro (non sarà visibile)</label>
+                <input type="text" id="itemAddress" readonly style="background-color: #F1F5F9; color: #64748B;">
+            </div>
+
+            <div class="price-banner">
+                <i class="fa-solid fa-hand-holding-heart"></i>
+                <span>Questo oggetto sarà pubblicato come <strong>GRATIS</strong>.</span>
+            </div>
+
+            <button type="submit" class="btn-primary full-width" id="submitBtn">Pubblica annuncio</button>
+        </form>
+
+    </main>
+
+    <script type="module" src="js/pubblica-oggetto.js"></script>
+</body>
+</html>
