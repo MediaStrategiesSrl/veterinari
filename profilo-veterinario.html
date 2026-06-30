@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Profilo Veterinario — Veterinari.it</title>
+    <link rel="stylesheet" href="css/global.css">
+    <link rel="stylesheet" href="css/profilo-veterinario.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+
+    <main class="app-container">
+        
+        <header class="page-header">
+            <a href="dashboard-veterinario.html" class="back-btn"><i class="fas fa-chevron-left"></i></a>
+            <div class="header-title">
+                <h2>Profilo veterinario</h2>
+                <p>Identità verificata</p>
+            </div>
+            <div class="header-action">
+                <i class="fa-solid fa-diamond"></i>
+            </div>
+        </header>
+
+        <div class="dashboard-content">
+            
+            <div class="vet-hero-card">
+                <img src="https://via.placeholder.com/150/E2E8F0/E2E8F0" alt="Avatar" id="vetAvatar" class="vet-hero-avatar" onerror="this.src='https://ui-avatars.com/api/?name=V&background=E2E8F0&color=64748B'">
+                <div class="vet-hero-info">
+                    <div class="verified-badge"><i class="fa-solid fa-check"></i> ORDINE VERIFICATO</div>
+                    <h1 id="vetName">Caricamento...</h1>
+                    <p id="vetSubtitle">Medico veterinario · Verifica in corso...</p>
+                </div>
+            </div>
+
+            <div class="menu-section">
+                
+                <a href="#" class="menu-card">
+                    <div class="menu-icon icon-orange"><i class="fa-solid fa-circle"></i></div>
+                    <div class="menu-text">
+                        <h4>Profilo e certificazioni</h4>
+                        <p>Foto, CI e tessera dell'Ordine</p>
+                    </div>
+                    <i class="fa-solid fa-chevron-right menu-arrow"></i>
+                </a>
+
+                <a href="#" class="menu-card">
+                    <div class="menu-icon icon-blue"><i class="fa-solid fa-bars"></i></div>
+                    <div class="menu-text">
+                        <h4>Servizi e prezzi</h4>
+                        <p>Visite, durata e tariffa</p>
+                    </div>
+                    <i class="fa-solid fa-chevron-right menu-arrow"></i>
+                </a>
+
+                <a href="#" class="menu-card">
+                    <div class="menu-icon icon-orange"><i class="fa-solid fa-location-crosshairs"></i></div>
+                    <div class="menu-text">
+                        <h4>Luoghi di appuntamento</h4>
+                        <p>2 luoghi disponibili</p>
+                    </div>
+                    <i class="fa-solid fa-chevron-right menu-arrow"></i>
+                </a>
+
+                <a href="#" class="menu-card">
+                    <div class="menu-icon icon-blue"><i class="fa-solid fa-euro-sign"></i></div>
+                    <div class="menu-text">
+                        <h4>Compensi e fatture</h4>
+                        <p>Gestiti centralmente da Veterinari.it</p>
+                    </div>
+                    <i class="fa-solid fa-chevron-right menu-arrow"></i>
+                </a>
+
+                <a href="#" class="menu-card">
+                    <div class="menu-icon icon-orange"><i class="fa-solid fa-arrow-trend-up"></i></div>
+                    <div class="menu-text">
+                        <h4>Aggiungi ruolo sponsor</h4>
+                        <p>Aumenta la tua visibilità</p>
+                    </div>
+                    <i class="fa-solid fa-chevron-right menu-arrow"></i>
+                </a>
+
+            </div>
+
+            <div style="height: 80px;"></div>
+        </div>
+
+        <div class="bottom-ad-banner">
+            <strong>PETCARE+</strong> Protezione completa da €9,90/mese · <span>Scopri</span>
+        </div>
+
+        <nav class="bottom-nav">
+            <a href="dashboard-veterinario.html" class="nav-item">
+                <i class="fa-solid fa-house"></i>
+                <span>Home</span>
+            </a>
+            <a href="agenda.html" class="nav-item">
+                <i class="fa-solid fa-table-cells"></i>
+                <span>Agenda</span>
+            </a>
+            <a href="scansiona.html" class="nav-item">
+                <i class="fa-solid fa-square-full"></i>
+                <span>Scansiona</span>
+            </a>
+            <a href="pazienti.html" class="nav-item">
+                <i class="fa-solid fa-paw"></i>
+                <span>Pazienti</span>
+            </a>
+            <a href="profilo-veterinario.html" class="nav-item active">
+                <i class="fa-solid fa-user"></i>
+                <span>Profilo</span>
+            </a>
+        </nav>
+
+    </main>
+
+    <script type="module" src="js/profilo-veterinario.js"></script>
+</body>
+</html>

@@ -56,31 +56,47 @@ form.addEventListener("submit", async function (event) {
         }
 
         const user = authData.user;
+        let userRole = "";
 
-        // 2. Scopri il ruolo dell'utente per il redirect dinamico
-        const { data: roleData, error: roleError } = await supabase
-            .from('user_roles')
-            .select(`
-                roles (
-                    nome_ruolo,
-                    nome
-                )
-            `)
+        // 2. CONTROLLO CORRETTO DEL RUOLO UTENTE
+        // Step A: Verifichiamo subito se l'utente è registrato nella tabella 'veterinarians'
+        const { data: isVet, error: vetTableError } = await supabase
+            .from('veterinarians')
+            .select('user_id')
             .eq('user_id', user.id)
-            .limit(1)
-            .single();
+            .maybeSingle(); // Evita di andare in crash se la riga non esiste
 
-        if (roleError) {
-            console.warn("Impossibile recuperare il ruolo o utente senza ruolo:", roleError.message);
+        if (isVet) {
+            // Se esiste nella tabella veterinari, il ruolo è confermato!
+            userRole = "veterinario";
+        } else {
+            // Step B: Se non è un veterinario, cerchiamo il suo ruolo nella tabella generica 'user_roles'
+            const { data: roleData, error: roleError } = await supabase
+                .from('user_roles')
+                .select(`
+                    roles (
+                        nome_ruolo,
+                        nome
+                    )
+                `)
+                .eq('user_id', user.id)
+                .limit(1)
+                .maybeSingle();
+
+            if (roleError) {
+                console.warn("Impossibile recuperare il ruolo o utente senza ruolo:", roleError.message);
+            }
+
+            if (roleData?.roles) {
+                // Estrae il testo del ruolo convertendolo in minuscolo
+                userRole = (roleData.roles.nome_ruolo || roleData.roles.nome || "").toLowerCase();
+            }
         }
 
         showStatus("Accesso eseguito! Reindirizzamento in corso...", "success");
         
         // 3. Esegui il reindirizzamento in base al ruolo trovato
         setTimeout(() => {
-            // Controlliamo sia 'nome_ruolo' che 'nome' nel caso in cui la colonna nel DB si chiami diversamente
-            const userRole = roleData?.roles?.nome_ruolo?.toLowerCase() || roleData?.roles?.nome?.toLowerCase();
-
             switch (userRole) {
                 case 'veterinario':
                     window.location.href = "dashboard-veterinario.html";
@@ -96,8 +112,8 @@ form.addEventListener("submit", async function (event) {
                     window.location.href = "dashboard-proprietario.html";
                     break;
                 default:
-                    // Fallback di sicurezza: se il ruolo non è definito
-                    console.log("Ruolo non riconosciuto o mancante, fallback attivato.");
+                    // Fallback di sicurezza: se il ruolo non è definito o non riconosciuto
+                    console.log("Ruolo non riconosciuto o mancante, fallback attivato verso proprietario.");
                     window.location.href = "dashboard-proprietario.html"; 
                     break;
             }

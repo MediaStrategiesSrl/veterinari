@@ -47,9 +47,9 @@ async function initPage() {
 async function caricaPazienti() {
     try {
         const { data, error } = await supabase
-            .from('vet_patients')
+            .from('veterinarian_patients')
             .select(`pet_id, pets ( nome )`)
-            .eq('vet_id', currentUser.id);
+            .eq('veterinarian_id', currentUser.id);
 
         if (error) throw error;
 

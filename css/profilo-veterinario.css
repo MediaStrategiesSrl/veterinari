@@ -1,0 +1,158 @@
+body, .app-container {
+    background-color: #FDF7F0 !important;
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+/* Header */
+.page-header {
+    display: flex; justify-content: space-between; align-items: center; padding: 20px;
+}
+.back-btn { color: #1E293B; font-size: 1.2rem; text-decoration: none; }
+.header-title { text-align: center; flex-grow: 1; }
+.header-title h2 { margin: 0; font-size: 1.4rem; color: #1E293B; }
+.header-title p { margin: 2px 0 0 0; font-size: 0.85rem; color: #64748B; }
+.header-action i { font-size: 1.2rem; color: #1E293B; }
+
+.dashboard-content { padding: 0 20px; }
+
+/* HERO CARD BLU VETERINARIO */
+.vet-hero-card {
+    background: linear-gradient(135deg, #57B6D8, #42A2C4);
+    border-radius: 24px;
+    padding: 20px;
+    color: white;
+    margin-bottom: 25px;
+    box-shadow: 0 10px 20px rgba(66, 162, 196, 0.2);
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    position: relative;
+    overflow: hidden;
+}
+
+.vet-hero-card::before {
+    content: ''; position: absolute; top: -40px; right: -40px;
+    width: 150px; height: 150px; background: rgba(255,255,255,0.1);
+    border-radius: 50%;
+}
+
+.vet-hero-avatar {
+    width: 85px; height: 85px;
+    border-radius: 20px;
+    object-fit: cover;
+    border: 3px solid rgba(255,255,255,0.3);
+    background-color: #fff;
+    flex-shrink: 0;
+    z-index: 2;
+}
+
+.vet-hero-info { z-index: 2; }
+
+.verified-badge {
+    display: inline-block;
+    background: rgba(255,255,255,0.25);
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 0.65rem;
+    font-weight: 800;
+    letter-spacing: 0.5px;
+    margin-bottom: 6px;
+    backdrop-filter: blur(4px);
+    text-transform: uppercase;
+}
+
+.vet-hero-info h1 { margin: 0 0 5px 0; font-size: 1.5rem; line-height: 1.1; }
+.vet-hero-info p { margin: 0; font-size: 0.8rem; opacity: 0.95; line-height: 1.3; }
+
+/* MENU CARDS */
+.menu-section {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.menu-card {
+    background: #fff;
+    border-radius: 20px;
+    padding: 16px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+    border: 1px solid #E2E8F0;
+    text-decoration: none;
+    transition: transform 0.1s;
+}
+.menu-card:active { transform: scale(0.98); }
+
+.menu-icon {
+    width: 45px; height: 45px;
+    border-radius: 14px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.2rem;
+}
+
+.icon-orange { background-color: #FEF3C7; color: #F58220; }
+.icon-blue { background-color: #E0F2FE; color: #0284C7; }
+
+.menu-text { flex-grow: 1; }
+.menu-text h4 { margin: 0 0 4px 0; font-size: 1.05rem; color: #1E293B; }
+.menu-text p { margin: 0; font-size: 0.8rem; color: #64748B; }
+
+.menu-arrow { color: #CBD5E1; font-size: 1rem; }
+
+.bottom-ad-banner {
+    position: fixed;
+    bottom: 65px; /* Modificato da 0 a 65px! */
+    left: 50%;
+    transform: translateX(-50%);
+    width: 100%;
+    max-width: 480px;
+    background: #FEF3C7;
+    border-top: 2px solid #FCD34D;
+    padding: 15px;
+    font-size: 0.85rem;
+    color: #92400E;
+    text-align: center;
+    box-sizing: border-box;
+    z-index: 99;
+}
+.bottom-ad-banner strong { color: #B45309; }
+.bottom-ad-banner span { font-weight: bold; cursor: pointer; text-decoration: underline; }
+
+/* BOTTOM NAV BAR */
+.bottom-nav {
+    position: fixed;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 100%;
+    max-width: 480px;
+    background-color: #fff;
+    display: flex;
+    justify-content: space-around;
+    padding: 12px 0;
+    box-shadow: 0 -2px 10px rgba(0,0,0,0.05);
+    border-top: 1px solid #E2E8F0;
+    z-index: 100;
+}
+
+.nav-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-decoration: none;
+    color: #94A3B8;
+    font-size: 1.2rem;
+    gap: 4px;
+}
+
+.nav-item span {
+    font-size: 0.7rem;
+    font-weight: 600;
+}
+
+.nav-item.active {
+    color: #F58220; /* Colore arancione per indicare dove ti trovi */
+}
