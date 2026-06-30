@@ -1,0 +1,171 @@
+/* Sfondo Crema Forzato */
+body, .app-container {
+    background-color: #F8F7F4 !important;
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    padding-bottom: 80px; 
+}
+
+/* Header */
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 20px 10px 20px;
+}
+
+.back-btn { color: #1E293B; font-size: 1.2rem; text-decoration: none; }
+.header-title { text-align: center; flex-grow: 1; }
+.header-title h2 { margin: 0; font-size: 1.4rem; color: #1E293B; }
+.header-title p { margin: 2px 0 0 0; font-size: 0.85rem; color: #64748B; text-transform: capitalize; }
+.header-action i { font-size: 1.2rem; color: #1E293B; }
+
+/* Carosello Date Orizzontale */
+.date-carousel-container {
+    width: 100%;
+    overflow: hidden;
+    margin-bottom: 20px;
+}
+
+.date-carousel {
+    display: flex;
+    gap: 12px;
+    padding: 10px 20px;
+    margin: 0;
+    list-style: none;
+    overflow-x: auto;
+    /* Nasconde la scrollbar ma mantiene lo scroll fluido */
+    scrollbar-width: none; 
+    -ms-overflow-style: none;
+    scroll-behavior: smooth;
+}
+
+.date-carousel::-webkit-scrollbar {
+    display: none;
+}
+
+.date-pill {
+    background: #fff;
+    border: 1px solid #E2E8F0;
+    border-radius: 20px;
+    padding: 8px 16px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #64748B;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: all 0.2s;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+}
+
+.date-pill.active {
+    background: #F58220;
+    color: #fff;
+    border-color: #F58220;
+    box-shadow: 0 4px 8px rgba(245, 130, 32, 0.3);
+}
+
+.dashboard-content { padding: 0 20px; }
+
+/* Header Sezione Appuntamenti */
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 15px;
+}
+
+.section-header h3 {
+    margin: 0;
+    font-size: 1.2rem;
+    color: #1E293B;
+}
+
+.link-action {
+    color: #0284C7;
+    text-decoration: none;
+    font-size: 0.9rem;
+    font-weight: 700;
+}
+
+/* Lista Appuntamenti */
+.appointments-list {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.appt-card {
+    background: #fff;
+    border-radius: 16px;
+    padding: 16px 20px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+    border: 1px solid #E2E8F0;
+    border-left: 4px solid #F58220; /* Default Orange */
+}
+
+/* Varianti Colore Bordo Left */
+.appt-card.border-blue { border-left-color: #0284C7; }
+.appt-card.border-orange { border-left-color: #F58220; }
+
+.appt-time {
+    font-size: 0.85rem;
+    font-weight: 800;
+    margin-bottom: 6px;
+}
+
+/* Colori Orari abbinati al bordo */
+.appt-card.border-orange .appt-time { color: #B45309; }
+.appt-card.border-blue .appt-time { color: #0284C7; }
+
+.appt-title {
+    font-size: 1.05rem;
+    font-weight: 600;
+    color: #1E293B;
+    margin-bottom: 4px;
+}
+
+.appt-details {
+    font-size: 0.85rem;
+    color: #64748B;
+}
+
+/* Bottoni Standard */
+.btn-primary {
+    background-color: #F58220;
+    color: #fff;
+    border: none;
+    padding: 15px;
+    border-radius: 12px;
+    font-size: 1rem;
+    font-weight: bold;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(245, 130, 32, 0.2);
+    transition: background-color 0.2s;
+}
+.btn-primary:active { background-color: #E0731A; transform: scale(0.98); }
+
+/* Banner */
+.ad-banner {
+    margin-top: 30px;
+    margin-bottom: 20px;
+    background: #FEF3C7;
+    border: 1px solid #FCD34D;
+    padding: 12px 15px;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    color: #92400E;
+    text-align: center;
+}
+.ad-banner strong { color: #B45309; }
+.ad-banner span { font-weight: bold; cursor: pointer; }
+
+/* Nav */
+.bottom-nav {
+    position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 480px;
+    background-color: #fff; display: flex; justify-content: space-around; padding: 12px 0;
+    box-shadow: 0 -2px 10px rgba(0,0,0,0.05); border-top: 1px solid #E2E8F0; z-index: 100;
+}
+.nav-item { display: flex; flex-direction: column; align-items: center; text-decoration: none; color: #94A3B8; font-size: 1.2rem; gap: 4px; }
+.nav-item span { font-size: 0.7rem; font-weight: 600; }
+.nav-item.active { color: #F58220; }

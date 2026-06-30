@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Profilo Professionista — Veterinari.it</title>
+    <link rel="stylesheet" href="css/global.css">
+    <link rel="stylesheet" href="css/dettaglio-professionista.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+
+    <main class="app-container">
+        
+        <header class="page-header">
+            <a href="cerca.html" class="back-btn"><i class="fas fa-chevron-left"></i></a>
+            <div class="header-title">
+                <h2>Professionista</h2>
+                <p>Profilo verificato</p>
+            </div>
+            <div class="header-action">
+                <i class="fa-solid fa-diamond"></i>
+            </div>
+        </header>
+
+        <div class="dashboard-content">
+            
+            <div class="hero-card">
+                <div class="hero-top">
+                <img src="https://ui-avatars.com/api/?name=Vet&background=E2E8F0&color=64748B" alt="Avatar" id="vetAvatar" class="hero-avatar" onerror="this.onerror=null; this.src='https://ui-avatars.com/api/?name=V&background=E2E8F0&color=64748B';">
+                    <div class="hero-info">
+                        <div class="verified-badge"><i class="fa-solid fa-check"></i> VERIFICATA</div>
+                        <h1 id="vetName">Caricamento...</h1>
+                    </div>
+                </div>
+                
+                <div class="hero-subtitle">
+                    <span id="vetRole">Veterinario</span>
+                    </div>
+                
+                <button class="btn-book">Prenota appuntamento</button>
+            </div>
+
+            <div class="stats-grid">
+                <div class="stat-box">
+                    <h3 id="vetDistance">n.d.</h3>
+                    <p>Distanza</p>
+                </div>
+                <div class="stat-box">
+                    <h3 id="vetPrice">--</h3>
+                    <p>Da</p>
+                </div>
+                <div class="stat-box">
+                    <h3 id="vetAvailability">Oggi</h3>
+                    <p>Disponibile</p>
+                </div>
+            </div>
+
+            <h3 class="section-title">Servizi</h3>
+            
+            <div class="services-list" id="servicesList">
+                <div style="text-align: center; padding: 20px; color: #64748B; background: #fff; border-radius: 16px; border: 1px dashed #CBD5E1;">
+                    Nessun servizio registrato.
+                </div>
+            </div>
+
+        </div>
+
+    </main>
+
+    <script type="module" src="js/dettaglio-professionista.js"></script>
+</body>
+</html>

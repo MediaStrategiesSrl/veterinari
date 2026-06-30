@@ -1,0 +1,292 @@
+body, .app-container {
+    /* Rimosso il colore per farlo ereditare in automatico da global.css */
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+
+/* Header */
+.vet-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 20px 15px 20px;
+}
+
+.main-logo {
+    height: 42px; /* Stessa altezza della dashboard proprietario */
+    width: auto;
+    object-fit: contain;
+}
+
+.notification-btn {
+    width: 45px;
+    height: 45px;
+    background-color: #fff;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #1E293B;
+    text-decoration: none;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    font-size: 1.2rem;
+    border: 1px solid #E2E8F0;
+    transition: transform 0.2s;
+}
+
+.notification-btn:active {
+    transform: scale(0.95);
+}
+
+.header-action i {
+    font-size: 1.2rem;
+    color: #1E293B;
+}
+
+.dashboard-content {
+    padding: 0 20px;
+}
+
+/* Scheda Urgenze */
+.emergency-card {
+    background: linear-gradient(135deg, #E8705B 0%, #D95A46 100%);
+    border-radius: 20px;
+    padding: 20px;
+    color: #fff;
+    margin-bottom: 30px;
+    box-shadow: 0 8px 20px rgba(232, 112, 91, 0.3);
+}
+
+.emergency-card h2 {
+    margin: 0 0 8px 0;
+    font-size: 1.3rem;
+}
+
+.emergency-card p {
+    margin: 0 0 20px 0;
+    font-size: 0.9rem;
+    opacity: 0.9;
+    line-height: 1.4;
+}
+
+.toggle-container {
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 16px;
+    padding: 15px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.toggle-texts h3 {
+    margin: 0;
+    font-size: 1.1rem;
+}
+
+.toggle-texts p {
+    margin: 4px 0 0 0;
+    font-size: 0.8rem;
+    opacity: 0.8;
+}
+
+/* CSS per il Toggle Switch */
+.switch {
+    position: relative;
+    display: inline-block;
+    width: 50px;
+    height: 28px;
+}
+
+.switch input { 
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background-color: rgba(0,0,0,0.2);
+    transition: .4s;
+}
+
+.slider:before {
+    position: absolute;
+    content: "";
+    height: 20px;
+    width: 20px;
+    left: 4px;
+    bottom: 4px;
+    background-color: white;
+    transition: .4s;
+}
+
+input:checked + .slider {
+    background-color: #059669; /* Verde acceso se attivo */
+}
+
+input:checked + .slider:before {
+    transform: translateX(22px);
+}
+
+.slider.round { border-radius: 34px; }
+.slider.round:before { border-radius: 50%; }
+
+/* Sezioni Header (Oggi, Strumenti) */
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 15px;
+}
+
+.section-header h3 {
+    margin: 0;
+    font-size: 1.2rem;
+    color: #1E293B;
+}
+
+.link-action {
+    color: #0284C7;
+    text-decoration: none;
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
+/* Agenda Cards */
+.agenda-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.agenda-card {
+    background: #fff;
+    border-radius: 16px;
+    padding: 16px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+    border: 1px solid #E2E8F0;
+    border-left: 4px solid #CBD5E1; /* Default */
+}
+
+.agenda-card.completed { border-left-color: #F58220; }
+.agenda-card.next { border-left-color: #0284C7; }
+.agenda-card.future { border-left-color: #F58220; }
+
+.agenda-time {
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: #B45309;
+    margin-bottom: 6px;
+}
+
+.agenda-card.next .agenda-time { color: #0284C7; }
+
+.agenda-title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #1E293B;
+    margin-bottom: 4px;
+}
+
+.agenda-address {
+    font-size: 0.85rem;
+    color: #64748B;
+}
+
+/* Strumenti Rapidi (Grid 2x2) */
+.tools-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.tool-card {
+    background: #fff;
+    border-radius: 16px;
+    padding: 15px;
+    text-decoration: none;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+    border: 1px solid #E2E8F0;
+    display: flex;
+    flex-direction: column;
+}
+
+.tool-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem;
+    margin-bottom: 12px;
+}
+
+.tool-card h4 {
+    margin: 0 0 4px 0;
+    color: #1E293B;
+    font-size: 0.95rem;
+}
+
+.tool-card p {
+    margin: 0;
+    color: #64748B;
+    font-size: 0.8rem;
+    line-height: 1.3;
+}
+
+/* Ad Banner */
+.ad-banner {
+    background: #FEF3C7;
+    border: 1px solid #FCD34D;
+    padding: 12px 15px;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    color: #92400E;
+    text-align: center;
+    margin-top: 10px;
+    margin-bottom: 20px;
+}
+
+.ad-banner strong { color: #B45309; }
+.ad-banner span { font-weight: bold; cursor: pointer; }
+
+/* Bottom Nav */
+.bottom-nav {
+    position: fixed;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 100%;
+    max-width: 480px;
+    background-color: #fff;
+    display: flex;
+    justify-content: space-around;
+    padding: 12px 0;
+    box-shadow: 0 -2px 10px rgba(0,0,0,0.05);
+    border-top: 1px solid #E2E8F0;
+    z-index: 100;
+}
+
+.nav-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-decoration: none;
+    color: #94A3B8;
+    font-size: 1.2rem;
+    gap: 4px;
+}
+
+.nav-item span {
+    font-size: 0.7rem;
+    font-weight: 600;
+}
+
+.nav-item.active {
+    color: #F58220;
+}

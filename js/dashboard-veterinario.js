@@ -3,142 +3,176 @@ import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./config.js";
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-// Elementi DOM
-const navHome = document.getElementById("navHome");
-const navAgenda = document.getElementById("navAgenda");
-const homeSection = document.getElementById("homeSection");
-const agendaSection = document.getElementById("agendaSection");
-const urgencyToggle = document.getElementById("urgencyToggle");
-const agendaList = document.getElementById("agendaList");
-const currentDateDisplay = document.getElementById("currentDateDisplay");
-const logoutBtn = document.getElementById("logoutBtn");
-
 let currentUser = null;
 
-// Formatta la data di oggi (es. "10 giugno")
-const options = { day: 'numeric', month: 'long' };
-currentDateDisplay.textContent = new Date().toLocaleDateString('it-IT', options);
+// Elementi DOM
+const availabilityToggle = document.getElementById("availabilityToggle");
+const availabilityText = document.getElementById("availabilityText");
+const waitTimeText = document.getElementById("waitTimeText");
+const oggiDataText = document.getElementById("oggiData");
+const agendaContainer = document.getElementById("agendaContainer");
 
-// ==========================================
-// 1. AUTENTICAZIONE
-// ==========================================
-supabase.auth.onAuthStateChange(async (event, session) => {
-    if (event === "SIGNED_OUT" || !session) {
-        window.location.href = "login.html";
+async function initDashboard() {
+    impostaDataOggi();
+
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+        window.location.href = "index.html";
         return;
     }
+    currentUser = user;
 
-    currentUser = session.user;
+    // Eseguiamo i caricamenti in parallelo
+    await Promise.all([
+        caricaStatoDisponibilita(),
+        caricaAgendaDinamica()
+    ]);
+}
 
-    // Verifica ruolo veterinario
-    const { data: userRole, error: roleError } = await supabase
-        .from("user_roles")
-        .select("role_id, roles(nome)")
-        .eq("user_id", currentUser.id)
-        .maybeSingle();
-
-    if (roleError || !userRole || userRole.roles.nome !== "veterinario") {
-        window.location.href = "login.html";
-        return;
-    }
-
-    // Se è tutto ok, carica i dati dinamici!
-    loadUrgencyStatus();
-    loadAgenda();
-});
+function impostaDataOggi() {
+    const options = { day: 'numeric', month: 'long' };
+    const oggi = new Date().toLocaleDateString('it-IT', options);
+    oggiDataText.textContent = `Oggi, ${oggi}`;
+}
 
 // ==========================================
-// 2. CHIAMATE API DINAMICHE
+// 1. GESTIONE URGENZE (Fix Errore Connessione)
 // ==========================================
+async function caricaStatoDisponibilita() {
+    try {
+        const { data: vetData, error } = await supabase
+            .from('veterinarians')
+            .select('is_available_now')
+            .eq('user_id', currentUser.id)
+            .single();
 
-// A. Carica e gestisci lo Switch Urgenze
-async function loadUrgencyStatus() {
-    const { data: vetData, error } = await supabase
-        .from("veterinarians")
-        .select("is_available_now")
-        .eq("user_id", currentUser.id)
-        .single();
+        // Se l'errore è PGRST116 significa "Nessuna riga trovata" (Il veterinario non esiste ancora)
+        if (error && error.code === 'PGRST116') {
+            availabilityText.textContent = "Profilo inattivo";
+            waitTimeText.textContent = "Completa la registrazione Vet per ricevere urgenze.";
+            availabilityToggle.disabled = true;
+            return;
+        } else if (error) {
+            throw error;
+        }
 
-    if (!error && vetData) {
-        urgencyToggle.checked = vetData.is_available_now;
+        // Se il veterinario esiste nel DB
+        if (vetData) {
+            const isAvailable = vetData.is_available_now;
+            availabilityToggle.checked = isAvailable;
+            aggiornaTestoUrgenze(isAvailable);
+            availabilityToggle.disabled = false;
+        }
+
+    } catch (error) {
+        console.error("Errore nel recupero dati veterinario:", error);
+        availabilityText.textContent = "Errore di connessione";
     }
 }
 
-urgencyToggle.addEventListener("change", async (e) => {
-    const isAvailable = e.target.checked;
-    urgencyToggle.disabled = true;
+availabilityToggle.addEventListener('change', async (e) => {
+    const isNowAvailable = e.target.checked;
+    availabilityToggle.disabled = true;
+    availabilityText.textContent = "Salvataggio...";
 
-    const { error } = await supabase
-        .from("veterinarians")
-        .update({ is_available_now: isAvailable })
-        .eq("user_id", currentUser.id);
+    try {
+        const { error } = await supabase
+            .from('veterinarians')
+            .update({ is_available_now: isNowAvailable })
+            .eq('user_id', currentUser.id);
 
-    if (error) {
-        console.error("Errore aggiornamento:", error);
-        urgencyToggle.checked = !isAvailable; 
+        if (error) throw error;
+        aggiornaTestoUrgenze(isNowAvailable);
+
+    } catch (error) {
+        availabilityToggle.checked = !isNowAvailable;
+        aggiornaTestoUrgenze(!isNowAvailable);
+        alert("Impossibile aggiornare lo stato.");
+    } finally {
+        availabilityToggle.disabled = false;
     }
-    urgencyToggle.disabled = false;
 });
 
-// B. Carica Appuntamenti e costruisci le card dinamicamente
-async function loadAgenda() {
-    // Sostituisci 'visite' con il nome reale della tua tabella
-    const { data: appuntamenti, error } = await supabase
-        .from('visite') 
-        .select(`id, orario, stato, motivo, luogo, pets (nome)`)
-        .eq('veterinario_id', currentUser.id)
-        .order('orario', { ascending: true });
-
-    if (error) {
-        agendaList.innerHTML = `<p style="text-align:center; color:red;">Errore caricamento</p>`;
-        return;
+function aggiornaTestoUrgenze(isAvailable) {
+    if (isAvailable) {
+        availabilityText.textContent = "Sei disponibile";
+        waitTimeText.textContent = "In attesa di chiamate..."; 
+    } else {
+        availabilityText.textContent = "Non disponibile";
+        waitTimeText.textContent = "Attiva per ricevere urgenze";
     }
+}
 
-    agendaList.innerHTML = ''; // Svuota il contenitore
-
-    if (!appuntamenti || appuntamenti.length === 0) {
-        agendaList.innerHTML = `<p style="text-align:center; color:#888;">Nessun appuntamento per oggi.</p>`;
-        return;
-    }
-
-    // Costruisci le card inserendoci dentro i dati reali
-    appuntamenti.forEach(visita => {
-        let borderClass = "border-orange"; 
-        if (visita.stato === "PROSSIMO") borderClass = "border-blue";
-
-        const orario = new Date(visita.orario).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-        const nomePet = visita.pets ? visita.pets.nome : "Sconosciuto";
-
-        const card = document.createElement("div");
-        card.className = `agenda-card ${borderClass}`;
+// ==========================================
+// 2. AGENDA DINAMICA
+// ==========================================
+async function caricaAgendaDinamica() {
+    try {
+        // Otteniamo l'inizio e la fine della giornata di oggi per filtrare
+        const oggiInizio = new Date();
+        oggiInizio.setHours(0, 0, 0, 0);
         
-        card.innerHTML = `
-            <div class="status-indicator">${orario} · ${visita.stato || ''}</div>
-            <h4>${nomePet} · ${visita.motivo}</h4>
-            <p>${visita.luogo || 'Sede clinica'}</p>
-        `;
-        agendaList.appendChild(card);
-    });
+        const oggiFine = new Date();
+        oggiFine.setHours(23, 59, 59, 999);
+
+        // Peschiamo dalla tabella appuntamenti incrociando i dati del cane
+        const { data: appuntamenti, error } = await supabase
+            .from('appointments')
+            .select(`
+                id,
+                data_inizio,
+                stato,
+                pets ( nome )
+            `)
+            .eq('provider_id', currentUser.id)
+            .gte('data_inizio', oggiInizio.toISOString())
+            .lte('data_inizio', oggiFine.toISOString())
+            .order('data_inizio', { ascending: true });
+
+        if (error) throw error;
+
+        // Puliamo il contenitore
+        agendaContainer.innerHTML = "";
+
+        // Se non ci sono appuntamenti oggi (Il caso attuale del tuo DB!)
+        if (!appuntamenti || appuntamenti.length === 0) {
+            agendaContainer.innerHTML = `
+                <div style="background: #fff; border-radius: 16px; padding: 30px 20px; text-align: center; border: 1px dashed #CBD5E1;">
+                    <div style="font-size: 2rem; color: #94A3B8; margin-bottom: 10px;"><i class="fa-regular fa-calendar-xmark"></i></div>
+                    <h4 style="margin: 0 0 5px 0; color: #1E293B;">Nessun appuntamento</h4>
+                    <p style="margin: 0; font-size: 0.85rem; color: #64748B;">Non hai visite programmate per oggi.</p>
+                </div>
+            `;
+            return;
+        }
+
+        // Se ci sono appuntamenti, creiamo le card dinamicamente
+        appuntamenti.forEach(app => {
+            const dataInizio = new Date(app.data_inizio);
+            const orario = dataInizio.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' });
+            
+            const nomePet = app.pets ? app.pets.nome : "Animale sconosciuto";
+            
+            // Definiamo i colori in base allo stato
+            let classeStato = "future"; // default
+            if (app.stato === "completato") classeStato = "completed";
+            else if (app.stato === "in_corso") classeStato = "next";
+
+            const card = document.createElement('div');
+            card.className = `agenda-card ${classeStato}`;
+            card.innerHTML = `
+                <div class="agenda-time">${orario} · ${app.stato.toUpperCase()}</div>
+                <div class="agenda-title">${nomePet} · Visita</div>
+                <div class="agenda-address">Studio Veterinario</div>
+            `;
+            agendaContainer.appendChild(card);
+        });
+
+    } catch (error) {
+        console.error("Errore nel recupero dell'agenda:", error);
+        agendaContainer.innerHTML = `<p style="color:red; text-align:center;">Errore nel caricamento dell'agenda.</p>`;
+    }
 }
 
-// ==========================================
-// 3. NAVIGAZIONE TAB
-// ==========================================
-function switchTab(activeNav, activeSection) {
-    document.querySelectorAll(".nav-item").forEach(el => el.classList.remove("active"));
-    homeSection.classList.add("hidden");
-    agendaSection.classList.add("hidden");
-
-    activeNav.classList.add("active");
-    activeSection.classList.remove("hidden");
-}
-
-navHome.addEventListener("click", (e) => { e.preventDefault(); switchTab(navHome, homeSection); });
-navAgenda.addEventListener("click", (e) => { e.preventDefault(); switchTab(navAgenda, agendaSection); });
-
-// ==========================================
-// 4. LOGOUT
-// ==========================================
-logoutBtn.addEventListener("click", async () => {
-    await supabase.auth.signOut();
-});
+// Avvio
+initDashboard();

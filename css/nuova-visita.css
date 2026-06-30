@@ -1,0 +1,114 @@
+body, .app-container {
+    background-color: #FDF7F0 !important;
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+.page-header {
+    display: flex; justify-content: space-between; align-items: center; padding: 20px;
+}
+.back-btn { color: #1E293B; font-size: 1.2rem; text-decoration: none; }
+.header-title { text-align: center; flex-grow: 1; }
+.header-title h2 { margin: 0; font-size: 1.4rem; color: #1E293B; }
+.header-title p { margin: 2px 0 0 0; font-size: 0.85rem; color: #64748B; }
+.header-action i { font-size: 1.2rem; color: #1E293B; }
+
+.dashboard-content { padding: 0 20px; }
+
+.form-group { margin-bottom: 20px; }
+
+.form-group label {
+    display: block;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: #64748B;
+    margin-bottom: 8px;
+    letter-spacing: 0.5px;
+}
+
+.form-group input, 
+.form-group select, 
+.form-group textarea {
+    width: 100%;
+    padding: 14px;
+    background: #fff;
+    border: 1px solid #E2E8F0;
+    border-radius: 12px;
+    font-size: 1rem;
+    color: #1E293B;
+    box-sizing: border-box;
+    outline: none;
+    transition: border-color 0.2s;
+}
+
+.form-group input:focus, 
+.form-group select:focus, 
+.form-group textarea:focus {
+    border-color: #F58220;
+}
+
+/* Stile per dare l'effetto "Referto Medico" come nel tuo screenshot */
+.form-group textarea {
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 0.95rem;
+    resize: vertical;
+}
+
+/* Card Allegati */
+.attachment-card {
+    background: #fff;
+    border-radius: 16px;
+    padding: 15px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 25px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+}
+
+.attach-info { display: flex; align-items: center; gap: 15px; }
+.attach-info i { font-size: 1.2rem; color: #475569; }
+.attach-info h4 { margin: 0 0 3px 0; font-size: 0.95rem; color: #1E293B; }
+.attach-info p { margin: 0; font-size: 0.75rem; color: #94A3B8; }
+
+.attach-btn {
+    width: 35px; height: 35px;
+    border-radius: 50%;
+    background: #F8FAFC;
+    border: 1px solid #E2E8F0;
+    display: flex; align-items: center; justify-content: center;
+    color: #1E293B; cursor: pointer;
+}
+
+.disclaimer {
+    font-size: 0.75rem;
+    color: #64748B;
+    line-height: 1.4;
+    margin-bottom: 25px;
+    text-align: left;
+}
+
+.btn-submit {
+    width: 100%;
+    background-color: #F58220;
+    color: #fff;
+    border: none;
+    padding: 16px;
+    border-radius: 14px;
+    font-size: 1.05rem;
+    font-weight: 800;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(245, 130, 32, 0.2);
+    transition: transform 0.2s;
+}
+.btn-submit:active { transform: scale(0.98); }
+.btn-submit:disabled { opacity: 0.7; cursor: not-allowed; }
+
+.form-message {
+    text-align: center;
+    margin-top: 15px;
+    font-size: 0.9rem;
+    font-weight: 600;
+}

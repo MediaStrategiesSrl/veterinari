@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Scansiona QR — Veterinari.it</title>
+    <link rel="stylesheet" href="css/global.css">
+    <link rel="stylesheet" href="css/scansiona.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+</head>
+<body>
+
+    <main class="app-container">
+        
+        <header class="scan-header">
+            <a href="dashboard-veterinario.html" class="back-btn"><i class="fas fa-chevron-left"></i></a>
+            <div class="header-title">
+                <h2>Scansiona QR</h2>
+                <p>Inquadra il telefono del proprietario</p>
+            </div>
+            <div class="header-action">
+                <i class="fa-solid fa-diamond"></i>
+            </div>
+        </header>
+
+        <div class="dashboard-content">
+            
+            <div class="camera-wrapper">
+                <div id="reader"></div>
+                <div class="camera-overlay">
+                    <div class="scan-box"></div>
+                    <p class="scan-instruction">Allinea il QR dentro il riquadro</p>
+                </div>
+            </div>
+
+            <p class="info-text">Il proprietario dovrà confermare l'accesso dal proprio dispositivo.</p>
+
+            <div id="scanStatus" class="scan-status hidden">
+                <i class="fa-solid fa-spinner fa-spin"></i> Elaborazione QR...
+            </div>
+
+            <div class="ad-banner">
+                <strong>PETCARE+</strong> Protezione completa da €9,90/mese · <span>Scopri</span>
+            </div>
+
+        </div>
+
+        <nav class="bottom-nav">
+            <a href="dashboard-veterinario.html" class="nav-item">
+                <i class="fa-solid fa-house"></i>
+                <span>Home</span>
+            </a>
+            <a href="#" class="nav-item">
+                <i class="fa-solid fa-table-cells"></i>
+                <span>Agenda</span>
+            </a>
+            <a href="scansiona.html" class="nav-item active">
+                <i class="fa-solid fa-square-full"></i>
+                <span>Scansiona</span>
+            </a>
+            <a href="#" class="nav-item">
+                <i class="fa-solid fa-paw"></i>
+                <span>Pazienti</span>
+            </a>
+            <a href="ruoli.html" class="nav-item">
+                <i class="fa-solid fa-user"></i>
+                <span>Profilo</span>
+            </a>
+        </nav>
+
+    </main>
+
+    <script type="module" src="js/scansiona.js"></script>
+</body>
+</html>

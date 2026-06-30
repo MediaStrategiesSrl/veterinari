@@ -23,7 +23,7 @@
 
         <div class="profile-header-center">
             <div class="profile-avatar-wrapper">
-                <img id="petProfileAvatar" src="assets/default-pet.png" alt="Avatar Animale">
+                <img id="petProfileAvatar" src="assets/default-pet.png" alt="Avatar Animale" onerror="this.src='https://ui-avatars.com/api/?name=P&background=E2E8F0&color=64748B'">
             </div>
             <h1 class="profile-name" id="petProfileName">...</h1>
             <p class="profile-id">ID animale <span id="petProfileId">...</span></p>
@@ -47,7 +47,7 @@
                 <div class="info-icon icon-blue"><i class="fa-solid fa-microchip"></i></div>
                 <div class="info-text">
                     <div class="info-title">Microchip</div>
-                    <div class="info-desc">Non inserito</div>
+                    <div class="info-desc" id="petMicrochip">Non inserito</div>
                 </div>
             </div>
         </div>
@@ -68,7 +68,8 @@
             </div>
         </div>
 
-        <div style="height: 40px;"></div> </main>
+        <div style="height: 40px;"></div> 
+    </main>
 
     <script type="module" src="js/profilo-animale.js"></script>
 </body>

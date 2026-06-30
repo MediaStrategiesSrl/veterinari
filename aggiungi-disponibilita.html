@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Nuovo Appuntamento — Veterinari.it</title>
+    <link rel="stylesheet" href="css/global.css">
+    <link rel="stylesheet" href="css/aggiungi-disponibilita.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+
+    <main class="app-container">
+        <header class="page-header">
+            <a href="agenda.html" class="back-btn"><i class="fas fa-chevron-left"></i></a>
+            <div class="header-title">
+                <h2>Nuovo Appuntamento</h2>
+                <p>Inserisci data, ora e paziente</p>
+            </div>
+            <div class="header-action">
+                <i class="fa-solid fa-diamond"></i>
+            </div>
+        </header>
+
+        <form id="appointmentForm" class="form-container">
+            
+            <div class="form-card">
+                <h3><i class="fa-solid fa-paw"></i> Paziente</h3>
+                <div class="input-group">
+                    <label for="petSelect">Seleziona Animale</label>
+                    <select id="petSelect" required disabled>
+                        <option value="" disabled selected>Caricamento pazienti...</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-card">
+                <h3><i class="fa-regular fa-clock"></i> Data e Orario</h3>
+                
+                <div class="input-group">
+                    <label for="dataInizio">Inizio Visita</label>
+                    <input type="datetime-local" id="dataInizio" required>
+                </div>
+
+                <div class="input-group">
+                    <label for="dataFine">Fine Visita</label>
+                    <input type="datetime-local" id="dataFine" required>
+                </div>
+            </div>
+
+            <div class="form-card">
+                <h3><i class="fa-solid fa-euro-sign"></i> Dettagli Economici</h3>
+                <div class="input-group">
+                    <label for="costo">Costo della Visita (€)</label>
+                    <input type="number" id="costo" step="0.01" min="0" placeholder="0.00" required>
+                </div>
+            </div>
+
+            <button type="submit" id="submitBtn" class="btn-save" disabled>Conferma Appuntamento</button>
+            <div id="formMessage" class="form-message"></div>
+        </form>
+
+    </main>
+
+    <script type="module" src="js/aggiungi-disponibilita.js"></script>
+</body>
+</html>

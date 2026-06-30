@@ -9,6 +9,7 @@ const petProfileName = document.getElementById("petProfileName");
 const petProfileId = document.getElementById("petProfileId");
 const petProfileAvatar = document.getElementById("petProfileAvatar");
 const petSpeciesBreed = document.getElementById("petSpeciesBreed");
+const petMicrochip = document.getElementById("petMicrochip"); // Nuovo
 
 const authorizedVetsContainer = document.getElementById("authorizedVetsContainer");
 const recentActivitiesContainer = document.getElementById("recentActivitiesContainer");
@@ -40,7 +41,7 @@ async function loadPetProfile() {
         if (error) throw error;
         if (!pet) throw new Error("Animale non trovato");
 
-        // 2. Popola i Dati Base (Avatar, Nome, Specie, Razza, ID)
+        // 2. Popola i Dati Base (Avatar, Nome, Specie, Razza, ID, Microchip)
         pageHeaderTitle.textContent = `Profilo di ${pet.nome}`;
         petProfileName.textContent = pet.nome;
         
@@ -52,23 +53,35 @@ async function loadPetProfile() {
         const razzaText = pet.razza ? ` · ${pet.razza}` : '';
         petSpeciesBreed.textContent = `${pet.specie}${razzaText}`;
 
+        // Compila il Microchip se esiste!
+        petMicrochip.textContent = pet.microchip ? pet.microchip : "Non inserito";
+
         // Avatar
         if (pet.avatar_url) {
+            // Assicurati che il bucket si chiami davvero 'avatars', se usi 'storage_veterinari' modificalo!
             const { data: publicUrlData } = supabase.storage.from('avatars').getPublicUrl(pet.avatar_url);
-            // Se per caso usi 'storage_veterinari' e 'pets_avatar', cambia la riga sopra di conseguenza!
             petProfileAvatar.src = publicUrlData.publicUrl;
+        } else {
+             petProfileAvatar.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(pet.nome)}&background=F58220&color=fff`;
         }
 
         // ==========================================
-        // 3. POPOLA ACCESSI VETERINARI (Dinamico)
+        // 3. POPOLA ACCESSI VETERINARI (Doppio JOIN)
         // ==========================================
-        // Per ora facciamo una query finta su una tabella che potresti non avere ancora ("vet_access")
-        // che ci restituirà array vuoto, scatenando lo stato "Nullo" elegantemente.
         const { data: vets, error: vetError } = await supabase
-            .from('appointments') // Usiamo appointments come mock per ora
-            .select('provider_id')
-            .eq('owner_id', user.id)
-            .limit(0); // Forza a 0 per simulare il vuoto
+            .from('veterinarian_patients')
+            .select(`
+                veterinarian_id,
+                veterinarians (
+                    profiles (
+                        nome, 
+                        avatar_url
+                    )
+                )
+            `)
+            .eq('pet_id', pet.id);
+
+        if (vetError) throw vetError;
 
         if (!vets || vets.length === 0) {
             authorizedVetsContainer.innerHTML = `
@@ -77,25 +90,42 @@ async function loadPetProfile() {
                 </div>
             `;
         } else {
-            // Qui andrà la logica quando avremo i veterinari collegati
             authorizedVetsContainer.innerHTML = ''; 
-        }
+            
+            vets.forEach(relazione => {
+                // Navighiamo nel "doppio salto" per pescare nome e foto
+                const profiloVet = relazione.veterinarians?.profiles;
+                const vetName = profiloVet?.nome || 'Veterinario';
+                const avatarUrl = profiloVet?.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(vetName)}&background=E0F2FE&color=0284C7`;
 
+                const vetHTML = `
+                    <div style="display: flex; align-items: center; padding: 15px; border: 1px solid #E2E8F0; border-radius: 16px; margin-bottom: 10px; background: #fff;">
+                        <img src="${avatarUrl}" alt="Avatar" style="width: 45px; height: 45px; border-radius: 50%; object-fit: cover; margin-right: 15px; border: 1px solid #E2E8F0;" onerror="this.src='https://ui-avatars.com/api/?name=V&background=E0F2FE&color=0284C7'">
+                        <div style="flex-grow: 1;">
+                            <h4 style="margin: 0; color: #1E293B; font-size: 1rem;">${vetName}</h4>
+                            <p style="margin: 3px 0 0 0; font-size: 0.8rem; color: #059669; font-weight: 600;">
+                                <i class="fa-solid fa-check-circle"></i> Accesso autorizzato
+                            </p>
+                        </div>
+                    </div>
+                `;
+                authorizedVetsContainer.insertAdjacentHTML('beforeend', vetHTML);
+            });
+        }
         // ==========================================
-        // 4. POPOLA ATTIVITÀ RECENTI (Dinamico)
+        // 4. POPOLA ATTIVITÀ RECENTI (Ancora finto per ora)
         // ==========================================
         const { data: activities, error: actError } = await supabase
-            .from('walks') // Usiamo walks come mock
+            .from('walks') 
             .select('*')
             .eq('creator_id', user.id)
-            .limit(0); // Forza a 0 per simulare il vuoto
+            .limit(0); 
 
         if (!activities || activities.length === 0) {
             recentActivitiesContainer.innerHTML = `
                 <div class="empty-state-text" style="padding-left: 0;">Nessuna attività registrata di recente.</div>
             `;
         } else {
-            // Logica timeline per il futuro
             recentActivitiesContainer.innerHTML = '';
         }
 

@@ -1,0 +1,154 @@
+/* Sfondo Crema Forzato */
+body, .app-container {
+    background-color: #F8F7F4 !important;
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+/* Header */
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px;
+}
+
+.back-btn { color: #1E293B; font-size: 1.2rem; text-decoration: none; }
+.header-title { text-align: center; flex-grow: 1; }
+.header-title h2 { margin: 0; font-size: 1.4rem; color: #1E293B; }
+.header-title p { margin: 2px 0 0 0; font-size: 0.85rem; color: #64748B; }
+.header-action i { font-size: 1.2rem; color: #1E293B; }
+
+.dashboard-content { padding: 0 20px 40px 20px; }
+
+/* HERO CARD BLU */
+.hero-card {
+    background: linear-gradient(135deg, #57B6D8, #42A2C4);
+    border-radius: 24px;
+    padding: 25px;
+    color: white;
+    margin-bottom: 20px;
+    box-shadow: 0 10px 20px rgba(66, 162, 196, 0.2);
+    position: relative;
+    overflow: hidden;
+}
+
+/* Cerchi decorativi di sfondo nella card */
+.hero-card::before {
+    content: ''; position: absolute; top: -50px; right: -50px;
+    width: 200px; height: 200px; background: rgba(255,255,255,0.1);
+    border-radius: 50%;
+}
+
+.hero-top {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 15px;
+    position: relative;
+    z-index: 2;
+}
+
+.hero-avatar {
+    width: 80px; height: 80px;
+    border-radius: 20px;
+    object-fit: cover;
+    border: 3px solid rgba(255,255,255,0.3);
+    background-color: #fff;
+}
+
+.verified-badge {
+    display: inline-block;
+    background: rgba(255,255,255,0.25);
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 0.7rem;
+    font-weight: 800;
+    letter-spacing: 0.5px;
+    margin-bottom: 6px;
+    backdrop-filter: blur(4px);
+}
+
+.hero-info h1 { margin: 0; font-size: 1.6rem; line-height: 1.1; }
+
+.hero-subtitle {
+    font-size: 0.95rem;
+    line-height: 1.4;
+    margin-bottom: 20px;
+    opacity: 0.95;
+    position: relative;
+    z-index: 2;
+}
+
+.hero-subtitle i { color: #FFD43B; margin-right: 3px; }
+
+/* Bottone Prenota */
+.btn-book {
+    width: 100%;
+    background-color: #fff;
+    color: #F58220;
+    border: none;
+    padding: 16px;
+    border-radius: 16px;
+    font-size: 1.05rem;
+    font-weight: 800;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    position: relative;
+    z-index: 2;
+    transition: transform 0.2s;
+}
+.btn-book:active { transform: scale(0.98); }
+
+/* STATISTICHE (3 Box bianchi) */
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin-bottom: 30px;
+}
+
+.stat-box {
+    background: #fff;
+    border-radius: 16px;
+    padding: 15px 5px;
+    text-align: center;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+    border: 1px solid #E2E8F0;
+}
+
+.stat-box h3 { margin: 0 0 5px 0; font-size: 1.1rem; color: #1E293B; }
+.stat-box p { margin: 0; font-size: 0.75rem; color: #64748B; }
+
+/* SERVIZI */
+.section-title { margin: 0 0 15px 0; font-size: 1.3rem; color: #1E293B; }
+
+.services-list { display: flex; flex-direction: column; gap: 12px; }
+
+.service-card {
+    background: #fff;
+    border-radius: 20px;
+    padding: 16px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+    border: 1px solid #E2E8F0;
+    text-decoration: none;
+}
+
+.service-icon {
+    width: 50px; height: 50px;
+    border-radius: 16px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.3rem;
+}
+
+.icon-orange { background-color: #FEF3C7; color: #F58220; }
+.icon-blue { background-color: #E0F2FE; color: #0284C7; }
+
+.service-details { flex-grow: 1; }
+.service-details h4 { margin: 0 0 4px 0; font-size: 1.05rem; color: #1E293B; }
+.service-details p { margin: 0; font-size: 0.85rem; color: #64748B; }
+
+.service-arrow { color: #CBD5E1; font-size: 1rem; }

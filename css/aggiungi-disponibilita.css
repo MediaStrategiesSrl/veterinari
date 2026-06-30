@@ -1,0 +1,109 @@
+/* Sfondo Crema Forzato */
+body, .app-container {
+    background-color: #F8F7F4 !important;
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+.app-container {
+    max-width: 480px;
+    margin: 0 auto;
+    min-height: 100vh;
+    padding-bottom: 40px;
+}
+
+/* Header */
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px;
+}
+
+.back-btn { color: #1E293B; font-size: 1.2rem; text-decoration: none; }
+.header-title { text-align: center; flex-grow: 1; }
+.header-title h2 { margin: 0; font-size: 1.3rem; color: #1E293B; }
+.header-title p { margin: 2px 0 0 0; font-size: 0.85rem; color: #64748B; }
+.header-action i { font-size: 1.2rem; color: #1E293B; }
+
+.form-container { padding: 0 20px; }
+
+/* Stile Card in Linea con il Design dell'App */
+.form-card {
+    background-color: #fff;
+    border-radius: 20px;
+    padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+    border: 1px solid #E2E8F0;
+}
+
+.form-card h3 {
+    margin: 0 0 15px 0;
+    font-size: 1rem;
+    color: #F58220;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    border-bottom: 1px solid #F1F5F9;
+    padding-bottom: 10px;
+}
+
+.input-group { margin-bottom: 15px; }
+.input-group:last-child { margin-bottom: 0; }
+
+.input-group label {
+    display: block;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #475569;
+    margin-bottom: 6px;
+}
+
+/* Input, Select, Datetime stilosi */
+.input-group input, .input-group select {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #CBD5E1;
+    border-radius: 12px;
+    font-size: 1rem;
+    color: #1E293B;
+    box-sizing: border-box;
+    background-color: #fff;
+    font-family: inherit;
+    outline: none;
+    transition: border-color 0.2s;
+}
+
+.input-group input:focus, .input-group select:focus {
+    border-color: #F58220;
+}
+
+/* Bottone di salvataggio */
+.btn-save {
+    width: 100%;
+    background-color: #F58220;
+    color: #fff;
+    border: none;
+    padding: 16px;
+    border-radius: 14px;
+    font-size: 1rem;
+    font-weight: bold;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(245, 130, 32, 0.2);
+    transition: all 0.2s;
+}
+
+.btn-save:hover { background-color: #E0731A; }
+.btn-save:disabled {
+    background-color: #CBD5E1;
+    box-shadow: none;
+    cursor: not-allowed;
+}
+
+.form-message {
+    text-align: center;
+    margin-top: 15px;
+    font-size: 0.9rem;
+    font-weight: 500;
+}
