@@ -118,26 +118,41 @@ form.addEventListener("submit", async (e) => {
         if (file) {
             submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Caricamento file...';
             
-            // Crea un nome unico per il file per evitare sovrascritture
-            const fileExt = file.name.split('.').pop();
-            const fileName = `${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
-            
-            // Inserisce il file esattamente nella tua cartella 'referti'
+            // LA MAGIA ANTI-DOPPIONE: Stessa nomenclatura della scheda-paziente!
+            const safeName = file.name.replace(/[^a-zA-Z0-9.\-_]/g, '_');
+            const fileName = `${petId}_${safeName}`;
             const filePath = `referti/${fileName}`; 
 
-            // Upload nel TUO bucket 'storage_veterinari'
-            const { error: uploadError } = await supabase.storage
+            // Controllo pre-upload: Esiste già questo file nello storage?
+            const { data: existingFiles } = await supabase.storage
                 .from('storage_veterinari')
-                .upload(filePath, file);
+                .list('referti', { search: fileName });
 
-            if (uploadError) throw uploadError;
+            const isDuplicate = existingFiles && existingFiles.some(f => f.name === fileName);
 
-            // Recupera il link pubblico del file appena caricato
-            const { data: { publicUrl } } = supabase.storage
-                .from('storage_veterinari')
-                .getPublicUrl(filePath);
+            if (isDuplicate) {
+                // Se esiste, NON lo ricarichiamo (risparmiamo memoria), peschiamo solo il link!
+                console.log("File già presente in memoria. Riciclo il link!");
+                const { data: { publicUrl } } = supabase.storage
+                    .from('storage_veterinari')
+                    .getPublicUrl(filePath);
+                
+                attachmentUrl = publicUrl;
+            } else {
+                // Se è un file nuovo di zecca, facciamo l'upload classico
+                console.log("File nuovo, procedo all'upload...");
+                const { error: uploadError } = await supabase.storage
+                    .from('storage_veterinari')
+                    .upload(filePath, file);
 
-            attachmentUrl = publicUrl;
+                if (uploadError) throw uploadError;
+
+                const { data: { publicUrl } } = supabase.storage
+                    .from('storage_veterinari')
+                    .getPublicUrl(filePath);
+
+                attachmentUrl = publicUrl;
+            }
         }
 
         submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Salvataggio referto...';
@@ -152,7 +167,7 @@ form.addEventListener("submit", async (e) => {
                 anamnesi: document.getElementById("anamnesi").value,
                 diagnosi: document.getElementById("diagnosi").value,
                 terapia: document.getElementById("terapia").value,
-                attachment_url: attachmentUrl // <-- Salva il link del file! (Sarà NULL se non ha allegato nulla)
+                attachment_url: attachmentUrl // <-- Salva il link del file! (O quello nuovo, o quello riciclato)
             });
 
         if (insertError) throw insertError;

@@ -1,0 +1,131 @@
+body, .app-container {
+    background-color: #FDF7F0 !important;
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+/* Header */
+.page-header {
+    display: flex; justify-content: space-between; align-items: center; padding: 20px;
+}
+.back-btn { color: #1E293B; font-size: 1.2rem; text-decoration: none; }
+.header-title { text-align: center; flex-grow: 1; }
+.header-title h2 { margin: 0; font-size: 1.4rem; color: #1E293B; }
+.header-title p { margin: 2px 0 0 0; font-size: 0.85rem; color: #64748B; }
+.header-action i { font-size: 1.2rem; color: #1E293B; }
+
+.dashboard-content { padding: 0 20px; }
+
+/* CARD IDENTIFICATIVA PAZIENTE */
+.pet-id-card {
+    background: #fff;
+    border-radius: 20px;
+    padding: 20px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 25px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+    border: 1px solid #E2E8F0;
+}
+
+.pet-id-avatar {
+    width: 75px; height: 75px;
+    border-radius: 50%;
+    object-fit: cover;
+    flex-shrink: 0;
+    border: 1px solid #E2E8F0;
+}
+
+.pet-id-info { flex-grow: 1; }
+
+.pet-id-info h3 { margin: 0 0 4px 0; font-size: 1.2rem; color: #1E293B; }
+.pet-id-info p { margin: 0 0 8px 0; font-size: 0.8rem; color: #64748B; }
+
+.status-badge {
+    display: inline-block;
+    background: #D1FAE5; /* Verdino chiaro */
+    color: #059669; /* Verde scuro */
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 700;
+}
+.status-badge i { margin-right: 3px; }
+
+/* GRIGLIA AZIONI 2x2 */
+.actions-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+    margin-bottom: 30px;
+}
+
+.action-card {
+    background: #fff;
+    border-radius: 20px;
+    padding: 20px;
+    text-decoration: none;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+    border: 1px solid #E2E8F0;
+    transition: transform 0.1s;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+.action-card:active { transform: scale(0.98); }
+
+.action-icon {
+    width: 45px; height: 45px;
+    border-radius: 14px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.2rem;
+    margin-bottom: 15px;
+}
+
+.icon-orange { background-color: #FEF3C7; color: #F58220; }
+.icon-blue { background-color: #E0F2FE; color: #0284C7; }
+
+.action-card h4 { margin: 0 0 5px 0; font-size: 1rem; color: #1E293B; }
+.action-card p { margin: 0; font-size: 0.75rem; color: #64748B; line-height: 1.3; }
+
+/* INFORMAZIONI COMPLETE (Lista) */
+.section-title {
+    font-size: 1.2rem;
+    color: #1E293B;
+    margin: 0 0 15px 0;
+}
+
+.info-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.info-list-item {
+    background: #fff;
+    border-radius: 20px;
+    padding: 15px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+    border: 1px solid #E2E8F0;
+    text-decoration: none;
+    transition: transform 0.1s;
+}
+.info-list-item:active { transform: scale(0.98); }
+
+.info-list-icon {
+    width: 40px; height: 40px;
+    border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.1rem;
+    flex-shrink: 0;
+}
+
+.info-list-text { flex-grow: 1; }
+.info-list-text h4 { margin: 0 0 3px 0; font-size: 1rem; color: #1E293B; }
+.info-list-text p { margin: 0; font-size: 0.8rem; color: #64748B; }
+
+.info-list-arrow { color: #CBD5E1; font-size: 0.9rem; }

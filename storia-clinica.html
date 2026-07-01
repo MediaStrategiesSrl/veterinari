@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Cartella Sanitaria — Veterinari.it</title>
+    <link rel="stylesheet" href="css/global.css">
+    <link rel="stylesheet" href="css/storia-clinica.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+
+    <main class="app-container">
+        
+        <header class="page-header">
+            <a href="#" id="backBtn" class="back-btn"><i class="fas fa-chevron-left"></i></a>
+            <div class="header-title">
+                <h2>Cartella sanitaria</h2>
+                <p id="headerSubtitle">Caricamento...</p>
+            </div>
+            <div class="header-action">
+                <i class="fa-solid fa-diamond"></i>
+            </div>
+        </header>
+
+        <div class="dashboard-content">
+            
+            <div class="stats-grid">
+                
+                <div class="stat-box">
+                    <div class="stat-icon icon-orange"><i class="fa-solid fa-plus"></i></div>
+                    <h4>Visite</h4>
+                    <p id="countVisite">...</p>
+                </div>
+
+                <div class="stat-box">
+                    <div class="stat-icon icon-blue"><i class="fa-solid fa-prescription"></i></div>
+                    <h4>Farmaci</h4>
+                    <p>In sviluppo</p>
+                </div>
+
+                <div class="stat-box">
+                    <div class="stat-icon icon-blue"><i class="fa-solid fa-diamond"></i></div>
+                    <h4>Vaccini</h4>
+                    <p>In sviluppo</p>
+                </div>
+
+                <div class="stat-box">
+                    <div class="stat-icon icon-orange"><i class="fa-solid fa-list-ul"></i></div>
+                    <h4>Referti</h4>
+                    <p id="countReferti">...</p>
+                </div>
+
+            </div>
+
+            <div class="section-header">
+                <h3>Linea clinica</h3>
+                <a href="#" class="export-link">Esporta</a>
+            </div>
+
+            <div class="timeline" id="timelineContainer">
+                <div style="text-align: center; color: #94A3B8; padding: 20px;">
+                    <i class="fa-solid fa-spinner fa-spin"></i> Caricamento cartella...
+                </div>
+            </div>
+
+            <div style="height: 40px;"></div>
+        </div>
+    </main>
+
+    <script type="module" src="js/storia-clinica.js"></script>
+</body>
+</html>

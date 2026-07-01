@@ -156,3 +156,25 @@ body, .app-container {
 .nav-item.active {
     color: #F58220; /* Colore arancione per indicare dove ti trovi */
 }
+
+/* BOTTONE CAMBIA PROFILO / LOGOUT */
+.btn-logout {
+    display: block;
+    width: 100%;
+    background-color: #fff;
+    border: none;
+    border-radius: 16px;
+    padding: 1.2rem;
+    text-align: center;
+    font-weight: 800;
+    font-size: 1.1rem;
+    color: #1a365d; /* Blu scuro elegante */
+    box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+    margin-top: 25px; /* Lo stacca bene dal menu sopra */
+    cursor: pointer;
+    transition: transform 0.1s;
+}
+
+.btn-logout:active {
+    transform: scale(0.98);
+}

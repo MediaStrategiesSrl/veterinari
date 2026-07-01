@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Certificazioni — Veterinari.it</title>
+    <link rel="stylesheet" href="css/global.css">
+    <link rel="stylesheet" href="css/certificazioni.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+
+    <main class="app-container">
+        
+        <!-- Header -->
+        <header class="page-header">
+            <a href="profilo-veterinario.html" class="back-btn"><i class="fas fa-chevron-left"></i></a>
+            <div class="header-title">
+                <h2>Certificazioni</h2>
+                <p>Documenti e verifiche</p>
+            </div>
+            <div class="header-action" style="width: 20px;"></div> <!-- Spaziatore per centrare -->
+        </header>
+
+        <div class="dashboard-content">
+            
+            <div class="info-alert">
+                <i class="fa-solid fa-shield-halved"></i>
+                <p>I tuoi documenti sono archiviati in modo sicuro e utilizzati esclusivamente per la verifica dell'Ordine.</p>
+            </div>
+
+            <form id="certificationsForm">
+                
+                <!-- 1. FOTO PROFILO -->
+                <h3 class="section-title">Foto Profilo</h3>
+                <label for="avatarUpload" class="upload-card">
+                    <div class="upload-icon icon-blue"><i class="fa-solid fa-camera"></i></div>
+                    <div class="upload-text">
+                        <h4 id="avatarFileName">Aggiorna foto</h4>
+                        <p id="avatarSubtext">Formato JPG o PNG</p>
+                    </div>
+                    <div class="upload-btn"><i class="fa-solid fa-plus"></i></div>
+                    <input type="file" id="avatarUpload" style="display: none;" accept="image/*">
+                </label>
+
+                <!-- 2. CARTA D'IDENTITÀ -->
+                <h3 class="section-title">Documento d'Identità</h3>
+                <label for="ciUpload" class="upload-card">
+                    <div class="upload-icon icon-orange"><i class="fa-regular fa-id-card"></i></div>
+                    <div class="upload-text">
+                        <h4 id="ciFileName">Carica documento</h4>
+                        <p id="ciSubtext">Fronte/Retro in unico file PDF o Foto</p>
+                    </div>
+                    <div class="upload-btn"><i class="fa-solid fa-plus"></i></div>
+                    <input type="file" id="ciUpload" style="display: none;" accept=".pdf,image/*">
+                </label>
+
+                <!-- 3. TESSERA DELL'ORDINE -->
+                <h3 class="section-title">Tessera dell'Ordine</h3>
+                <label for="tesseraUpload" class="upload-card">
+                    <div class="upload-icon icon-blue"><i class="fa-solid fa-address-card"></i></div>
+                    <div class="upload-text">
+                        <h4 id="tesseraFileName">Carica tessera</h4>
+                        <p id="tesseraSubtext">PDF o Foto nitida</p>
+                    </div>
+                    <div class="upload-btn"><i class="fa-solid fa-plus"></i></div>
+                    <input type="file" id="tesseraUpload" style="display: none;" accept=".pdf,image/*">
+                </label>
+
+                <!-- NUMERO ORDINE MANUALE -->
+                <h3 class="section-title">Numero di Iscrizione</h3>
+                <div class="input-group">
+                    <input type="text" id="numeroOrdine" placeholder="Es. Ordine di Milano n. 5124" class="custom-input">
+                </div>
+
+                <!-- MESSAGGIO DI STATO -->
+                <div id="formMessage" style="margin-top: 15px; text-align: center; font-weight: 600; font-size: 0.9rem;"></div>
+
+                <button type="submit" id="submitBtn" class="btn-primary" style="margin-top: 25px; margin-bottom: 40px;">
+                    Salva Documenti
+                </button>
+            </form>
+
+        </div>
+    </main>
+
+    <script type="module" src="js/certificazioni-veterinario.js"></script>
+</body>
+</html>

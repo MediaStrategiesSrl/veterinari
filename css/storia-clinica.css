@@ -1,0 +1,120 @@
+body, .app-container {
+    background-color: #F8F7F4 !important; /* Colore panna di base */
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+/* Header */
+.page-header { display: flex; justify-content: space-between; align-items: center; padding: 20px; }
+.back-btn { color: #1E293B; font-size: 1.2rem; text-decoration: none; }
+.header-title { text-align: center; flex-grow: 1; }
+.header-title h2 { margin: 0; font-size: 1.5rem; color: #1E293B; font-weight: 700; }
+.header-title p { margin: 2px 0 0 0; font-size: 0.85rem; color: #94A3B8; }
+.header-action i { font-size: 1.2rem; color: #1E293B; }
+
+.dashboard-content { padding: 0 20px; }
+
+/* GRIGLIA STATISTICHE */
+.stats-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+    margin-bottom: 35px;
+}
+
+.stat-box {
+    background: #fff;
+    border-radius: 24px;
+    padding: 20px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+}
+
+.stat-icon {
+    width: 45px; height: 45px;
+    border-radius: 14px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.2rem;
+    margin-bottom: 12px;
+}
+
+.icon-orange { background-color: #FEF3C7; color: #1E293B; } /* Icona scura su sfondo crema */
+.icon-blue { background-color: #E0F2FE; color: #1E293B; }
+
+.stat-box h4 { margin: 0 0 4px 0; font-size: 1.05rem; color: #1E293B; font-weight: 700; }
+.stat-box p { margin: 0; font-size: 0.8rem; color: #64748B; }
+
+/* HEADER TIMELINE */
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 25px;
+}
+.section-header h3 { margin: 0; font-size: 1.3rem; color: #1E293B; font-weight: 600; }
+.export-link { color: #0284C7; font-weight: 800; text-decoration: none; font-size: 0.9rem; }
+
+/* TIMELINE (Linea Clinica) */
+.timeline {
+    padding-left: 10px; /* Spazio a sinistra per non attaccare la linea al bordo */
+}
+
+.timeline-item {
+    position: relative;
+    padding-left: 25px; /* Distanza del testo dalla linea */
+    padding-bottom: 30px;
+    border-left: 1px solid #CBD5E1; /* LA LINEA GRIGIA VERTICALE */
+}
+
+/* L'ultimo elemento non deve avere la riga che continua verso il basso */
+.timeline-item:last-child {
+    border-left: 1px solid transparent; 
+}
+
+/* PALLINI COLORATI */
+.timeline-dot {
+    position: absolute;
+    left: -6px; /* Centra il pallino di 11px sulla riga di 1px */
+    top: 0;
+    width: 11px;
+    height: 11px;
+    border-radius: 50%;
+}
+.dot-orange { background-color: #F58220; }
+.dot-blue { background-color: #0284C7; }
+
+/* CONTENUTO TESTUALE TIMELINE */
+.timeline-meta {
+    font-size: 0.7rem;
+    font-weight: 800;
+    color: #94A3B8;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 6px;
+    line-height: 1;
+}
+
+.timeline-content h4 {
+    margin: 0 0 6px 0;
+    font-size: 1.1rem;
+    color: #1E293B;
+    font-weight: 600;
+}
+
+.timeline-content p {
+    margin: 0;
+    font-size: 0.85rem;
+    color: #64748B;
+    line-height: 1.4;
+}
+
+/* Link al referto allegato */
+.referto-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    margin-top: 8px;
+    font-size: 0.8rem;
+    color: #0284C7;
+    text-decoration: none;
+    font-weight: 700;
+}

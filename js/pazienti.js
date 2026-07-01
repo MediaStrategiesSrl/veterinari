@@ -13,7 +13,7 @@ const activeCountText = document.getElementById("activeCount");
 async function initPazienti() {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
-        window.location.href = "login.html";
+        window.location.href = "index.html";
         return;
     }
     currentUser = user;
@@ -31,7 +31,9 @@ async function caricaPazienti() {
                 pets (
                     id,
                     nome,
-                    razza
+                    razza,
+                    microchip,
+                    avatar_url
                 )
             `)
             .eq('veterinarian_id', currentUser.id)
@@ -40,13 +42,25 @@ async function caricaPazienti() {
         if (error) throw error;
 
         // Estraiamo in modo pulito l'array di pazienti
-        allPatients = data.map(item => ({
-            id: item.pets.id,
-            nome: item.pets.nome || "Sconosciuto",
-            razza: item.pets.razza || "Meticcio",
-            // Se non hai una foto nel db, usiamo un'immagine default canina simpatica
-            avatarUrl: "https://images.unsplash.com/photo-1543466835-00a7907e9de1?auto=format&fit=crop&w=150&q=80" 
-        }));
+        allPatients = data.map(item => {
+            let finalAvatarUrl = "https://images.unsplash.com/photo-1543466835-00a7907e9de1?auto=format&fit=crop&w=150&q=80"; // Default
+            
+            // Se c'è un avatar salvato in Supabase, recupera il link pubblico
+            if (item.pets.avatar_url) {
+                const { data: publicUrlData } = supabase.storage.from('avatars').getPublicUrl(item.pets.avatar_url);
+                if (publicUrlData) {
+                    finalAvatarUrl = publicUrlData.publicUrl;
+                }
+            }
+
+            return {
+                id: item.pets.id,
+                nome: item.pets.nome || "Sconosciuto",
+                razza: item.pets.razza || "Meticcio",
+                microchip: item.pets.microchip || "", // Aggiunto microchip
+                avatarUrl: finalAvatarUrl 
+            };
+        });
 
         // Aggiorna contatore statistico
         activeCountText.textContent = allPatients.length;
@@ -76,7 +90,8 @@ function renderPatients(patientsToRender) {
 
     patientsToRender.forEach(pet => {
         const card = document.createElement("a");
-        card.href = "#"; // Qui andrà il link alla cartella clinica in futuro
+        // ECCO LA MODIFICA CHIAVE: Passiamo l'ID nell'URL
+        card.href = `scheda-paziente.html?petId=${pet.id}`; 
         card.className = "patient-card";
         
         card.innerHTML = `
@@ -96,12 +111,14 @@ function renderPatients(patientsToRender) {
 
 // Filtro di ricerca "Live"
 searchInput.addEventListener("input", (e) => {
-    const searchTerm = e.target.value.toLowerCase();
+    const searchTerm = e.target.value.toLowerCase().trim();
     
-    // Filtriamo in base al nome
-    const filtered = allPatients.filter(pet => 
-        pet.nome.toLowerCase().includes(searchTerm)
-    );
+    // Filtriamo in base al nome OPPURE al microchip
+    const filtered = allPatients.filter(pet => {
+        const matchNome = pet.nome.toLowerCase().includes(searchTerm);
+        const matchMicrochip = pet.microchip.toLowerCase().includes(searchTerm);
+        return matchNome || matchMicrochip;
+    });
     
     renderPatients(filtered);
 });

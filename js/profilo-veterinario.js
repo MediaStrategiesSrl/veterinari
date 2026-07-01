@@ -55,4 +55,35 @@ async function initProfile() {
     }
 }
 
+// ==========================================
+// LOGOUT / CAMBIO PROFILO
+// ==========================================
+const logoutBtn = document.getElementById("logoutBtn");
+
+if (logoutBtn) {
+    logoutBtn.addEventListener("click", async () => {
+        // Opzionale: Cambia il testo mentre carica
+        logoutBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Uscita in corso...';
+        logoutBtn.disabled = true;
+
+        try {
+            // Disconnette l'utente da Supabase
+            const { error } = await supabase.auth.signOut();
+            if (error) throw error;
+
+            // Pulisce la memoria del browser per sicurezza
+            localStorage.clear();
+            sessionStorage.clear();
+
+            // Rimanda alla pagina di Login
+            window.location.href = "index.html";
+        } catch (error) {
+            console.error("Errore durante il logout:", error);
+            alert("Errore durante la disconnessione.");
+            logoutBtn.innerHTML = 'Cambia profilo';
+            logoutBtn.disabled = false;
+        }
+    });
+}
+
 initProfile();

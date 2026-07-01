@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Scheda Paziente — Veterinari.it</title>
+    <link rel="stylesheet" href="css/global.css">
+    <link rel="stylesheet" href="css/scheda-paziente.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+
+    <main class="app-container">
+        
+        <header class="page-header">
+            <a href="pazienti.html" class="back-btn"><i class="fas fa-chevron-left"></i></a>
+            <div class="header-title">
+                <h2 id="headerPetName">Caricamento...</h2>
+                <p>Cartella clinica completa</p>
+            </div>
+            <div class="header-action">
+                <i class="fa-solid fa-diamond"></i>
+            </div>
+        </header>
+
+        <div class="dashboard-content">
+            
+            <div class="pet-id-card">
+                <img src="https://via.placeholder.com/100/F1F5F9/94A3B8" alt="Avatar Animale" id="petAvatar" class="pet-id-avatar">
+                <div class="pet-id-info">
+                    <h3 id="petNameAge">...</h3>
+                    <p id="petMicrochipText">Caricamento dati...</p>
+                    <div class="status-badge"><i class="fa-solid fa-check"></i> Accesso autorizzato</div>
+                </div>
+            </div>
+
+            <div class="actions-grid">
+                
+                <a href="#" id="btnNuovaVisita" class="action-card">
+                    <div class="action-icon icon-orange"><i class="fa-solid fa-plus"></i></div>
+                    <h4>Nuova visita</h4>
+                    <p>Diagnosi e terapia</p>
+                </a>
+
+             <label for="uploadReferto" class="action-card" style="cursor: pointer;">
+                    <div class="action-icon icon-blue"><i class="fa-solid fa-file-lines"></i></div>
+                    <h4 id="refertoTitle">Allega referto</h4>
+                    <p id="refertoSub">PDF, foto o esame</p>
+                    <input type="file" id="uploadReferto" multiple style="display: none;" accept=".pdf,image/*">
+                </label>
+
+                <a href="#" class="action-card">
+                    <div class="action-icon icon-blue"><i class="fa-solid fa-prescription-bottle-medical"></i></div>
+                    <h4>Prescrizione</h4>
+                    <p>Farmaci e dosaggio</p>
+                </a>
+
+                <a href="#" class="action-card">
+                    <div class="action-icon icon-orange"><i class="fa-solid fa-arrow-up-right-from-square"></i></div>
+                    <h4>Esporta</h4>
+                    <p>Cartella interoperabile</p>
+                </a>
+
+            </div>
+
+            <h3 class="section-title">Informazioni complete</h3>
+
+            <div class="info-list">
+                
+             <a href="#" id="btnStoriaClinica" class="info-list-item">
+        <div class="info-list-icon icon-orange"><i class="fa-solid fa-notes-medical"></i></div>
+     <div class="info-list-text">
+        <h4>Storia clinica</h4>
+        <p id="storiaClinicaStats">Caricamento...</p>
+        </div>
+        <i class="fa-solid fa-chevron-right info-list-arrow"></i>
+    </a>
+
+                <a href="#" class="info-list-item">
+                    <div class="info-list-icon icon-blue"><i class="fa-solid fa-prescription"></i></div>
+                    <div class="info-list-text">
+                        <h4>Terapie attive</h4>
+                        <p id="terapieStats">Nessuna terapia attiva</p>
+                    </div>
+                    <i class="fa-solid fa-chevron-right info-list-arrow"></i>
+                </a>
+
+                <a href="#" class="info-list-item">
+                    <div class="info-list-icon icon-orange"><i class="fa-solid fa-tree"></i></div>
+                    <div class="info-list-text">
+                        <h4>Attività e passeggiate</h4>
+                        <p id="attivitaStats">Nessun dato registrato</p>
+                    </div>
+                    <i class="fa-solid fa-chevron-right info-list-arrow"></i>
+                </a>
+
+            </div>
+
+            <div style="height: 40px;"></div>
+        </div>
+
+    </main>
+
+    <script type="module" src="js/scheda-paziente.js"></script>
+</body>
+</html>
