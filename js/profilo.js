@@ -29,7 +29,7 @@ async function loadUserProfile() {
         // 1. Controlla chi è loggato
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) {
-            window.location.href = "index.html";
+            window.location.href = "../../index.html";
             return;
         }
 
@@ -98,7 +98,7 @@ if (btnLogout) {
             alert("Errore durante il logout: " + error.message);
         } else {
             // Riporta alla pagina di Login
-            window.location.href = "index.html";
+            window.location.href = "../../index.html";
         }
     });
 }

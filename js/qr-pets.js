@@ -13,7 +13,7 @@ async function loadQRCode() {
         // 1. Controlla utente
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) {
-            window.location.href = 'login.html';
+            window.location.href = '../../index.html';
             return;
         }
 

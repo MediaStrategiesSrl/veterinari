@@ -130,7 +130,7 @@ form.addEventListener("submit", async (e) => {
         formMessage.style.color = "#059669";
 
         setTimeout(() => {
-            window.location.href = "agenda.html";
+            window.location.href = "pages/veterinario/agenda.html";
         }, 1500);
 
     } catch (error) {

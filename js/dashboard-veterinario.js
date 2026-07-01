@@ -17,7 +17,7 @@ async function initDashboard() {
 
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
-        window.location.href = "index.html";
+        window.location.href = "../../index.html";
         return;
     }
     currentUser = user;

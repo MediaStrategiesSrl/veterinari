@@ -245,13 +245,13 @@ form.addEventListener("submit", async function (event) {
     
     setTimeout(() => {
         if (selectedRoleName === "proprietario") {
-            window.location.href = "dashboard-proprietario.html";
+            window.location.href = "pages/proprietario/dashboard-proprietario.html";
         } else if (selectedRoleName === "veterinario") {
-            window.location.href = "dashboard-veterinario.html";
+            window.location.href = "pages/veterinario/dashboard-veterinario.html";
         } else if (selectedRoleName === "altro professionista") {
-            window.location.href = "dashboard-professionista.html";
+            window.location.href = "pages/professionista/dashboard-professionista.html";
         } else if (selectedRoleName === "sponsor") {
-            window.location.href = "dashboard-sponsor.html";
+            window.location.href = "pages/sponsor/dashboard-sponsor.html";
         } else {
             window.location.href = "index.html";
         }

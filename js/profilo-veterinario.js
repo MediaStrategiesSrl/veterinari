@@ -12,7 +12,7 @@ async function initProfile() {
         // 1. Verifica chi è loggato
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) {
-            window.location.href = "index.html";
+            window.location.href = "../../index.html";
             return;
         }
 
@@ -79,7 +79,7 @@ if (logoutBtn) {
             sessionStorage.clear();
 
             // Rimanda alla pagina di Login
-            window.location.href = "index.html";
+            window.location.href = "../../index.html";
         } catch (error) {
             console.error("Errore durante il logout:", error);
             alert("Errore durante la disconnessione.");

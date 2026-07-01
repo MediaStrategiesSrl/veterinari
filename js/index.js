@@ -99,22 +99,22 @@ form.addEventListener("submit", async function (event) {
         setTimeout(() => {
             switch (userRole) {
                 case 'veterinario':
-                    window.location.href = "dashboard-veterinario.html";
+                    window.location.href = "pages/veterinario/dashboard-veterinario.html";
                     break;
                 case 'professionista': 
                 case 'altro professionista': // Gestisce entrambe le possibili diciture
-                    window.location.href = "dashboard-professionista.html";
+                    window.location.href = "pages/professionista/dashboard-professionista.html";
                     break;
                 case 'sponsor':
-                    window.location.href = "dashboard-sponsor.html";
+                    window.location.href = "pages/sponsor/dashboard-sponsor.html";
                     break;
                 case 'proprietario':
-                    window.location.href = "dashboard-proprietario.html";
+                    window.location.href = "pages/proprietario/dashboard-proprietario.html";
                     break;
                 default:
                     // Fallback di sicurezza: se il ruolo non è definito o non riconosciuto
                     console.log("Ruolo non riconosciuto o mancante, fallback attivato verso proprietario.");
-                    window.location.href = "dashboard-proprietario.html"; 
+                    window.location.href = "pages/proprietario/dashboard-proprietario.html"; 
                     break;
             }
         }, 1500);

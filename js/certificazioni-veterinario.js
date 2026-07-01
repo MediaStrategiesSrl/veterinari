@@ -60,7 +60,7 @@ async function uploadFileToStorage(file, bucketName, folderPath) {
 async function initPage() {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
-        window.location.href = "login.html";
+        window.location.href = "../../index.html";
         return;
     }
     currentUser = user;

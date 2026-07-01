@@ -12,28 +12,28 @@ const ALL_ROLES = [
         title: "Proprietario",
         desc: "Gestisci i tuoi animali",
         icon: "fa-paw",
-        dashboardUrl: "dashboard-proprietario.html"
+        dashboardUrl: "pages/proprietario/dashboard-proprietario.html"
     },
     {
         id: "veterinario",
         title: "Veterinario",
         desc: "Gestisci visite e pazienti",
         icon: "fa-user-doctor",
-        dashboardUrl: "dashboard-veterinario.html"
+        dashboardUrl: "pages/veterinario/dashboard-veterinario.html"
     },
     {
         id: "professionista",
         title: "Professionista (Pet Sitter/Educatore)",
         desc: "Offri servizi per animali",
         icon: "fa-dog",
-        dashboardUrl: "dashboard-professionista.html"
+        dashboardUrl: "pages/professionista/dashboard-professionista.html"
     },
     {
         id: "sponsor",
         title: "Sponsor",
         desc: "Gestisci le tue campagne",
         icon: "fa-bullhorn",
-        dashboardUrl: "dashboard-sponsor.html"
+        dashboardUrl: "pages/sponsor/dashboard-sponsor.html"
     }
 ];
 

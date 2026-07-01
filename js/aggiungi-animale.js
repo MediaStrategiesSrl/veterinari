@@ -73,7 +73,7 @@ addPetForm.addEventListener('submit', async (e) => {
         } 
         
         // Se tutto va bene, torna alla dashboard
-        window.location.href = "dashboard-proprietario.html";
+        window.location.href = "pages/proprietario/dashboard-proprietario.html";
 
     } catch (err) {
         // Ora se c'è un errore te lo stampa in faccia, non puoi sbagliarti

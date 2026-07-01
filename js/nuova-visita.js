@@ -19,7 +19,7 @@ async function initPage() {
     // 1. Controllo Autenticazione
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
-        window.location.href = "index.html";
+        window.location.href = "../../index.html";
         return;
     }
     currentUser = user;
