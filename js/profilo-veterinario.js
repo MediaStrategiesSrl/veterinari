@@ -12,7 +12,7 @@ async function initProfile() {
         // 1. Verifica chi è loggato
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) {
-            window.location.href = "login.html";
+            window.location.href = "index.html";
             return;
         }
 
@@ -21,7 +21,7 @@ async function initProfile() {
             .from('veterinarians')
             .select(`
                 numero_ordine,
-                profiles (nome, avatar_url)
+                profiles (nome, cognome, avatar_url)
             `)
             .eq('user_id', user.id)
             .single();
@@ -30,13 +30,16 @@ async function initProfile() {
 
         // 3. Popola Nome e Avatar
         if (vetData.profiles) {
-            const nomeProf = vetData.profiles.nome || "Dott. Sconosciuto";
-            vetName.textContent = nomeProf;
+            const nome = vetData.profiles.nome || "";
+            const cognome = vetData.profiles.cognome || "";
+
+            const nomeCompleto = (nome || cognome) ? `${nome} ${cognome}`.trim() : "Dott. Sconosciuto";
+            vetName.textContent = nomeCompleto;
             
             if (vetData.profiles.avatar_url) {
                 vetAvatar.src = vetData.profiles.avatar_url;
             } else {
-                vetAvatar.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(nomeProf)}&background=E2E8F0&color=64748B`;
+                vetAvatar.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(nomeCompleto)}&background=E2E8F0&color=64748B`;
             }
         }
 

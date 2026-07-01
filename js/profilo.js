@@ -33,9 +33,9 @@ async function loadUserProfile() {
             return;
         }
 
-        // 2. Prendi i dati dalla tabella profiles (o users, dipende da come l'hai chiamata)
+        // 2. Prendi i dati dalla tabella profiles
         const { data: profileData, error } = await supabase
-            .from('profiles') // <-- Cambialo in 'users' se la tua tabella si chiama così
+            .from('profiles')
             .select('*')
             .eq('id', user.id)
             .single();
@@ -43,7 +43,7 @@ async function loadUserProfile() {
         if (error) throw error;
 
         // 3. Popola l'interfaccia
-        let nomeUtente = "Utente Senza Nome";
+        let nomeUtente = "";
         if (profileData.nome && profileData.nome.trim() !== "") {
             nomeUtente = profileData.nome.trim();
         }
@@ -53,14 +53,13 @@ async function loadUserProfile() {
             cognomeUtente = profileData.cognome.trim();
         }
 
-        userNameDisplay.textContent = nomeUtente;
+        // ECCO LA VARIABILE COMPLETA
+        const nomeCompletoUtente = [nomeUtente, cognomeUtente].filter(Boolean).join(" ").trim() || "Utente Senza Nome";
         
-        // Mockup della città (se non l'hai nel db la mettiamo fissa o dinamica)
         let citta = "Milano";
         if (profileData.citta && profileData.citta.trim() !== "") {
             citta = profileData.citta.trim();
         }
-        userDetailsDisplay.textContent = `Account verificato · ${citta}`;
 
         // 4. Gestione dinamica Avatar (Immagine vs Iniziali)
         let avatarHTML = '';
@@ -74,19 +73,18 @@ async function loadUserProfile() {
             avatarHTML = `<div class="user-initials-avatar">${initials}</div>`;
         }
 
-        // Sostituisce solo l'avatar senza toccare h1 e p sottostanti
+        // 5. STAMPA FINALE (Ora usiamo nomeCompletoUtente!)
         profileHeaderContainer.innerHTML = avatarHTML + `
-            <h1 id="userNameDisplay">${nomeUtente}</h1>
+            <h1 id="userNameDisplay">${nomeCompletoUtente}</h1>
             <p id="userDetailsDisplay">Account verificato · ${citta}</p>
         `;
 
     } catch (err) {
         console.error("Errore nel caricamento del profilo:", err);
-        userNameDisplay.textContent = "Errore";
-        userDetailsDisplay.textContent = "Impossibile caricare i dati";
+        if (userNameDisplay) userNameDisplay.textContent = "Errore";
+        if (userDetailsDisplay) userDetailsDisplay.textContent = "Impossibile caricare i dati";
     }
 }
-
 loadUserProfile();
 
 // ==========================================

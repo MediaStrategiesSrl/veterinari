@@ -173,6 +173,7 @@ form.addEventListener("submit", async function (event) {
         id: user.id,
         nome: document.getElementById("firstName").value.trim(),
         cognome: document.getElementById("lastName").value.trim(),
+        data_nascita: document.getElementById("birthDate").value.trim(),
         telefono: document.getElementById("phone").value.trim(),
         citta: document.getElementById("city").value.trim(),
         indirizzo: document.getElementById("address").value.trim(),
