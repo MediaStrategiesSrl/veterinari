@@ -9,6 +9,8 @@ let allPatients = []; // Salveremo i dati qui per la ricerca locale
 const patientsList = document.getElementById("patientsList");
 const searchInput = document.getElementById("searchInput");
 const activeCountText = document.getElementById("activeCount");
+// NUOVO DOM ELEMENT: Assicurati che l'HTML del contatore revocati abbia id="revokedCount"
+const revokedCountText = document.getElementById("revokedCount"); 
 
 async function initPazienti() {
     const { data: { user } } = await supabase.auth.getUser();
@@ -23,8 +25,8 @@ async function initPazienti() {
 
 async function caricaPazienti() {
     try {
-        // Peschiamo dalla tabella ponte per prendere i dati degli animali associati
-        const { data, error } = await supabase
+        // 1. QUERY PAZIENTI ATTIVI (per la lista e il contatore "ATTIVI")
+        const { data: attiviData, error: attiviError } = await supabase
             .from('veterinarian_patients')
             .select(`
                 created_at,
@@ -37,16 +39,26 @@ async function caricaPazienti() {
                 )
             `)
             .eq('veterinarian_id', currentUser.id)
+            .eq('status', 'active') // FILTRO FONDAMENTALE!
             .order('created_at', { ascending: false });
 
-        if (error) throw error;
+        if (attiviError) throw attiviError;
 
-        // Estraiamo in modo pulito l'array di pazienti
-        allPatients = data.map(item => {
+        // 2. QUERY CONTATORE REVOCATI (solo il numero, non ci servono i dati completi)
+        const { count: countRevocati, error: revocatiError } = await supabase
+            .from('veterinarian_patients')
+            .select('*', { count: 'exact', head: true })
+            .eq('veterinarian_id', currentUser.id)
+            .eq('status', 'revoked'); // FILTRO FONDAMENTALE!
+
+        if (revocatiError) throw revocatiError;
+
+        // Estraiamo in modo pulito l'array di pazienti (solo quelli attivi!)
+        allPatients = attiviData.map(item => {
             let finalAvatarUrl = "https://images.unsplash.com/photo-1543466835-00a7907e9de1?auto=format&fit=crop&w=150&q=80"; // Default
             
             // Se c'è un avatar salvato in Supabase, recupera il link pubblico
-            if (item.pets.avatar_url) {
+            if (item.pets && item.pets.avatar_url) {
                 const { data: publicUrlData } = supabase.storage.from('avatars').getPublicUrl(item.pets.avatar_url);
                 if (publicUrlData) {
                     finalAvatarUrl = publicUrlData.publicUrl;
@@ -54,18 +66,19 @@ async function caricaPazienti() {
             }
 
             return {
-                id: item.pets.id,
-                nome: item.pets.nome || "Sconosciuto",
-                razza: item.pets.razza || "Meticcio",
-                microchip: item.pets.microchip || "", // Aggiunto microchip
+                id: item.pets ? item.pets.id : null,
+                nome: (item.pets && item.pets.nome) ? item.pets.nome : "Sconosciuto",
+                razza: (item.pets && item.pets.razza) ? item.pets.razza : "Meticcio",
+                microchip: (item.pets && item.pets.microchip) ? item.pets.microchip : "",
                 avatarUrl: finalAvatarUrl 
             };
         });
 
-        // Aggiorna contatore statistico
-        activeCountText.textContent = allPatients.length;
+        // 3. AGGIORNIAMO I DUE CONTATORI NELLA UI
+        if (activeCountText) activeCountText.textContent = allPatients.length;
+        if (revokedCountText) revokedCountText.textContent = countRevocati || 0;
 
-        // Mostra a schermo
+        // Mostra a schermo solo la lista degli attivi
         renderPatients(allPatients);
 
     } catch (error) {
@@ -89,8 +102,9 @@ function renderPatients(patientsToRender) {
     }
 
     patientsToRender.forEach(pet => {
+        if (!pet.id) return; // Salta record corrotti senza ID
+        
         const card = document.createElement("a");
-        // ECCO LA MODIFICA CHIAVE: Passiamo l'ID nell'URL
         card.href = `scheda-paziente.html?petId=${pet.id}`; 
         card.className = "patient-card";
         
@@ -110,18 +124,20 @@ function renderPatients(patientsToRender) {
 }
 
 // Filtro di ricerca "Live"
-searchInput.addEventListener("input", (e) => {
-    const searchTerm = e.target.value.toLowerCase().trim();
-    
-    // Filtriamo in base al nome OPPURE al microchip
-    const filtered = allPatients.filter(pet => {
-        const matchNome = pet.nome.toLowerCase().includes(searchTerm);
-        const matchMicrochip = pet.microchip.toLowerCase().includes(searchTerm);
-        return matchNome || matchMicrochip;
+if (searchInput) {
+    searchInput.addEventListener("input", (e) => {
+        const searchTerm = e.target.value.toLowerCase().trim();
+        
+        // Filtriamo in base al nome OPPURE al microchip (solo tra gli attivi)
+        const filtered = allPatients.filter(pet => {
+            const matchNome = pet.nome.toLowerCase().includes(searchTerm);
+            const matchMicrochip = pet.microchip.toLowerCase().includes(searchTerm);
+            return matchNome || matchMicrochip;
+        });
+        
+        renderPatients(filtered);
     });
-    
-    renderPatients(filtered);
-});
+}
 
 // Avvia tutto
 initPazienti();

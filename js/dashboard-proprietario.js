@@ -108,18 +108,23 @@ async function loadDashboardData(user) {
         // --- 4. CARICA I PROSSIMI IMPEGNI (Agenda Orizzontale) ---
         if (agendaContainer) agendaContainer.innerHTML = ''; 
 
-        const oggiISO = new Date().toISOString();
+        const oggi = new Date();
+        oggi.setHours(0, 0, 0, 0);
+        const oggiISO = oggi.toISOString();
         
-        const { data: appuntamenti } = await supabase
+      const { data: appuntamenti, error: appError } = await supabase
             .from("appointments")
-            .select(`
-                id, data_inizio,
-                provider:users!provider_id(cognome)
-            `)
+            .select("id, data_inizio, provider_id")
             .eq("owner_id", user.id)
             .gte("data_inizio", oggiISO)
             .order("data_inizio", { ascending: true })
             .limit(1);
+
+            if (appError) {
+            console.error("ERRORE DATABASE:", appError);
+            if (agendaContainer) agendaContainer.innerHTML = `<p style="color:red; text-align:center; padding:10px;">Errore DB: ${appError.message}</p>`;
+            return; // Blocchiamo l'esecuzione qui
+        }
 
         const { data: passeggiate } = await supabase
             .from("walks")

@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Prenota Appuntamento — Veterinari.it</title>
+    <link rel="stylesheet" href="../../css/global.css">
+    <link rel="stylesheet" href="../../css/prenota.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+
+    <main class="app-container">
+        <header class="page-header" style="padding: 20px; display: flex; align-items: center;">
+            <a href="javascript:history.back()" class="back-btn"><i class="fas fa-chevron-left"></i></a>
+            <div style="flex-grow: 1; text-align: center;">
+                <h2 style="margin: 0; font-size: 1.4rem; color: #1E293B;">Prenota</h2>
+                <p id="vetNameSubtitle" style="margin: 2px 0 0 0; font-size: 0.85rem; color: #64748B;">Caricamento...</p>
+            </div>
+            <div style="width: 20px;"></div>
+        </header>
+
+        <div class="dashboard-content" style="padding: 0 20px; padding-bottom: 100px;">
+            
+            <div class="form-group" style="margin-bottom: 20px;">
+                <label style="font-size: 0.75rem; font-weight: 700; color: #64748B; text-transform: uppercase;">Animale</label>
+                <select id="petSelect" class="custom-select" required>
+                    <option value="" disabled selected>Caricamento animali...</option>
+                </select>
+            </div>
+
+            <div id="serviceContainer" class="form-group" style="margin-bottom: 25px;">
+                <label style="font-size: 0.75rem; font-weight: 700; color: #64748B; text-transform: uppercase;">Servizio</label>
+                
+                <select id="serviceSelect" class="custom-select" required>
+                    <option value="" disabled selected>Caricamento servizi...</option>
+                </select>
+                
+                <div id="noServicesMsg" style="display: none; background: #FEF2F2; border: 1px dashed #F87171; padding: 15px; border-radius: 12px; margin-top: 10px;">
+                    <p style="color: #DC2626; font-size: 0.9rem; margin: 0; font-weight: 600;">
+                        <i class="fa-solid fa-triangle-exclamation"></i> Nessun servizio disponibile.
+                    </p>
+                    <p style="color: #7F1D1D; font-size: 0.8rem; margin: 5px 0 0 0;">Questo professionista non ha ancora configurato i propri servizi e tariffe.</p>
+                </div>
+            </div>
+
+            <h3 style="font-size: 1.1rem; color: #1E293B; margin-bottom: 15px;">Scegli data</h3>
+            <div class="horizontal-scroll" id="dateContainer">
+                </div>
+
+            <h3 style="font-size: 1.1rem; color: #1E293B; margin-bottom: 15px; margin-top: 25px;">Orario</h3>
+            <div id="timeContainer" class="pills-grid">
+                <p style="color: #64748B; font-size: 0.9rem;">Seleziona prima una data.</p>
+            </div>
+
+            <div class="location-card" style="margin-top: 25px;">
+                <h4 style="color: #F58220; font-size: 0.75rem; text-transform: uppercase; margin: 0 0 5px 0;">Luogo Appuntamento</h4>
+                <p id="vetAddress" style="font-weight: 700; color: #1E293B; margin: 0 0 5px 0;">Caricamento...</p>
+                <p style="font-size: 0.8rem; color: #94A3B8; margin: 0;">Indicazione fornita dal professionista</p>
+            </div>
+
+            <div class="summary-card" style="margin-top: 25px;">
+                <p style="color: #94A3B8; font-size: 0.85rem; margin: 0 0 5px 0;">Da pagare in struttura</p>
+                <h2 id="totalPrice" style="color: white; font-size: 2.2rem; margin: 0 0 15px 0;">-- €</h2>
+                <div style="display: flex; justify-content: space-between; border-top: 1px solid #475569; padding-top: 15px;">
+                    <span style="color: #cbd5e1; font-size: 0.85rem;">Totale appuntamento</span>
+                    <span id="summaryPrice" style="color: white; font-weight: bold; font-size: 0.85rem;">--</span>
+                </div>
+            </div>
+
+            <button id="confirmBtn" class="btn-primary" style="margin-top: 20px; width: 100%;" disabled>
+                Conferma prenotazione
+            </button>
+            <p id="statusMessage" class="status-message" hidden></p>
+        </div>
+    </main>
+
+    <script type="module" src="../../js/prenota.js"></script>
+</body>
+</html>

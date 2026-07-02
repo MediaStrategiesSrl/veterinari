@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Modifica Animale — Veterinari.it</title>
+    <link rel="stylesheet" href="../../css/global.css">
+    <link rel="stylesheet" href="../../css/auth.css"> <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body style="background-color: #FDF7F0;">
+
+    <main class="app-container">
+        <header class="page-header" style="display: flex; align-items: center; padding: 20px;">
+            <a href="javascript:history.back()" class="back-btn" style="color: #1E293B; font-size: 1.2rem; text-decoration: none;"><i class="fas fa-chevron-left"></i></a>
+            <h2 style="flex-grow: 1; text-align: center; margin: 0; font-size: 1.2rem; color: #1E293B;">Modifica Dati</h2>
+            <div style="width: 20px;"></div> </header>
+
+        <div class="dashboard-content" style="padding: 0 20px;">
+            <div class="login-card" style="margin-top: 10px; max-width: 100%;">
+                
+                <form id="editPetForm">
+                    <div class="form-group">
+                        <label for="petName">Nome dell'animale</label>
+                        <input type="text" id="petName" required>
+                    </div>
+
+                    <div class="form-row" style="display: flex; gap: 15px;">
+                        <div class="form-group" style="flex: 1;">
+                            <label for="petSpecies">Specie</label>
+                            <select id="petSpecies" style="width: 100%; padding: 0.8rem 1rem; border: 1px solid #E2E8F0; border-radius: 14px; background-color: #FAFAFA;" required>
+                                <option value="Cane">Cane</option>
+                                <option value="Gatto">Gatto</option>
+                                <option value="Coniglio">Coniglio</option>
+                                <option value="Uccello">Uccello</option>
+                                <option value="Rettile">Rettile</option>
+                                <option value="Altro">Altro</option>
+                            </select>
+                        </div>
+                        <div class="form-group" style="flex: 1;">
+                            <label for="petBreed">Razza</label>
+                            <input type="text" id="petBreed" placeholder="Es. Meticcio">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="petDob">Data di nascita</label>
+                        <input type="date" id="petDob">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="petMicrochip">Numero Microchip</label>
+                        <input type="text" id="petMicrochip" placeholder="15 cifre (opzionale)">
+                    </div>
+
+                    <p id="statusMessage" class="status-message" hidden></p>
+
+                    <button type="submit" id="submitBtn" style="width: 100%; margin-top: 20px; padding: 1rem; background-color: #F58220; color: white; border: none; border-radius: 30px; font-weight: bold; cursor: pointer;">
+                        Salva Modifiche
+                    </button>
+                </form>
+            </div>
+        </div>
+    </main>
+
+    <script type="module" src="../../js/modifica-animale.js"></script>
+</body>
+</html>

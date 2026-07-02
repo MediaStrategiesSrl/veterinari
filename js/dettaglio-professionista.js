@@ -20,31 +20,39 @@ async function initPage() {
         return;
     }
 
+    const btnPrenota = document.getElementById("btnPrenota");
+    if (btnPrenota && vetId) {
+        btnPrenota.href = `prenota.html?user_id=${vetId}`;
+    }
+
     try {
         // 2. Scarica i dati reali da Supabase (Tabella veterinari)
         const { data: vetData, error } = await supabase
             .from('veterinarians')
             .select(`
                 user_id,
-                profiles (nome, avatar_url)
+                profiles (nome, cognome, avatar_url)
             `)
             .eq('user_id', vetId)
             .single();
 
         if (error) throw error;
 
-        // 3. Popola Nome e Avatar
-      if (vetData.profiles) {
-            const nomeProf = vetData.profiles.nome || "Utente Sconosciuto";
-            vetName.textContent = nomeProf;
+         // 3. Popola Nome e Avatar
+        if (vetData.profiles) {
+            const nome = vetData.profiles.nome || "";
+            const cognome = vetData.profiles.cognome || "";
+
+            const nomeCompleto = (nome || cognome) ? `${nome} ${cognome}`.trim() : "Dott. Sconosciuto";
+            vetName.textContent = nomeCompleto;
             
-            // Se ha una foto reale la usa, altrimenti crea un'icona carina con la sua iniziale!
             if (vetData.profiles.avatar_url) {
                 vetAvatar.src = vetData.profiles.avatar_url;
             } else {
-                vetAvatar.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(nomeProf)}&background=E2E8F0&color=1E293B&size=150`;
+                vetAvatar.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(nomeCompleto)}&background=E2E8F0&color=64748B`;
             }
         }
+
 
         // 4. Mostra la distanza pescata da cerca.js
         const distSalvata = localStorage.getItem(`dist_${vetId}`);

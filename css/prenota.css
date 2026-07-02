@@ -1,0 +1,25 @@
+/* Select personalizzata */
+.custom-select { width: 100%; padding: 1rem; border: 1px solid #E2E8F0; border-radius: 16px; font-size: 1rem; background-color: #fff; color: #1E293B; margin-top: 5px; appearance: none; box-shadow: 0 2px 5px rgba(0,0,0,0.02); }
+.custom-select:focus { outline: none; border-color: #F58220; }
+
+/* Scorrimento orizzontale per le date */
+.horizontal-scroll { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 10px; -ms-overflow-style: none; scrollbar-width: none; }
+.horizontal-scroll::-webkit-scrollbar { display: none; }
+
+/* Griglia per gli orari */
+.pills-grid { display: flex; flex-wrap: wrap; gap: 10px; }
+
+/* Stile dei bottoni data/ora (Pills) */
+.pill { padding: 10px 18px; background: #fff; border: 1px solid #E2E8F0; border-radius: 20px; font-size: 0.9rem; font-weight: 600; color: #64748B; cursor: pointer; transition: all 0.2s; white-space: nowrap; }
+.pill:hover { border-color: #F58220; }
+.pill.active { background: #F58220; color: white; border-color: #F58220; box-shadow: 0 4px 10px rgba(245, 130, 32, 0.3); }
+.pill.disabled { opacity: 0.5; cursor: not-allowed; text-decoration: line-through; background: #f1f5f9; border-color: #f1f5f9; }
+
+/* Card Luogo con bordo colorato a sinistra */
+.location-card { background: #fff; border-radius: 16px; padding: 15px 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.03); border-left: 5px solid #0284C7; }
+
+/* Card Riepilogo Scusa */
+.summary-card { background: #334155; border-radius: 24px; padding: 25px; box-shadow: 0 10px 25px rgba(51, 65, 85, 0.2); }
+
+.btn-primary { padding: 16px; background-color: #F58220; color: white; border: none; border-radius: 30px; font-size: 1.1rem; font-weight: bold; cursor: pointer; transition: 0.2s; }
+.btn-primary:disabled { background-color: #CBD5E1; cursor: not-allowed; }

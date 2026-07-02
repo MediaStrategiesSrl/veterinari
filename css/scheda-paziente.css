@@ -129,3 +129,41 @@ body, .app-container {
 .info-list-text p { margin: 0; font-size: 0.8rem; color: #64748B; }
 
 .info-list-arrow { color: #CBD5E1; font-size: 0.9rem; }
+
+/* ========================================== */
+/* AZIONI DISTRUTTIVE (REVOCA ACCESSO)        */
+/* ========================================== */
+
+.title-danger {
+    color: #EF4444; /* Rosso di allerta */
+    margin-top: 30px;
+}
+
+/* Adatta il tag button per comportarsi come la tua card */
+button.info-list-item {
+    width: 100%;
+    text-align: left;
+    cursor: pointer;
+    font-family: inherit;
+    /* Rimuove gli stili di default del browser */
+    outline: none; 
+}
+
+.item-danger {
+    background-color: #FEF2F2;
+    border: 1px solid #FEE2E2;
+    margin-top: 20px;
+}
+
+.icon-danger {
+    background-color: #FEE2E2;
+    color: #EF4444;
+}
+
+.item-danger .info-list-text h4 {
+    color: #EF4444;
+}
+
+.item-danger .info-list-text p {
+    color: #F87171;
+}

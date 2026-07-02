@@ -117,8 +117,21 @@ form.addEventListener("submit", async function (event) {
 });
 
 // Mostra/nasconde errore password in tempo reale
-confirmPasswordInput.addEventListener("input", function () {
-    if (passwordInput.value === confirmPasswordInput.value) {
+function checkPasswordsMatch() {
+    // Se il campo conferma è vuoto, non mostrare nessun errore (non infastidiamo l'utente)
+    if (confirmPasswordInput.value === "") {
+        passwordError.classList.remove("visible");
+    } 
+    // Se l'utente ha scritto qualcosa e non coincide, mostra l'errore
+    else if (passwordInput.value !== confirmPasswordInput.value) {
+        passwordError.classList.add("visible");
+    } 
+    // Se coincidono perfettamente, nascondi l'errore
+    else {
         passwordError.classList.remove("visible");
     }
-});
+}
+
+// Facciamo scattare il controllo sia quando scrive nella prima password, sia nella seconda
+confirmPasswordInput.addEventListener("input", checkPasswordsMatch);
+passwordInput.addEventListener("input", checkPasswordsMatch);

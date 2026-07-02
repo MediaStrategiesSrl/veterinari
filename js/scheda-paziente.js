@@ -23,6 +23,9 @@ const uploadRefertoInput = document.getElementById("uploadReferto");
 const refertoTitle = document.getElementById("refertoTitle");
 const refertoSub = document.getElementById("refertoSub");
 
+// Elemento DOM per Revoca
+const btnRevocaAccesso = document.getElementById("btnRevocaAccesso");
+
 async function initPage() {
     try {
         // Controllo Login
@@ -185,6 +188,50 @@ uploadRefertoInput.addEventListener("change", async (e) => {
         uploadRefertoInput.value = ""; 
     }
 });
+
+// ==========================================
+// FUNZIONE: REVOCA ACCESSO VETERINARIO
+// ==========================================
+if (btnRevocaAccesso) {
+    btnRevocaAccesso.addEventListener("click", async () => {
+        // Chiediamo conferma per evitare click accidentali
+        const conferma = confirm("Attenzione: sei sicuro di voler rimuovere questa cartella dai tuoi pazienti? Non potrai più visualizzare i dati o caricare referti.");
+        
+        if (!conferma) return;
+
+        // UI: Feedback visivo e disabilitazione per evitare click multipli
+        btnRevocaAccesso.disabled = true;
+        btnRevocaAccesso.style.opacity = "0.6";
+        btnRevocaAccesso.querySelector('h4').textContent = "Revoca in corso...";
+
+        try {
+            // Soft delete: aggiorniamo lo status in "revoked" e salviamo l'orario in "revoked_at"
+            const { error } = await supabase
+                .from('veterinarian_patients')
+                .update({ 
+                    status: 'revoked', 
+                    revoked_at: new Date().toISOString() 
+                })
+                .eq('pet_id', petId)
+                .eq('veterinarian_id', currentUser.id);
+
+            if (error) throw error;
+
+            // Feedback di successo e reindirizzamento alla lista pazienti
+            alert("Accesso revocato con successo.");
+            window.location.href = "pazienti.html";
+
+        } catch (error) {
+            console.error("Errore durante la revoca dell'accesso:", error);
+            alert("Si è verificato un errore: " + error.message);
+            
+            // Ripristino interfaccia in caso di errore
+            btnRevocaAccesso.disabled = false;
+            btnRevocaAccesso.style.opacity = "1";
+            btnRevocaAccesso.querySelector('h4').textContent = "Revoca accesso";
+        }
+    });
+}
 
 // Avvia tutto!
 initPage();

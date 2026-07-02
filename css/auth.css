@@ -14,6 +14,28 @@
 .form-group input { width: 100%; padding: 0.8rem 1rem; border: 1px solid var(--border-color); border-radius: 14px; font-size: 0.95rem; background-color: #FAFAFA; transition: border-color 0.2s, background-color 0.2s; }
 .form-group input:focus { outline: none; border-color: var(--orange-accent); background-color: var(--white); }
 
+/* --- AGGIUNTO: GESTIONE ERRORI --- */
+.error-message {
+    display: none; /* Nascosto di default */
+    color: #DC2626; /* Rosso errore */
+    font-size: 0.85rem;
+    margin-top: 5px;
+    font-weight: 500;
+}
+.error-message.visible {
+    display: block; /* Visibile solo quando il JS aggiunge questa classe */
+}
+
+.status-message {
+    text-align: center;
+    font-size: 0.9rem;
+    margin-top: 1rem;
+    font-weight: 600;
+}
+.status-message.error { color: #DC2626; }
+.status-message.success { color: #16A34A; }
+/* --------------------------------- */
+
 button[type="submit"], .btn-simulate { width: 100%; margin-top: 1.5rem; padding: 1rem; background-color: var(--orange-accent); color: var(--white); border: none; border-radius: 30px; font-size: 1.05rem; font-weight: 700; cursor: pointer; display: flex; justify-content: center; align-items: center; box-shadow: 0 4px 15px rgba(238, 138, 42, 0.2); transition: background-color 0.15s, transform 0.15s, box-shadow 0.15s; }
 button[type="submit"]:hover, .btn-simulate:hover { background-color: #db761b; }
 button[type="submit"]:active, .btn-simulate:active { transform: scale(0.97); box-shadow: 0 2px 8px rgba(238, 138, 42, 0.1); }

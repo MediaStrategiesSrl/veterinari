@@ -1,6 +1,14 @@
 /* =========================================
    PASSAPORTO DIGITALE (QR)
    ========================================= */
+
+html, body, .app-container, .dashboard-content {
+    background-color: #FDF7F0 !important; /* Crema caldo ovunque */
+    min-height: 100vh;
+    margin: 0 auto;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
 .qr-container { display: flex; flex-direction: column; align-items: center; padding: 2rem 1rem 1rem; }
 .qr-box { background: var(--white); padding: 1.5rem; border-radius: 32px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.04); margin-bottom: 1.5rem; display: flex; justify-content: center; align-items: center; }
 .qr-box img { width: 220px; height: 220px; border-radius: 16px; object-fit: contain; }

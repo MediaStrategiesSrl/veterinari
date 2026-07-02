@@ -13,6 +13,7 @@ const petMicrochip = document.getElementById("petMicrochip"); // Nuovo
 
 const authorizedVetsContainer = document.getElementById("authorizedVetsContainer");
 const recentActivitiesContainer = document.getElementById("recentActivitiesContainer");
+const linkModifica = document.getElementById("linkModifica");
 
 async function loadPetProfile() {
     try {
@@ -40,6 +41,12 @@ async function loadPetProfile() {
 
         if (error) throw error;
         if (!pet) throw new Error("Animale non trovato");
+
+        //tasto modifica aninale
+        if (linkModifica) {
+            // Se sei dentro pages/proprietario/, non servono i puntini!
+            linkModifica.href = `modifica-animale.html?petId=${pet.id}`;
+        }
 
         // 2. Popola i Dati Base (Avatar, Nome, Specie, Razza, ID, Microchip)
         pageHeaderTitle.textContent = `Profilo di ${pet.nome}`;
