@@ -7,15 +7,25 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 const backBtn = document.getElementById("backBtn");
 const headerSubtitle = document.getElementById("headerSubtitle");
 const timelineContainer = document.getElementById("timelineContainer");
-const countVisite = document.getElementById("countVisite");
-const countReferti = document.getElementById("countReferti");
+
+let currentUser = null;
 
 async function initPage() {
     try {
-        // 1. Legge il petId dall'URL
+      const { data: { user }, error: authError } = await supabase.auth.getUser();
+        
+        // Se non c'è una sessione attiva, lo rimandiamo al login
+        if (authError || !user) {
+            window.location.href = "index.html";
+            return;
+        }
+        
+        // Salviamo l'utente nella variabile globale così la riga del controllo della GUARD funzionerà!
+        currentUser = user;
+
+        // 3. Legge il petId dall'URL
         const urlParams = new URLSearchParams(window.location.search);
         const petId = urlParams.get('petId');
-
         if (!petId) {
             alert("Paziente non trovato!");
             window.location.href = "pazienti.html";
@@ -53,6 +63,23 @@ async function initPage() {
 
         if (error) throw error;
 
+        // ==========================================
+        // NUOVO: CONTROLLO DI SICUREZZA (GUARD)
+        // ==========================================
+        const { data: accessData, error: accessError } = await supabase
+            .from('veterinarian_patients')
+            .select('status')
+            .eq('pet_id', petId)
+            .eq('veterinarian_id', currentUser.id)
+            .single();
+
+        // Se c'è un errore, se non c'è il dato, o se lo status NON è "active", blocca tutto!
+        if (accessError || !accessData || accessData.status !== 'active') {
+            alert("Accesso negato: non sei autorizzato a visualizzare o modificare questo paziente (Accesso revocato).");
+            window.location.href = "/pages/veterinario/pazienti.html";
+            return;
+        }
+
         // 4. Disegna a schermo
         renderDati(records);
 
@@ -65,20 +92,13 @@ async function initPage() {
 function renderDati(records) {
     timelineContainer.innerHTML = "";
     
-    let totaleVisite = 0;
-    let totaleReferti = 0;
-
     // Se non c'è nulla, mostriamo un avviso vuoto
     if (!records || records.length === 0) {
         timelineContainer.innerHTML = `<div style="color: #94A3B8; text-align: center;">Nessun dato clinico registrato.</div>`;
-        countVisite.textContent = "0 registrazioni";
-        countReferti.textContent = "0 documenti";
         return;
     }
 
     records.forEach((record, index) => {
-        totaleVisite++;
-        if (record.attachment_url) totaleReferti++;
 
         // FORMATO DATA (es: "19 MAG 2026")
         const dateObj = new Date(record.data_visita);
@@ -121,10 +141,6 @@ function renderDati(records) {
 
         timelineContainer.appendChild(div);
     });
-
-    // Aggiorna i testi nei box in alto
-    countVisite.textContent = `${totaleVisite} registrazion${totaleVisite === 1 ? 'e' : 'i'}`;
-    countReferti.textContent = `${totaleReferti} document${totaleReferti === 1 ? 'o' : 'i'}`;
 }
 
 // Inizializza la pagina

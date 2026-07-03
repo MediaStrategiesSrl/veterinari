@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Dettaglio Passeggiata — Veterinari.it</title>
+    <link rel="stylesheet" href="../../css/global.css">
+    <link rel="stylesheet" href="../../css/dettaglio-passeggiata.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+
+    <main class="app-container">
+        <header class="page-header">
+            <a href="javascript:history.back()" class="back-btn"><i class="fas fa-chevron-left"></i></a>
+            <div class="header-title">
+                <h2>Passeggiata</h2>
+                <p id="headerLuogo">Caricamento...</p>
+            </div>
+            <div style="width: 20px;"></div>
+        </header>
+
+        <div class="dashboard-content">
+            
+            <div class="date-badge" id="walkDateTime">
+                <i class="fa-regular fa-calendar"></i> Caricamento data...
+            </div>
+
+            <h1 class="walk-title" id="walkTitleDisplay">Caricamento...</h1>
+            <p class="walk-desc" id="walkDescDisplay">...</p>
+
+            <div class="walk-stats-grid">
+                <div class="walk-stat-card">
+                    <strong id="statPartecipanti">0/0</strong>
+                    <p>Partecipanti</p>
+                </div>
+                <div class="walk-stat-card">
+                    <strong id="statDistanza">-- km</strong>
+                    <p>Percorso</p>
+                </div>
+                <div class="walk-stat-card">
+                    <strong id="statLivello">--</strong>
+                    <p>Livello</p>
+                </div>
+            </div>
+
+            <h3 class="section-title" style="margin-top: 30px;">Requisiti</h3>
+            
+            <div class="req-card">
+                <div class="req-icon orange"><i class="fa-solid fa-check"></i></div>
+                <div class="req-info">
+                    <h4>Cane dichiarato docile</h4>
+                    <p>Confermato per <span class="pet-name-fill">il tuo pet</span></p>
+                </div>
+                <i class="fa-solid fa-chevron-right req-arrow"></i>
+            </div>
+
+            <div class="req-card">
+                <div class="req-icon blue"><i class="fa-solid fa-check"></i></div>
+                <div class="req-info">
+                    <h4>Profilo identificato</h4>
+                    <p>Microchip verificato</p>
+                </div>
+                <i class="fa-solid fa-chevron-right req-arrow"></i>
+            </div>
+
+            <div class="bottom-actions">
+                <button id="btnPartecipa" class="btn-primary" style="width: 100%; margin-bottom: 12px;">
+                    Partecipa con <span class="pet-name-fill">...</span>
+                </button>
+            </div>
+
+        </div>
+    </main>
+
+    <script type="module" src="../../js/dettaglio-passeggiata.js"></script>
+</body>
+</html>

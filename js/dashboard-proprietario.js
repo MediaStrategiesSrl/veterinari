@@ -188,6 +188,8 @@ async function updateHeroCard(pet, index) {
     currentActivePetId = pet.id;
     currentPetIndex = index; // Salviamo l'indice attivo per l'upload dell'avatar
 
+    localStorage.setItem("activePetId", currentActivePetId);
+
     if (petNameDisplay) petNameDisplay.textContent = pet.nome;
     if (btnOpenProfile) btnOpenProfile.innerHTML = `Apri la scheda <i class="fa-solid fa-paw"></i>`;
     if (qrPetName) qrPetName.textContent = pet.nome;
@@ -332,7 +334,7 @@ const btnPrenota = document.getElementById("btnPrenota");
 if (btnPrenota) btnPrenota.addEventListener("click", () => window.location.href = "cerca.html");
 
 const btnPasseggiata = document.getElementById("btnPasseggiata");
-if (btnPasseggiata) btnPasseggiata.addEventListener("click", () => alert("Mappa passeggiate in sviluppo..."));
+if (btnPasseggiata) btnPasseggiata.addEventListener("click", () => window.location.href = "passeggiate.html");
 
 const btnShop = document.getElementById("btnShop");
 if (btnShop) btnShop.addEventListener("click", () => alert("Shop Veterinario in sviluppo..."));

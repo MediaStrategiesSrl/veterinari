@@ -42,7 +42,24 @@ async function initPage() {
 
         if (!petId) {
             alert("Nessun paziente selezionato!");
-            window.location.href = "pazienti.html";
+            window.location.href = "/pages/veterinario/pazienti.html";
+            return;
+        }
+
+        // ==========================================
+        // NUOVO: CONTROLLO DI SICUREZZA (GUARD)
+        // ==========================================
+        const { data: accessData, error: accessError } = await supabase
+            .from('veterinarian_patients')
+            .select('status')
+            .eq('pet_id', petId)
+            .eq('veterinarian_id', currentUser.id)
+            .single();
+
+        // Se c'è un errore, se non c'è il dato, o se lo status NON è "active", blocca tutto!
+        if (accessError || !accessData || accessData.status !== 'active') {
+            alert("Accesso negato: non sei autorizzato a visualizzare o modificare questo paziente (Accesso revocato).");
+            window.location.href = "/pages/veterinario/pazienti.html";
             return;
         }
 

@@ -1,0 +1,200 @@
+/* Card Azzurra Principale */
+.hero-walks-card {
+    background: linear-gradient(135deg, #38BDF8, #0284C7);
+    border-radius: 24px;
+    padding: 25px;
+    color: white;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 10px 20px rgba(2, 132, 199, 0.2);
+}
+
+.badge-docili {
+    background: rgba(255, 255, 255, 0.2);
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 0.7rem;
+    font-weight: 800;
+    letter-spacing: 0.5px;
+    margin-bottom: 15px;
+    display: inline-block;
+}
+
+.hero-walks-card h1 { margin: 0 0 10px 0; font-size: 1.6rem; line-height: 1.2; }
+.hero-walks-card p { font-size: 0.9rem; line-height: 1.4; margin-bottom: 20px; opacity: 0.9; }
+
+.btn-white-orange {
+    background: white; color: #F58220; border: none; padding: 12px 20px;
+    border-radius: 16px; font-weight: 800; font-size: 1rem; cursor: pointer;
+}
+
+/* Lista Passeggiate (Vicino a te) */
+.walks-container { display: flex; flex-direction: column; gap: 12px; }
+
+.walk-item-card {
+    background: white; border-radius: 20px; padding: 15px;
+    display: flex; align-items: center; gap: 15px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.03); border: 1px solid #F1F5F9;
+}
+
+.walk-icon {
+    width: 50px; height: 50px; background: #FFF7ED; color: #F58220;
+    border-radius: 16px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem;
+}
+
+.walk-info { flex-grow: 1; }
+.walk-info h4 { margin: 0 0 4px 0; font-size: 1.05rem; color: #1E293B; }
+.walk-info p { margin: 0; font-size: 0.8rem; color: #94A3B8; }
+
+/* Scroll Orizzontale Amici */
+.friends-horizontal-scroll {
+    display: flex; gap: 15px; overflow-x: auto; padding-bottom: 15px;
+    -ms-overflow-style: none; scrollbar-width: none; margin-top: 15px;
+}
+.friends-horizontal-scroll::-webkit-scrollbar { display: none; }
+
+.friend-card {
+    min-width: 150px; background: white; border-radius: 20px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.03); overflow: hidden;
+    border: 1px solid #F1F5F9;
+}
+
+.friend-img { width: 100%; height: 110px; object-fit: cover; }
+.friend-info { padding: 12px; }
+.friend-info h4 { margin: 0 0 2px 0; color: #1E293B; font-size: 1rem; }
+.friend-info p { margin: 0; color: #94A3B8; font-size: 0.75rem; }
+
+/* Badge Notifiche */
+.notification-badge {
+    position: absolute; top: -5px; right: -5px; background: #DC2626;
+    color: white; font-size: 0.6rem; font-weight: bold; padding: 2px 6px;
+    border-radius: 10px;
+}
+
+/* Stile per la campanellina a destra */
+.header-action-btn { 
+    background: none; 
+    border: none; 
+    font-size: 1.4rem; 
+    color: #1E293B; 
+    cursor: pointer; 
+    position: relative; 
+    padding: 5px; 
+}
+
+.notification-badge { 
+    position: absolute; 
+    top: -2px; 
+    right: -2px; 
+    background: #DC2626; 
+    color: white; 
+    font-size: 0.65rem; 
+    font-weight: bold; 
+    width: 18px; 
+    height: 18px; 
+    display: flex; 
+    align-items: center; 
+    justify-content: center; 
+    border-radius: 50%; 
+    border: 2px solid #FDF7F0; /* Bordino colore crema per staccarlo dall'icona */
+}
+
+/* Lo sfondo scuro che copre tutta l'app */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(15, 23, 42, 0.7); /* Sfondo scuro semitrasparente */
+    z-index: 9999; /* Sta sopra a qualsiasi altra cosa */
+    
+    /* Il JS usa display: flex per aprirlo e none per nasconderlo */
+    display: flex; 
+    justify-content: center;
+    align-items: center; /* Centra la finestra nello schermo */
+    backdrop-filter: blur(3px); /* Effetto sfocato figo dietro (opzionale) */
+}
+
+/* La finestra vera e propria con il form */
+.modal-content {
+    background-color: #FDF7F0; /* Stesso color crema dell'app */
+    width: 90%;
+    max-width: 450px;
+    border-radius: 24px;
+    padding: 25px;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+    position: relative;
+    animation: popUp 0.3s ease-out;
+}
+
+/* Header del popup (Titolo e X per chiudere) */
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.modal-header h3 {
+    margin: 0;
+    color: #1E293B;
+    font-size: 1.3rem;
+}
+
+.close-modal-btn {
+    background: #F1F5F9;
+    border: none;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    font-size: 1.2rem;
+    color: #64748B;
+    cursor: pointer;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    transition: 0.2s;
+}
+
+.close-modal-btn:hover {
+    background: #E2E8F0;
+    color: #1E293B;
+}
+
+/* Stili per i campi di input del form */
+.form-group {
+    margin-bottom: 15px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 6px;
+    font-weight: 700;
+    font-size: 0.85rem;
+    color: #475569;
+    text-transform: uppercase;
+}
+
+.form-group input {
+    width: 100%;
+    padding: 12px 15px;
+    border: 1px solid #CBD5E1;
+    border-radius: 12px;
+    font-family: inherit;
+    font-size: 1rem;
+    box-sizing: border-box;
+    outline: none;
+    transition: 0.2s;
+}
+
+.form-group input:focus {
+    border-color: #0284C7;
+    box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.15);
+}
+
+/* Animazione di entrata */
+@keyframes popUp {
+    from { transform: translateY(50px) scale(0.9); opacity: 0; }
+    to { transform: translateY(0) scale(1); opacity: 1; }
+}

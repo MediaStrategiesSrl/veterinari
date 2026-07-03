@@ -1,6 +1,8 @@
-body, .app-container {
-    background-color: #F8F7F4 !important; /* Colore panna di base */
-    margin: 0;
+/* Sfondo Crema Unificato per tutto */
+html, body, .app-container, .dashboard-content {
+    background-color: #FDF7F0 !important; /* Crema caldo ovunque */
+    min-height: 100vh;
+    margin: 0 auto;
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
 }
 

@@ -40,16 +40,40 @@ async function initPage() {
     }
     headerSubtitle.textContent = `Seleziona paziente · ${nomeVeterinario}`;
 
-    // 3. Scarica i pazienti per la select
-    await caricaPazienti();
+    // ==========================================
+    // NUOVO: GESTIONE URL E SICUREZZA (GUARD)
+    // ==========================================
+    const urlParams = new URLSearchParams(window.location.search);
+    const urlPetId = urlParams.get('petId');
+
+    // Facciamo il controllo di sicurezza SOLO se si arriva tramite un link specifico di un animale
+    if (urlPetId) {
+        const { data: accessData, error: accessError } = await supabase
+            .from('veterinarian_patients')
+            .select('status')
+            .eq('pet_id', urlPetId)
+            .eq('veterinarian_id', currentUser.id)
+            .single();
+
+        // Se l'animale è stato revocato, blocco e redirect
+        if (accessError || !accessData || accessData.status !== 'active') {
+            alert("Accesso negato: non sei autorizzato a inserire visite per questo paziente (Accesso revocato).");
+            window.location.href = "/pages/veterinario/pazienti.html";
+            return;
+        }
+    }
+
+    // 3. Scarica i pazienti per la select (solo quelli attivi!)
+    await caricaPazienti(urlPetId);
 }
 
-async function caricaPazienti() {
+async function caricaPazienti(preselectedPetId) {
     try {
         const { data, error } = await supabase
             .from('veterinarian_patients')
             .select(`pet_id, pets ( nome )`)
-            .eq('veterinarian_id', currentUser.id);
+            .eq('veterinarian_id', currentUser.id)
+            .eq('status', 'active'); // <-- FONDAMENTALE: carica solo i pazienti attivi!
 
         if (error) throw error;
 
@@ -58,16 +82,27 @@ async function caricaPazienti() {
             return;
         }
 
+        // Pulisce la select prima di popolarla (utile se la ricarichi)
+        petSelect.innerHTML = `<option value="" disabled ${!preselectedPetId ? 'selected' : ''}>Seleziona il paziente...</option>`;
+
         data.forEach(item => {
             if (item.pets) {
                 const opt = document.createElement("option");
                 opt.value = item.pet_id;
                 opt.textContent = item.pets.nome;
+                
+                // Se c'è un preselectedPetId dall'URL, selezionalo in automatico
+                if (item.pet_id === preselectedPetId) {
+                    opt.selected = true;
+                    // Aggiorna subito il sottotitolo
+                    headerSubtitle.textContent = `${item.pets.nome} · ${nomeVeterinario}`;
+                }
+
                 petSelect.appendChild(opt);
             }
         });
 
-        // Aggiorna il sottotitolo dinamicamente quando il vet sceglie il cane
+        // Aggiorna il sottotitolo dinamicamente quando il vet cambia il cane dalla tendina
         petSelect.addEventListener("change", (e) => {
             const nomeCane = e.target.options[e.target.selectedIndex].text;
             headerSubtitle.textContent = `${nomeCane} · ${nomeVeterinario}`;
@@ -118,12 +153,10 @@ form.addEventListener("submit", async (e) => {
         if (file) {
             submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Caricamento file...';
             
-            // LA MAGIA ANTI-DOPPIONE: Stessa nomenclatura della scheda-paziente!
             const safeName = file.name.replace(/[^a-zA-Z0-9.\-_]/g, '_');
             const fileName = `${petId}_${safeName}`;
             const filePath = `referti/${fileName}`; 
 
-            // Controllo pre-upload: Esiste già questo file nello storage?
             const { data: existingFiles } = await supabase.storage
                 .from('storage_veterinari')
                 .list('referti', { search: fileName });
@@ -131,7 +164,6 @@ form.addEventListener("submit", async (e) => {
             const isDuplicate = existingFiles && existingFiles.some(f => f.name === fileName);
 
             if (isDuplicate) {
-                // Se esiste, NON lo ricarichiamo (risparmiamo memoria), peschiamo solo il link!
                 console.log("File già presente in memoria. Riciclo il link!");
                 const { data: { publicUrl } } = supabase.storage
                     .from('storage_veterinari')
@@ -139,7 +171,6 @@ form.addEventListener("submit", async (e) => {
                 
                 attachmentUrl = publicUrl;
             } else {
-                // Se è un file nuovo di zecca, facciamo l'upload classico
                 console.log("File nuovo, procedo all'upload...");
                 const { error: uploadError } = await supabase.storage
                     .from('storage_veterinari')
@@ -158,16 +189,17 @@ form.addEventListener("submit", async (e) => {
         submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Salvataggio referto...';
 
         // 2. SALVA TUTTO NEL DATABASE
+        // Attenzione: assicurati di leggere gli ID corretti dei tuoi input HTML
         const { error: insertError } = await supabase
             .from('medical_records')
             .insert({
                 pet_id: petId,
                 vet_id: currentUser.id,
-                motivo: document.getElementById("motivo").value,
-                anamnesi: document.getElementById("anamnesi").value,
-                diagnosi: document.getElementById("diagnosi").value,
-                terapia: document.getElementById("terapia").value,
-                attachment_url: attachmentUrl // <-- Salva il link del file! (O quello nuovo, o quello riciclato)
+                motivo: document.getElementById("motivo") ? document.getElementById("motivo").value : "",
+                anamnesi: document.getElementById("anamnesi") ? document.getElementById("anamnesi").value : "",
+                diagnosi: document.getElementById("diagnosi") ? document.getElementById("diagnosi").value : "",
+                terapia: document.getElementById("terapia") ? document.getElementById("terapia").value : "",
+                attachment_url: attachmentUrl
             });
 
         if (insertError) throw insertError;

@@ -1,0 +1,37 @@
+.date-badge {
+    background: white; color: #1E293B; padding: 10px 18px; border-radius: 20px;
+    display: inline-flex; align-items: center; gap: 8px; font-weight: 800; font-size: 0.9rem;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.05); margin-bottom: 20px; border: 1px solid #F1F5F9;
+}
+
+.walk-title { margin: 0 0 10px 0; font-size: 1.6rem; color: #1E293B; }
+.walk-desc { font-size: 0.95rem; color: #64748B; line-height: 1.5; margin-bottom: 25px; }
+
+/* Griglia delle 3 statistiche */
+.walk-stats-grid {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 30px;
+}
+.walk-stat-card {
+    background: white; border-radius: 20px; padding: 18px 5px; text-align: center;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.03); border: 1px solid #F1F5F9;
+}
+.walk-stat-card strong { display: block; font-size: 1.15rem; color: #1E293B; margin-bottom: 4px; }
+.walk-stat-card p { margin: 0; font-size: 0.75rem; color: #94A3B8; text-transform: uppercase; font-weight: bold; }
+
+/* Requisiti */
+.req-card {
+    background: white; border-radius: 20px; padding: 15px; display: flex; align-items: center; gap: 15px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.02); border: 1px solid #F1F5F9; margin-bottom: 12px;
+}
+.req-icon {
+    width: 45px; height: 45px; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 1.1rem;
+}
+.req-icon.orange { background: #FFF7ED; color: #F58220; }
+.req-icon.blue { background: #F0F9FF; color: #0284C7; }
+
+.req-info { flex-grow: 1; }
+.req-info h4 { margin: 0 0 4px 0; font-size: 1rem; color: #1E293B; }
+.req-info p { margin: 0; font-size: 0.8rem; color: #94A3B8; }
+.req-arrow { color: #CBD5E1; font-size: 0.9rem; }
+
+.bottom-actions { margin-top: 40px; padding-bottom: 30px; }
