@@ -12,7 +12,7 @@ let currentUser = null;
 
 async function initPage() {
     try {
-      const { data: { user }, error: authError } = await supabase.auth.getUser();
+        const { data: { user }, error: authError } = await supabase.auth.getUser();
         
         // Se non c'è una sessione attiva, lo rimandiamo al login
         if (authError || !user) {
@@ -20,67 +20,102 @@ async function initPage() {
             return;
         }
         
-        // Salviamo l'utente nella variabile globale così la riga del controllo della GUARD funzionerà!
         currentUser = user;
 
-        // 3. Legge il petId dall'URL
+        // Legge il petId dall'URL
         const urlParams = new URLSearchParams(window.location.search);
         const petId = urlParams.get('petId');
         if (!petId) {
             alert("Paziente non trovato!");
-            window.location.href = "pazienti.html";
+            window.location.href = "index.html"; 
             return;
         }
 
-        // Imposta la freccia indietro
-        backBtn.href = `scheda-paziente.html?petId=${petId}`;
+        // ==========================================
+        // 1. INFO HEADER ED ESTRAZIONE PROPRIETARIO
+        // ==========================================
+        // Tiriamo giù il nome del cane e soprattutto CHI È IL PROPRIETARIO (owner_id)
+        const { data: pet, error: petError } = await supabase
+            .from('pets')
+            .select('nome, owner_id')
+            .eq('id', petId)
+            .single();
 
-        // 2. Info dell'header (Nome cane e Data odierna)
-        const { data: pet } = await supabase.from('pets').select('nome').eq('id', petId).single();
-        if (pet) {
-            const mesi = ["gennaio", "febbraio", "marzo", "aprile", "maggio", "giugno", "luglio", "agosto", "settembre", "ottobre", "novembre", "dicembre"];
-            const oggi = new Date();
-            const stringaData = `${oggi.getDate()} ${mesi[oggi.getMonth()]}`;
-            headerSubtitle.textContent = `${pet.nome} · aggiornata il ${stringaData}`;
+        if (petError || !pet) {
+            alert("Paziente non trovato!");
+            window.location.href = "index.html";
+            return;
         }
 
-        // 3. Scarica i dati medici (Visite e Referti) unendo i profili dei veterinari
+        // ==========================================
+        // 2. LA GUARDIA A DOPPIA PORTA
+        // ==========================================
+        const isOwner = (pet.owner_id === currentUser.id);
+        let isAuthorizedVet = false;
+
+        // Se NON è il proprietario, controlliamo se è un veterinario autorizzato
+        if (!isOwner) {
+            const { data: accessData } = await supabase
+                .from('veterinarian_patients')
+                .select('status')
+                .eq('pet_id', petId)
+                .eq('veterinarian_id', currentUser.id)
+                .single();
+
+            if (accessData && accessData.status === 'active') {
+                isAuthorizedVet = true;
+            }
+        }
+
+        // Blocco totale se non sei né il padrone né il veterinario!
+        if (!isOwner && !isAuthorizedVet) {
+            alert("Accesso negato: non sei autorizzato a visualizzare questa cartella.");
+            window.location.href = "index.html";
+            return;
+        }
+
+        // ==========================================
+        // 3. FRECCIA INDIETRO DINAMICA
+        // ==========================================
+        if (isOwner) {
+            // Torna alla dashboard o profilo del proprietario (aggiusta il percorso se serve)
+            backBtn.href = `pages/proprietario/profilo-animale.html?petId=${petId}`;
+        } else {
+            // Torna alla scheda paziente del veterinario
+            backBtn.href = `pages/veterinario/scheda-paziente.html?petId=${petId}`;
+        }
+
+        // Data odierna per l'header
+        const mesi = ["gennaio", "febbraio", "marzo", "aprile", "maggio", "giugno", "luglio", "agosto", "settembre", "ottobre", "novembre", "dicembre"];
+        const oggi = new Date();
+        const stringaData = `${oggi.getDate()} ${mesi[oggi.getMonth()]}`;
+        headerSubtitle.textContent = `${pet.nome} · aggiornata il ${stringaData}`;
+
+        // ==========================================
+        // 4. SCARICA I DATI MEDICI (Visite e Referti)
+        // ==========================================
         const { data: records, error } = await supabase
             .from('medical_records')
             .select(`
-                id,
-                data_visita,
-                diagnosi,
-                terapia,
-                motivo,
-                attachment_url,
-                veterinarians (
-                    profiles ( nome )
-                )
+                id, data_visita, diagnosi, terapia, motivo, attachment_url,
+                veterinarians ( profiles ( nome ) )
             `)
             .eq('pet_id', petId)
-            .order('data_visita', { ascending: false }); // Dal più recente
+            .order('data_visita', { ascending: false });
 
         if (error) throw error;
 
         // ==========================================
-        // NUOVO: CONTROLLO DI SICUREZZA (GUARD)
+        // 5. GESTIONE INTERFACCIA (NASCONDI BOTTONI AL PROPRIETARIO)
         // ==========================================
-        const { data: accessData, error: accessError } = await supabase
-            .from('veterinarian_patients')
-            .select('status')
-            .eq('pet_id', petId)
-            .eq('veterinarian_id', currentUser.id)
-            .single();
-
-        // Se c'è un errore, se non c'è il dato, o se lo status NON è "active", blocca tutto!
-        if (accessError || !accessData || accessData.status !== 'active') {
-            alert("Accesso negato: non sei autorizzato a visualizzare o modificare questo paziente (Accesso revocato).");
-            window.location.href = "/pages/veterinario/pazienti.html";
-            return;
+        if (isOwner) {
+            // Se in futuro aggiungerai un bottone "Nuova Visita" per i veterinari in questa pagina, 
+            // potrai nasconderlo al proprietario scrivendo il suo id qui:
+            const btnNuovaVisita = document.getElementById("inserisci_id_tuo_bottone");
+            if (btnNuovaVisita) btnNuovaVisita.style.display = "none";
         }
 
-        // 4. Disegna a schermo
+        // Disegna la timeline a schermo
         renderDati(records);
 
     } catch (err) {

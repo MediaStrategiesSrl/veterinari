@@ -193,6 +193,37 @@
     box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.15);
 }
 
+/* Modale Notifiche - Stile Banner dall'alto */
+#modalNotifiche {
+    display: none; /* Nascosto di base! */
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    background-color: #ffffff;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+    z-index: 9999;
+    padding: 25px 20px 20px 20px;
+    box-sizing: border-box;
+    border-bottom-left-radius: 24px;
+    border-bottom-right-radius: 24px;
+    /* Animazione fluida di discesa */
+    animation: slideDown 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Sistemiamo anche il testo dentro */
+#modalNotifiche h3 {
+    margin: 0 0 15px 0;
+    font-size: 1.2rem;
+    color: #1E293B;
+}
+
+#listaNotifiche {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
 /* Animazione di entrata */
 @keyframes popUp {
     from { transform: translateY(50px) scale(0.9); opacity: 0; }

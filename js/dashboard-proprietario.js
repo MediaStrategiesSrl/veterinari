@@ -106,74 +106,90 @@ async function loadDashboardData(user) {
         }
 
         // --- 4. CARICA I PROSSIMI IMPEGNI (Agenda Orizzontale) ---
-        if (agendaContainer) agendaContainer.innerHTML = ''; 
+if (agendaContainer) agendaContainer.innerHTML = ''; 
 
-        const oggi = new Date();
-        oggi.setHours(0, 0, 0, 0);
-        const oggiISO = oggi.toISOString();
-        
-      const { data: appuntamenti, error: appError } = await supabase
-            .from("appointments")
-            .select("id, data_inizio, provider_id")
-            .eq("owner_id", user.id)
-            .gte("data_inizio", oggiISO)
-            .order("data_inizio", { ascending: true })
-            .limit(1);
+const oggi = new Date();
+oggi.setHours(0, 0, 0, 0);
+const oggiISO = oggi.toISOString();
 
-            if (appError) {
-            console.error("ERRORE DATABASE:", appError);
-            if (agendaContainer) agendaContainer.innerHTML = `<p style="color:red; text-align:center; padding:10px;">Errore DB: ${appError.message}</p>`;
-            return; // Blocchiamo l'esecuzione qui
-        }
+// 1. CARICAMENTO APPUNTAMENTI VETERINARIO (Intatto dal tuo codice)
+const { data: appuntamenti, error: appError } = await supabase
+    .from("appointments")
+    .select("id, data_inizio, provider_id")
+    .eq("owner_id", user.id)
+    .gte("data_inizio", oggiISO)
+    .order("data_inizio", { ascending: true })
+    .limit(1);
 
-        const { data: passeggiate } = await supabase
-            .from("walks")
-            .select("id, luogo, data_passeggiata")
-            .eq("creator_id", user.id)
-            .gte("data_passeggiata", oggiISO)
-            .order("data_passeggiata", { ascending: true })
-            .limit(1);
+if (appError) {
+    console.error("ERRORE DATABASE:", appError);
+    if (agendaContainer) agendaContainer.innerHTML = `<p style="color:red; text-align:center; padding:10px;">Errore DB: ${appError.message}</p>`;
+    return; // Blocchiamo l'esecuzione qui
+}
 
-        if (appuntamenti && appuntamenti.length > 0) {
-            const apt = appuntamenti[0];
-            const dataFormattata = formattaData(apt.data_inizio);
-            const dottore = apt.provider?.cognome ? `Dott.ssa/Dott. ${apt.provider.cognome}` : "Veterinario";
+// 2. CARICAMENTO PASSEGGIATE (CORRETTO!)
+// Ora peschiamo dalle "partecipazioni", così prende TUTTE le passeggiate a cui sei iscritto
+const { data: partecipazioni } = await supabase
+    .from("walk_participants")
+    .select(`
+        walks ( id, luogo, data_passeggiata )
+    `)
+    .eq("owner_id", user.id);
 
-            agendaContainer.innerHTML += `
-                <div class="agenda-card">
-                    <div class="agenda-icon icon-orange">
-                        <i class="fa-solid fa-shield-halved"></i>
-                    </div>
-                    <div class="agenda-info">
-                        <div class="agenda-title">Controllo veterinario <span>></span></div>
-                        <div class="agenda-desc">${dataFormattata} – ${dottore}</div>
-                    </div>
-                </div>
-            `;
-        }
+// Filtriamo le passeggiate future e prendiamo la più vicina (come faceva il tuo limit(1))
+let passeggiate = [];
+if (partecipazioni && partecipazioni.length > 0) {
+    const passeggiateFuture = partecipazioni
+        .map(p => p.walks)
+        .filter(w => w && w.data_passeggiata >= oggiISO)
+        .sort((a, b) => new Date(a.data_passeggiata) - new Date(b.data_passeggiata));
 
-        if (passeggiate && passeggiate.length > 0) {
-            const pass = passeggiate[0];
-            const dataFormattata = formattaData(pass.data_passeggiata);
+    if (passeggiateFuture.length > 0) {
+        passeggiate = [passeggiateFuture[0]]; 
+    }
+}
 
-            agendaContainer.innerHTML += `
-                <div class="agenda-card">
-                    <div class="agenda-icon icon-blue">
-                        <i class="fa-solid fa-tree"></i>
-                    </div>
-                    <div class="agenda-info">
-                        <div class="agenda-title">Passeggiata ${pass.luogo} <span>></span></div>
-                        <div class="agenda-desc">${dataFormattata}</div>
-                    </div>
-                </div>
-            `;
-        }
+// 3. DISEGNO A SCHERMO DEGLI APPUNTAMENTI E PASSEGGIATE (Intatto dal tuo codice)
+if (appuntamenti && appuntamenti.length > 0) {
+    const apt = appuntamenti[0];
+    const dataFormattata = formattaData(apt.data_inizio);
+    const dottore = apt.provider?.cognome ? `Dott.ssa/Dott. ${apt.provider.cognome}` : "Veterinario";
 
-        if ((!appuntamenti || appuntamenti.length === 0) && (!passeggiate || passeggiate.length === 0)) {
-            if (agendaContainer) {
-                agendaContainer.innerHTML = '<p style="text-align:center; color:#888; padding: 1rem;">Nessun impegno in programma per i prossimi giorni.</p>';
-            }
-        }
+    agendaContainer.innerHTML += `
+        <div class="agenda-card">
+            <div class="agenda-icon icon-orange">
+                <i class="fa-solid fa-shield-halved"></i>
+            </div>
+            <div class="agenda-info">
+                <div class="agenda-title">Controllo veterinario <span>></span></div>
+                <div class="agenda-desc">${dataFormattata} – ${dottore}</div>
+            </div>
+        </div>
+    `;
+}
+
+if (passeggiate && passeggiate.length > 0) {
+    const pass = passeggiate[0];
+    const dataFormattata = formattaData(pass.data_passeggiata);
+
+    agendaContainer.innerHTML += `
+        <div class="agenda-card">
+            <div class="agenda-icon icon-blue">
+                <i class="fa-solid fa-tree"></i>
+            </div>
+            <div class="agenda-info">
+                <div class="agenda-title">Passeggiata ${pass.luogo} <span>></span></div>
+                <div class="agenda-desc">${dataFormattata}</div>
+            </div>
+        </div>
+    `;
+}
+
+if ((!appuntamenti || appuntamenti.length === 0) && (!passeggiate || passeggiate.length === 0)) {
+    if (agendaContainer) {
+        agendaContainer.innerHTML = '<p style="text-align:center; color:#888; padding: 1rem;">Nessun impegno in programma per i prossimi giorni.</p>';
+    }
+}
 
     } catch (error) {
         console.error("Errore nel caricamento della dashboard:", error);

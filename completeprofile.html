@@ -97,10 +97,24 @@
                         </div>
                     </div>
 
+                    
+                    <div class="form-group" style="margin-top: 15px;">
+                    <label for="petMicrochip">Numero Microchip (Opzionale)</label>
+                    <input type="text" 
+                    id="petMicrochip" 
+                    name="petMicrochip" 
+                    placeholder="Es. 380123456789012"
+                    minlength="15"
+                    maxlength="15"
+                    pattern="\d{15}"
+                    title="Il microchip deve essere composto da esattamente 15 cifre numeriche">
+                </div>
+
                     <div id="specificPetTypeGroup" class="form-group hidden" style="margin-top: 15px;">
                         <label for="petSpecieSpecific">Specifica il Tipo di Animale</label>
                         <input type="text" id="petSpecieSpecific" name="petSpecieSpecific" placeholder="Es. Criceto, Furetto, Cavallo...">
                     </div>
+
                 </div>
 
                 <div id="vetFields" class="hidden">

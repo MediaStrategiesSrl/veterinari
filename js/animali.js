@@ -75,14 +75,14 @@ async function loadAnimaliData() {
                             <i class="fa-solid fa-chevron-right chevron-icon"></i>
                         </div>
 
-                        <div class="menu-action-card btn-cartella">
-                            <div class="info-icon icon-blue"><i class="fa-solid fa-plus"></i></div>
-                            <div class="menu-action-text">
-                                <div class="menu-action-title">Cartella sanitaria</div>
-                                <div class="menu-action-desc">Visite, farmaci, interventi e referti</div>
-                            </div>
-                            <i class="fa-solid fa-chevron-right chevron-icon"></i>
-                        </div>
+                       <div class="menu-action-card btn-cartella" data-id="${pet.id}">
+    <div class="info-icon icon-blue"><i class="fa-solid fa-plus"></i></div>
+    <div class="menu-action-text">
+        <div class="menu-action-title">Cartella sanitaria</div>
+        <div class="menu-action-desc">Visite, farmaci, interventi e referti</div>
+    </div>
+    <i class="fa-solid fa-chevron-right chevron-icon"></i>
+</div>
 
                         <div class="menu-action-card btn-qr" data-id="${pet.id}">
                             <div class="info-icon icon-orange"><i class="fa-solid fa-qrcode"></i></div>
@@ -132,10 +132,19 @@ async function loadAnimaliData() {
                 });
             });
 
-            document.querySelectorAll('.btn-cartella').forEach(btn => {
-                btn.addEventListener('click', () => alert("Cartella clinica in fase di sviluppo!"));
-            });
+          document.querySelectorAll('.btn-cartella').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+        const idAnimale = e.currentTarget.getAttribute('data-id');
+        
+        if (!idAnimale || idAnimale === "null") {
+            alert("Errore: ID animale non trovato sul bottone!");
+            return;
+        }
 
+        // Il '/' all'inizio lo riporta alla radice del sito, dove si trova il file
+        window.location.href = `/storia-clinica.html?petId=${idAnimale}`;
+    });
+});
             document.querySelectorAll('.btn-qr').forEach(btn => {
                 btn.addEventListener('click', (e) => {
                     window.location.href = `qr-pets.html?petId=${e.currentTarget.getAttribute('data-id')}`;

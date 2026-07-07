@@ -52,6 +52,20 @@ form.addEventListener("submit", async (e) => {
     submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Salvataggio...';
     statusMessage.hidden = true;
 
+    // IL BUTTAFUORI: CONTROLLO MICROCHIP IN JS
+    // ==========================================
+    const microchipValue = inputMicrochip.value.trim();
+    if (microchipValue !== "") {
+        const regexMicrochip = /^\d{15}$/;
+        if (!regexMicrochip.test(microchipValue)) {
+            showMessage("Errore: Il numero del microchip deve contenere esattamente 15 cifre.", "error");
+            // Riabilito il bottone per fargli riprovare
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = 'Salva Modifiche';
+            return; // <-- BLOCCA TUTTO, NON INVIA AL DATABASE
+        }
+    }
+
     try {
         // Prepara i dati da aggiornare
         const updates = {

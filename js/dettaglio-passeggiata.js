@@ -6,13 +6,14 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 let currentUser = null;
 let currentPetId = null;
 let currentWalkId = null;
+let isGiaIscritto = false;
 
 async function init() {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) { window.location.href = "login.html"; return; }
     currentUser = user;
 
-    // 1. Prendi l'ID della passeggiata dall'URL (es: dettaglio-passeggiata.html?id=123)
+    // 1. Prendi l'ID della passeggiata dall'URL
     const urlParams = new URLSearchParams(window.location.search);
     currentWalkId = urlParams.get('id');
 
@@ -57,39 +58,174 @@ async function loadWalkDetails() {
     document.getElementById("statPartecipanti").textContent = `${count || 0}/${walk.max_animali}`;
     document.getElementById("statDistanza").textContent = `${walk.lunghezza_km} km`;
     document.getElementById("statLivello").textContent = walk.livello;
+
+    await loadPartecipanti();
 }
 
+// ==========================================
+// CONTROLLO STATO ISCRIZIONE
+// ==========================================
 async function checkPartecipazione() {
     if (!currentPetId) return;
     const { data } = await supabase.from('walk_participants').select('id').eq('walk_id', currentWalkId).eq('pet_id', currentPetId).single();
     
     const btn = document.getElementById("btnPartecipa");
+    if (!btn) return;
+
     if (data) {
-        btn.textContent = "Iscritto!";
-        btn.disabled = true;
-        btn.style.background = "#10B981"; // Verde successo
+        isGiaIscritto = true;
+        btn.innerHTML = `<i class="fa-solid fa-xmark"></i> Annulla Iscrizione`;
+        btn.disabled = false;
+        btn.style.background = "#DC2626"; // Rosso
+        btn.style.color = "white";
+    } else {
+        isGiaIscritto = false;
+        // Recupera il nome del pet dal DOM per riscriverlo nel bottone
+        const petName = document.querySelector(".pet-name-fill") ? document.querySelector(".pet-name-fill").textContent : "...";
+        btn.innerHTML = `Partecipa con <span class="pet-name-fill">${petName}</span>`;
+        btn.disabled = false;
+        btn.style.background = "#F58220"; // Arancione
+        btn.style.color = "white";
     }
 }
 
-// BOTTONE PARTECIPA
-document.getElementById("btnPartecipa").addEventListener("click", async (e) => {
-    e.target.textContent = "Iscrizione...";
-    e.target.disabled = true;
+// ==========================================
+// BOTTONE PARTECIPA / ANNULLA
+// ==========================================
+const btnPartecipa = document.getElementById("btnPartecipa");
+if (btnPartecipa) {
+    btnPartecipa.addEventListener("click", async (e) => {
+        btnPartecipa.disabled = true;
+        btnPartecipa.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Attendere...`;
 
-    const { error } = await supabase.from('walk_participants').insert({
-        walk_id: currentWalkId,
-        pet_id: currentPetId,
-        owner_id: currentUser.id
+        if (isGiaIscritto) {
+            // AZIONE: DISISCRIVITI
+            const { error } = await supabase
+                .from('walk_participants')
+                .delete()
+                .eq('walk_id', currentWalkId)
+                .eq('pet_id', currentPetId);
+
+            if (!error) {
+                await checkPartecipazione(); 
+                await loadWalkDetails(); 
+            } else {
+                alert("Errore durante l'annullamento dell'iscrizione.");
+                await checkPartecipazione(); 
+            }
+        } else {
+            // AZIONE: ISCRIVITI
+            const { error } = await supabase
+                .from('walk_participants')
+                .insert({
+                    walk_id: currentWalkId,
+                    pet_id: currentPetId,
+                    owner_id: currentUser.id
+                });
+
+            if (!error) {
+                await checkPartecipazione(); 
+                await loadWalkDetails(); 
+            } else {
+                alert("Errore durante l'iscrizione.");
+                await checkPartecipazione(); 
+            }
+        }
     });
+}
+
+// ==========================================
+// CARICAMENTO PARTECIPANTI E AMICIZIE
+// ==========================================
+async function loadPartecipanti() {
+    // 1. Prendi tutti i partecipanti alla passeggiata, con i dati del loro pet
+    const { data: partecipanti, error } = await supabase
+        .from('walk_participants')
+        .select(`
+            pet_id,
+            pets ( id, nome, avatar_url )
+        `)
+        .eq('walk_id', currentWalkId);
+
+    if (error || !partecipanti) return;
+
+    const listaContainer = document.getElementById("listaPartecipanti");
+    
+    // Filtra via te stesso (non puoi chiederti l'amicizia da solo)
+    const altriPartecipanti = partecipanti.filter(p => p.pet_id !== currentPetId);
+
+    if (altriPartecipanti.length === 0) {
+        listaContainer.innerHTML = `<p style="color: #94A3B8; font-size: 0.9rem; text-align: center;">Nessun altro animale iscritto al momento.</p>`;
+        return;
+    }
+
+    listaContainer.innerHTML = ""; // Svuota il contenitore
+
+    // 2. Costruisci la UI per ogni cane
+    for (const p of altriPartecipanti) {
+        const pet = p.pets;
+        
+        // Controlla se siete già amici o c'è una richiesta in sospeso
+        const { data: friendship } = await supabase
+            .from('pet_friendships')
+            .select('status')
+            .or(`and(pet1_id.eq.${currentPetId},pet2_id.eq.${pet.id}),and(pet1_id.eq.${pet.id},pet2_id.eq.${currentPetId})`)
+            .single();
+
+        // Stato di default del bottone
+        let btnHTML = `<button class="btn-add-friend" data-id="${pet.id}"><i class="fa-solid fa-user-plus"></i> Aggiungi</button>`;
+        
+        if (friendship) {
+            if (friendship.status === 'pending') {
+                btnHTML = `<button class="btn-add-friend pending" disabled><i class="fa-solid fa-clock"></i> In attesa</button>`;
+            } else if (friendship.status === 'accepted') {
+                btnHTML = `<button class="btn-add-friend friends" disabled><i class="fa-solid fa-check"></i> Amici</button>`;
+            }
+        }
+
+        // Gestione foto avatar
+        const avatarUrl = pet.avatar_url 
+            ? supabase.storage.from('avatars').getPublicUrl(pet.avatar_url).data.publicUrl 
+            : '../../img/default-dog.jpg';
+
+        listaContainer.innerHTML += `
+            <div class="participant-card">
+                <img src="${avatarUrl}" class="participant-img" alt="${pet.nome}">
+                <div class="participant-info">
+                    <h4>${pet.nome}</h4>
+                </div>
+                ${btnHTML}
+            </div>
+        `;
+    }
+
+    // 3. Attacca gli eventi ai bottoni "Aggiungi" generati
+    document.querySelectorAll('.btn-add-friend:not([disabled])').forEach(btn => {
+        btn.addEventListener('click', async (e) => await inviaRichiestaAmicizia(e.target.closest('button')));
+    });
+}
+
+async function inviaRichiestaAmicizia(btn) {
+    const targetPetId = btn.dataset.id;
+    btn.disabled = true;
+    btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i>`;
+
+    const { error } = await supabase
+        .from('pet_friendships')
+        .insert({
+            pet1_id: currentPetId,
+            pet2_id: targetPetId,
+            status: 'pending' // Segna in attesa!
+        });
 
     if (!error) {
-        e.target.textContent = "Iscritto!";
-        e.target.style.background = "#10B981";
-        loadWalkDetails(); // Aggiorna il numerino dei partecipanti
+        btn.className = 'btn-add-friend pending';
+        btn.innerHTML = `<i class="fa-solid fa-clock"></i> In attesa`;
     } else {
-        alert("Errore durante l'iscrizione.");
-        e.target.disabled = false;
+        btn.disabled = false;
+        btn.innerHTML = `<i class="fa-solid fa-user-plus"></i> Aggiungi`;
+        alert("Errore nell'invio della richiesta.");
     }
-});
+}
 
 init();

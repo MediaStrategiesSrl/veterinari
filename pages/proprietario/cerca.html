@@ -42,7 +42,7 @@
         <div class="section-container" style="margin-top: 1.5rem;">
             <div class="section-header-flex">
                 <h3 style="margin-bottom: 0;">Consigliati vicino a te</h3>
-                <a href="#" class="edit-link">Filtri</a>
+                <a href="#" class="edit-link" id="btnApriFiltri">Filtri</a>
             </div>
 
             <div id="professionalsList">
@@ -73,5 +73,25 @@
     </main>
 
     <script type="module" src="../../js/cerca.js"></script>
+
+    <div id="modalFiltri" class="modal-filtri">
+    <div class="modal-filtri-content">
+        <div class="modal-header">
+            <h3>Filtri di ricerca</h3>
+            <span id="closeFiltri" class="close-btn">&times;</span>
+        </div>
+        
+        <div class="filter-group">
+            <label for="distanceRange">Distanza massima: <span id="distanceValue" style="color: #F58220; font-size: 1.1rem;">5</span> km</label>
+            <input type="range" id="distanceRange" min="1" max="50" value="5" step="1">
+            <div style="display: flex; justify-content: space-between; font-size: 0.8rem; color: #94A3B8; margin-top: 5px;">
+                <span>1 km</span>
+                <span>50 km</span>
+            </div>
+        </div>
+        
+        <button id="applyFiltri" class="btn-primary" style="width: 100%; margin-top: 15px;">Applica filtro</button>
+    </div>
+</div>
 </body>
 </html>

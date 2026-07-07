@@ -35,3 +35,29 @@
 .req-arrow { color: #CBD5E1; font-size: 0.9rem; }
 
 .bottom-actions { margin-top: 40px; padding-bottom: 30px; }
+
+/* Card Partecipanti */
+.participant-card {
+    background: white; border-radius: 16px; padding: 12px 15px; 
+    display: flex; align-items: center; gap: 15px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.02); border: 1px solid #F1F5F9; 
+    margin-bottom: 10px;
+}
+
+.participant-img {
+    width: 45px; height: 45px; border-radius: 50%; 
+    object-fit: cover; background: #E2E8F0;
+}
+
+.participant-info { flex-grow: 1; }
+.participant-info h4 { margin: 0 0 3px 0; font-size: 1rem; color: #1E293B; }
+
+/* Bottoni Amicizia */
+.btn-add-friend {
+    background: #F0F9FF; color: #0284C7; border: none; border-radius: 10px; 
+    padding: 8px 12px; font-size: 0.85rem; font-weight: bold; 
+    cursor: pointer; transition: 0.2s;
+}
+.btn-add-friend:hover { background: #E0F2FE; }
+.btn-add-friend.pending { background: #FFF7ED; color: #F58220; }
+.btn-add-friend.friends { background: #ECFDF5; color: #10B981; }

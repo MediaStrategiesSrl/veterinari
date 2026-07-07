@@ -7,6 +7,14 @@ const categoriesContainer = document.getElementById("categoriesContainer");
 const professionalsList = document.getElementById("professionalsList");
 const locationBadge = document.getElementById("locationBadge");
 
+// GESTIONE FILTRO DISTANZA
+const btnApriFiltri = document.getElementById('btnApriFiltri');
+const modalFiltri = document.getElementById('modalFiltri');
+const closeFiltri = document.getElementById('closeFiltri');
+const distanceRange = document.getElementById('distanceRange');
+const distanceValue = document.getElementById('distanceValue');
+const applyFiltri = document.getElementById('applyFiltri');
+
 // Variabili globali
 let leafletMap = null;
 let userLat = 45.4642; 
@@ -130,6 +138,63 @@ async function loadSearchData() {
     }
 }
 
+// 1. Apri la modale
+if (btnApriFiltri) {
+    btnApriFiltri.addEventListener('click', (e) => {
+        e.preventDefault();
+        modalFiltri.classList.add('show');
+    });
+}
+
+// 2. Chiudi la modale (con la X o cliccando fuori)
+if (closeFiltri) {
+    closeFiltri.addEventListener('click', () => modalFiltri.classList.remove('show'));
+}
+window.addEventListener('click', (e) => {
+    if (e.target === modalFiltri) modalFiltri.classList.remove('show');
+});
+
+// 3. Aggiorna il numerino dei KM in tempo reale mentre trascini lo slider
+if (distanceRange) {
+    distanceRange.addEventListener('input', (e) => {
+        distanceValue.textContent = e.target.value;
+    });
+}
+
+// 4. Bottone Applica Filtro
+if (applyFiltri) {
+    applyFiltri.addEventListener('click', () => {
+        const kmScelti = distanceRange.value;
+        modalFiltri.classList.remove('show');
+        
+        // Qui aggiorneremo il badge della mappa
+        const badgeMappa = document.querySelector('.leaflet-bottom .leaflet-control') || document.querySelector('.map-badge'); // Adatta in base a come hai strutturato il badge sulla mappa
+        if(badgeMappa) badgeMappa.textContent = `Entro ${kmScelti} km`;
+
+        // Filtriamo l'array globale allProfessionals tenendo solo quelli entro il limite
+        const professionistiFiltrati = allProfessionals.filter(pro => {
+            // Se il prof non ha le coordinate nel DB, per sicurezza lo escludiamo
+            if (!pro.latitudine || !pro.longitudine) return false;
+            
+            // Calcola la distanza
+            const distanzaVera = parseFloat(calcolaDistanza(userLat, userLng, pro.latitudine, pro.longitudine));
+            
+            // Tieni il professionista solo se la sua distanza è MINORE o UGUALE a kmScelti
+            return distanzaVera <= kmScelti;
+        });
+
+        // Dopo aver filtrato l'array, ordiniamo i sopravvissuti dal più vicino al più lontano!
+        professionistiFiltrati.sort((a, b) => {
+            const distA = parseFloat(calcolaDistanza(userLat, userLng, a.latitudine, a.longitudine));
+            const distB = parseFloat(calcolaDistanza(userLat, userLng, b.latitudine, b.longitudine));
+            return distA - distB;
+        });
+
+        // Manda in pasto al tuo render la lista accorciata e ordinata
+        renderProfessionals(professionistiFiltrati);
+    });
+}
+
 // ==========================================
 // 3. FUNZIONE DI RENDER (AGGIORNA LISTA E MAPPA)
 // ==========================================
@@ -156,21 +221,23 @@ function renderProfessionals(listaDaMostrare) {
                     .bindPopup(`<strong>${nomePro}</strong><br>${pro.tipo_professione}`);
             }
 
-            const proHTML = `
-                <a href="dettaglio-professionista.html?id=${pro.user_id}" class="pro-card">
-                    <img src="${avatarUrl}" alt="${nomePro}" class="pro-avatar">
-                    <div class="pro-info">
-                        <div class="pro-name">${nomePro}</div>
-                        <div class="pro-details">
-                            ${distanzaTesto} <i class="fa-solid fa-star"></i> 4.9 · ${prezzo}
-                        </div>
-                        <div style="font-size: 0.75rem; color: #F39C12; margin-top: 2px;">
-                            ${pro.tipo_professione}
-                        </div>
-                    </div>
-                    <i class="fa-solid fa-chevron-right chevron-icon"></i>
-                </a>
-            `;
+     const proHTML = `
+    <a href="dettaglio-professionista.html?id=${pro.user_id}" class="pro-card">
+        <img src="${avatarUrl}" alt="${nomePro}" class="pro-avatar">
+        <div class="pro-info">
+            <div class="pro-name">${nomePro}</div>
+            
+            <div class="pro-details">
+                ${distanzaTesto} &middot; ${prezzo}
+            </div>
+            
+            <div style="font-size: 0.75rem; color: #F39C12; margin-top: 2px;">
+                ${pro.tipo_professione}
+            </div>
+        </div>
+        <i class="fa-solid fa-chevron-right chevron-icon"></i>
+    </a>
+`;
             professionalsList.insertAdjacentHTML('beforeend', proHTML);
         });
     } else {

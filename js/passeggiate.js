@@ -134,7 +134,6 @@ async function loadAmici() {
 async function checkNotificheAmicizia() {
     if (!currentPetId) return;
 
-    // Cerca richieste in attesa dove il MIO cane è il destinatario (pet2_id)
     const { data: pendingRequests } = await supabase
         .from('pet_friendships')
         .select('id, pet1:pets!pet1_id(nome)')
@@ -142,32 +141,36 @@ async function checkNotificheAmicizia() {
         .eq('status', 'pending');
 
     const badge = document.getElementById("badgeNotifiche");
+    
+    // Se ci sono notifiche, accendi il badge e riempi la tendina
     if (pendingRequests && pendingRequests.length > 0) {
         badge.textContent = pendingRequests.length;
         badge.hidden = false;
 
-        // Riempiamo la modale delle notifiche
         const listaNotifiche = document.getElementById("listaNotifiche");
         listaNotifiche.innerHTML = "";
         pendingRequests.forEach(req => {
             listaNotifiche.innerHTML += `
-                <div style="background: #F8FAFC; padding: 15px; border-radius: 12px; margin-bottom: 10px;">
-                    <p style="margin: 0 0 10px 0;"><strong>${req.pet1.nome}</strong> vuole fare amicizia!</p>
+                <div style="background: #F8FAFC; padding: 15px; border-radius: 12px;">
+                    <p style="margin: 0 0 10px 0; color: #1E293B;"><strong>${req.pet1.nome}</strong> vuole fare amicizia!</p>
                     <div style="display:flex; gap: 10px;">
-                        <button class="btn-primary accetta-btn" data-id="${req.id}" style="padding: 8px; flex:1; font-size:0.9rem;">Accetta</button>
-                        <button class="btn-secondary rifiuta-btn" data-id="${req.id}" style="padding: 8px; flex:1; background:#E2E8F0; border:none; border-radius:30px; font-weight:bold;">Rifiuta</button>
+                        <button class="btn-primary accetta-btn" data-id="${req.id}" style="padding: 10px; flex:1;">Accetta</button>
+                        <button class="btn-secondary rifiuta-btn" data-id="${req.id}" style="padding: 10px; flex:1; background:#E2E8F0; border:none; border-radius:30px; font-weight:bold; color: #1E293B;">Rifiuta</button>
                     </div>
                 </div>
             `;
         });
 
-        // Eventi bottoni Accetta/Rifiuta
         document.querySelectorAll(".accetta-btn").forEach(btn => {
             btn.addEventListener("click", async (e) => await rispondiAmicizia(e.target.dataset.id, 'accepted'));
         });
         document.querySelectorAll(".rifiuta-btn").forEach(btn => {
             btn.addEventListener("click", async (e) => await rispondiAmicizia(e.target.dataset.id, 'rejected'));
         });
+    } else {
+        // Se non ci sono notifiche, NASCONDI IL BADGE
+        badge.hidden = true;
+        document.getElementById("listaNotifiche").innerHTML = `<p style="color:#94A3B8;">Nessuna nuova richiesta.</p>`;
     }
 }
 
@@ -188,7 +191,19 @@ document.querySelectorAll(".close-modal-btn").forEach(btn => btn.addEventListene
     modalNotifiche.style.display = "none";
 }));
 
-document.getElementById("btnNotifiche").addEventListener("click", () => modalNotifiche.style.display = "flex");
+document.getElementById("btnNotifiche").addEventListener("click", () => {
+    const modal = document.getElementById("modalNotifiche");
+    
+    // Mostra il banner a tendina
+    modal.style.display = "block";
+
+    // Fai sparire la tendina da sola dopo 5 secondi (5000 millisecondi)
+    setTimeout(() => {
+        if (modal.style.display === "block") {
+            modal.style.display = "none";
+        }
+    }, 5000);
+});
 
 document.getElementById("formCreaPasseggiata").addEventListener("submit", async (e) => {
     e.preventDefault();

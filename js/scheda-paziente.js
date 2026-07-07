@@ -67,7 +67,7 @@ async function initPage() {
         btnNuovaVisita.href = `nuova-visita.html?petId=${petId}`;
 
         // Prepara il bottone "Storia Clinica"
-        btnStoriaClinica.href = `storia-clinica.html?petId=${petId}`;
+        btnStoriaClinica.href = `../../storia-clinica.html?petId=${petId}`;
 
         // Scarica i dati dell'animale
         const { data: pet, error } = await supabase

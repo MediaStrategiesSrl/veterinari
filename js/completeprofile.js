@@ -214,11 +214,23 @@ form.addEventListener("submit", async function (event) {
             ? document.getElementById("petSpecieSpecific").value.trim() 
             : document.getElementById("petSpecie").value;
 
+            const microchipValue = document.getElementById("petMicrochip").value.trim();
+            // Se l'utente ha scritto qualcosa (visto che è opzionale) controlliamo che sia di 15 numeri
+        if (microchipValue !== "") {
+            const regexMicrochip = /^\d{15}$/;
+                if (!regexMicrochip.test(microchipValue)) {
+                    showStatus("Errore: Il microchip deve contenere esattamente 15 numeri.", "error");
+                    enableSubmit();
+        return; // Blocca l'invio a Supabase
+    }
+}
+
         const { error: petError } = await supabase.from("pets").insert({
             owner_id: user.id,
             nome: document.getElementById("petName").value.trim(),
             specie: finalSpecie,
-            qr_code_hash: generatedQrHash
+            qr_code_hash: generatedQrHash,
+            microchip: microchipValue
         });
         if (petError) return handleSpecificError(petError.message);
 
