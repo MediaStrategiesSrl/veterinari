@@ -5,6 +5,9 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 let currentUser = null;
 let nomeVeterinario = "Dott. Sconosciuto";
 
+// Variabile globale per tenere in memoria i dati completi dei pazienti (incluso il proprietario)
+let pazientiMemoria = []; 
+
 // Elementi DOM
 const headerSubtitle = document.getElementById("headerSubtitle");
 const petSelect = document.getElementById("petSelect");
@@ -69,11 +72,12 @@ async function initPage() {
 
 async function caricaPazienti(preselectedPetId) {
     try {
+        // AGGIUNTO 'owner_id' NELLA SELECT PER IL CONTROLLO CASSA!
         const { data, error } = await supabase
             .from('veterinarian_patients')
-            .select(`pet_id, pets ( nome )`)
+            .select(`pet_id, pets ( nome, owner_id )`) 
             .eq('veterinarian_id', currentUser.id)
-            .eq('status', 'active'); // <-- FONDAMENTALE: carica solo i pazienti attivi!
+            .eq('status', 'active'); 
 
         if (error) throw error;
 
@@ -82,7 +86,9 @@ async function caricaPazienti(preselectedPetId) {
             return;
         }
 
-        // Pulisce la select prima di popolarla (utile se la ricarichi)
+        // Salviamo in memoria così dopo possiamo controllare facilmente
+        pazientiMemoria = data;
+
         petSelect.innerHTML = `<option value="" disabled ${!preselectedPetId ? 'selected' : ''}>Seleziona il paziente...</option>`;
 
         data.forEach(item => {
@@ -91,10 +97,8 @@ async function caricaPazienti(preselectedPetId) {
                 opt.value = item.pet_id;
                 opt.textContent = item.pets.nome;
                 
-                // Se c'è un preselectedPetId dall'URL, selezionalo in automatico
                 if (item.pet_id === preselectedPetId) {
                     opt.selected = true;
-                    // Aggiorna subito il sottotitolo
                     headerSubtitle.textContent = `${item.pets.nome} · ${nomeVeterinario}`;
                 }
 
@@ -102,7 +106,6 @@ async function caricaPazienti(preselectedPetId) {
             }
         });
 
-        // Aggiorna il sottotitolo dinamicamente quando il vet cambia il cane dalla tendina
         petSelect.addEventListener("change", (e) => {
             const nomeCane = e.target.options[e.target.selectedIndex].text;
             headerSubtitle.textContent = `${nomeCane} · ${nomeVeterinario}`;
@@ -115,21 +118,24 @@ async function caricaPazienti(preselectedPetId) {
 }
 
 // Gestione Grafica: Mostra il nome del file selezionato
-documentUpload.addEventListener("change", (e) => {
-    const file = e.target.files[0];
-    if (file) {
-        fileNameDisplay.textContent = file.name;
-        fileNameDisplay.style.color = "#059669"; // Verde per conferma
-        fileSubtext.textContent = "File pronto per l'invio";
-    } else {
-        fileNameDisplay.textContent = "Allega documenti";
-        fileNameDisplay.style.color = "#1E293B";
-        fileSubtext.textContent = "Referti, esami, immagini (Max 5MB)";
-    }
-});
+if(documentUpload) {
+    documentUpload.addEventListener("change", (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            fileNameDisplay.textContent = file.name;
+            fileNameDisplay.style.color = "#059669"; 
+            fileSubtext.textContent = "File pronto per l'invio";
+        } else {
+            fileNameDisplay.textContent = "Allega documenti";
+            fileNameDisplay.style.color = "#1E293B";
+            fileSubtext.textContent = "Referti, esami, immagini (Max 5MB)";
+        }
+    });
+}
+
 
 // ==========================================
-// SALVATAGGIO CARTELLA CLINICA + UPLOAD FILE
+// SALVATAGGIO CARTELLA CLINICA + LOGICA CASSA
 // ==========================================
 form.addEventListener("submit", async (e) => {
     e.preventDefault();
@@ -147,9 +153,11 @@ form.addEventListener("submit", async (e) => {
 
     try {
         let attachmentUrl = null;
-        const file = documentUpload.files[0];
+        
+        // Protezione se documentUpload non esiste in alcune view
+        const file = documentUpload ? documentUpload.files[0] : null;
 
-        // 1. SE C'È UN FILE, FAI L'UPLOAD NELLO STORAGE PRIMA
+        // 1. SE C'È UN FILE, FAI L'UPLOAD
         if (file) {
             submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Caricamento file...';
             
@@ -164,14 +172,11 @@ form.addEventListener("submit", async (e) => {
             const isDuplicate = existingFiles && existingFiles.some(f => f.name === fileName);
 
             if (isDuplicate) {
-                console.log("File già presente in memoria. Riciclo il link!");
                 const { data: { publicUrl } } = supabase.storage
                     .from('storage_veterinari')
                     .getPublicUrl(filePath);
-                
                 attachmentUrl = publicUrl;
             } else {
-                console.log("File nuovo, procedo all'upload...");
                 const { error: uploadError } = await supabase.storage
                     .from('storage_veterinari')
                     .upload(filePath, file);
@@ -188,29 +193,45 @@ form.addEventListener("submit", async (e) => {
 
         submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Salvataggio referto...';
 
-        // 2. SALVA TUTTO NEL DATABASE
-        // Attenzione: assicurati di leggere gli ID corretti dei tuoi input HTML
-        const { error: insertError } = await supabase
+        // 2. SALVA LA VISITA NEL DATABASE
+        const { data: newRecord, error: insertError } = await supabase
             .from('medical_records')
             .insert({
                 pet_id: petId,
-                vet_id: currentUser.id,
+                vet_id: currentUser.id, // Tu, veterinario
                 motivo: document.getElementById("motivo") ? document.getElementById("motivo").value : "",
                 anamnesi: document.getElementById("anamnesi") ? document.getElementById("anamnesi").value : "",
                 diagnosi: document.getElementById("diagnosi") ? document.getElementById("diagnosi").value : "",
                 terapia: document.getElementById("terapia") ? document.getElementById("terapia").value : "",
                 attachment_url: attachmentUrl
-            });
+            })
+            .select() // Importante: ci facciamo restituire l'ID della visita appena creata
+            .single();
 
         if (insertError) throw insertError;
 
-        formMessage.textContent = "Referto e allegati salvati con successo!";
+        formMessage.textContent = "Referto salvato!";
         formMessage.style.color = "#059669";
 
-        // Torna alla dashboard dopo 2 secondi
+        // ==========================================
+        // 3. LOGICA DI INDIRIZZAMENTO (IL MISTERO È RISOLTO!)
+        // ==========================================
+        
+        // Troviamo a chi appartiene il cane appena visitato
+        const infoAnimaleVisato = pazientiMemoria.find(p => p.pet_id === petId);
+        
         setTimeout(() => {
-            window.location.href = "dashboard-veterinario.html";
-        }, 2000);
+            if (infoAnimaleVisato && infoAnimaleVisato.pets.owner_id === currentUser.id) {
+                // EDGE CASE: Il cane è del veterinario stesso! 
+                // Niente cassa, torniamo alla dashboard.
+                alert("Visita personale registrata con successo (Costo 0€).");
+                window.location.href = "dashboard-veterinario.html";
+            } else {
+                // FLUSSO NORMALE: Il cane è di un cliente.
+                // Lo mandiamo in cassa e gli passiamo via URL l'ID della visita (recordId) per generare la fattura!
+                window.location.href = `cassa.html?recordId=${newRecord.id}&petId=${petId}`;
+            }
+        }, 1500);
 
     } catch (error) {
         console.error("Errore salvataggio:", error);

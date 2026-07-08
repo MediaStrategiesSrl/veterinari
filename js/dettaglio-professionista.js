@@ -8,7 +8,8 @@ const vetName = document.getElementById("vetName");
 const vetAvatar = document.getElementById("vetAvatar");
 const vetDistance = document.getElementById("vetDistance");
 const vetPrice = document.getElementById("vetPrice"); 
-const servicesList = document.getElementById("servicesList"); // <-- Aggiunto per agganciare il div dei servizi
+const vetRole = document.getElementById("vetRole"); // Qui è dove apparirà "Ordine n. XXXX"
+const servicesList = document.getElementById("servicesList"); 
 
 async function initPage() {
     // 1. Legge l'ID dalla URL
@@ -26,11 +27,12 @@ async function initPage() {
     }
 
     try {
-        // 2. Scarica i dati reali da Supabase (Tabella veterinari)
+        // 2. Scarica i dati reali (AGGIUNTO 'numero_ordine' ALLA QUERY!)
         const { data: vetData, error: vetError } = await supabase
             .from('veterinarians')
             .select(`
                 user_id,
+                numero_ordine,
                 profiles (nome, cognome, avatar_url)
             `)
             .eq('user_id', vetId)
@@ -53,6 +55,17 @@ async function initPage() {
             }
         }
 
+        // ==========================================
+        // NUOVO: LOGICA ORDINE (Nel vetRole)
+        // ==========================================
+        if (vetRole) {
+            if (vetData.numero_ordine) {
+                vetRole.textContent = `Veterinario • Ordine n. ${vetData.numero_ordine}`;
+            } else {
+                vetRole.textContent = `Veterinario`;
+            }
+        }
+
         // 4. Mostra la distanza pescata da cerca.js
         const distSalvata = localStorage.getItem(`dist_${vetId}`);
         if (distSalvata) {
@@ -61,33 +74,25 @@ async function initPage() {
             vetDistance.textContent = "n.d.";
         }
 
-// ==========================================
-        // 5. NUOVO: SCARICA E MOSTRA I SERVIZI (CLICCABILI)
-        // ==========================================
+        // 5. SCARICA E MOSTRA I SERVIZI
         const { data: services, error: servicesError } = await supabase
             .from('provider_services')
-            .select('id, nome_servizio, durata_minuti, prezzo') // Assicurati di pescare anche l'ID del servizio!
-            .eq('provider_id', vetId);
+            .select('id, nome_servizio, durata_minuti, prezzo') 
+            .eq('provider_id', vetId)
+            .order('prezzo', { ascending: true }); // Ordinati per prezzo crescente!
 
         if (servicesError) throw servicesError;
 
-        // Se ci sono servizi registrati nel DB
         if (services && services.length > 0) {
-            servicesList.innerHTML = ""; // Svuotiamo il testo "Nessun servizio registrato"
-            let minPrice = Infinity;
+            servicesList.innerHTML = ""; 
+            
+            // Il prezzo minimo è ora sicuro di essere il primo elemento della lista
+            const minPrice = services[0].prezzo; 
 
             services.forEach(servizio => {
-                // Aggiorniamo il prezzo minimo
-                if (servizio.prezzo < minPrice) {
-                    minPrice = servizio.prezzo;
-                }
-
-                // Creiamo un tag <a> al posto di un <div> per renderlo cliccabile!
                 const serviceCard = document.createElement("a");
-                // Passiamo all'URL sia il veterinario che lo specifico servizio cliccato
                 serviceCard.href = `prenota.html?user_id=${vetId}&service_id=${servizio.id}`;
                 
-                // Stili inline per replicare il design del tuo mockup (Card bianca, icona, freccia)
                 serviceCard.style.cssText = `
                     display: flex; 
                     align-items: center; 
@@ -114,8 +119,8 @@ async function initPage() {
                 servicesList.appendChild(serviceCard);
             });
 
-            // Aggiorniamo dinamicamente il box in alto "Da --" col prezzo minimo reale
-            if (vetPrice && minPrice !== Infinity) {
+            // Aggiorniamo il box "Da --"
+            if (vetPrice && minPrice !== undefined) {
                 vetPrice.textContent = `€ ${minPrice}`;
             }
         }

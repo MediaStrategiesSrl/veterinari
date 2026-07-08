@@ -40,7 +40,7 @@ let qrChannel = null; // Memorizza l'antenna realtime per poterla spegnere quand
 // 1. ASCOLTA SESSIONE
 supabase.auth.onAuthStateChange((event, session) => {
     if (event === "SIGNED_OUT" || !session) {
-        window.location.href = "login.html"; 
+        window.location.href = "index.html"; 
     } else if (event === "SIGNED_IN" || event === "INITIAL_SESSION") {
         loadDashboardData(session.user);
     }

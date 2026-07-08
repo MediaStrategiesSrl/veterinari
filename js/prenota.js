@@ -5,9 +5,9 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 // ID presi dall'URL e Sessione
 const urlParams = new URLSearchParams(window.location.search);
-// CORREZIONE CHIAVE: Ora cerchiamo il nome esatto che abbiamo inviato!
 const vetId = urlParams.get('user_id'); 
 let currentUser = null;
+let isPersonalVisit = false; // <-- LA NOSTRA VARIABILE MAGICA PER L'AUTOPRENOTAZIONE
 
 // Stato della prenotazione
 let selectedDateStr = null;
@@ -39,6 +39,9 @@ async function initPrenota() {
         return;
     }
     currentUser = user;
+    
+    // CONTROLLO AUTOPRENOTAZIONE: Siamo lo stesso utente del medico?
+    isPersonalVisit = (currentUser.id === vetId);
 
     await loadVetInfo();
     await loadPets();
@@ -103,18 +106,16 @@ function generateDatePills() {
         const nomeGiorno = i === 0 ? "Oggi" : giorniSettimana[d.getDay()];
         pill.textContent = `${nomeGiorno} ${d.getDate()}`;
         
-        // Salviamo la data in formato YYYY-MM-DD per fare le query al DB
         const dateStr = d.toISOString().split('T')[0];
         pill.dataset.date = dateStr;
 
         pill.addEventListener("click", () => {
-            // Rimuovi classe active agli altri
             document.querySelectorAll("#dateContainer .pill").forEach(p => p.classList.remove("active"));
             pill.classList.add("active");
             selectedDateStr = dateStr;
-            selectedTimeStr = null; // Resetta l'orario
+            selectedTimeStr = null; 
             checkFormValidity();
-            loadAvailableTimes(dateStr); // Cerca orari liberi
+            loadAvailableTimes(dateStr); 
         });
 
         dateContainer.appendChild(pill);
@@ -124,25 +125,22 @@ function generateDatePills() {
 // Nuova funzione per caricare i servizi
 async function loadServices() {
     const { data: services, error } = await supabase
-        .from('provider_services') // <-- METTI IL NOME ESATTO DELLA TUA TABELLA
+        .from('provider_services')
         .select('*')
         .eq('provider_id', vetId);
 
     const noServicesMsg = document.getElementById("noServicesMsg");
     serviceSelect.innerHTML = "";
 
-    // Se c'è un errore o non ci sono servizi registrati
     if (error || !services || services.length === 0) {
-        serviceSelect.style.display = 'none'; // Nascondi la tendina
-        noServicesMsg.style.display = 'block'; // Mostra il messaggio di errore
+        serviceSelect.style.display = 'none'; 
+        noServicesMsg.style.display = 'block'; 
         
-        // Blocca i prezzi
         totalPrice.textContent = "-- €";
         summaryPrice.textContent = "--";
-        return false; // Ritorna FALSO per fermare il caricamento delle date
+        return false; 
     }
 
-    // Se ci sono servizi, popoliamo la tendina
     services.forEach(srv => {
         const option = document.createElement('option');
         option.value = srv.id;
@@ -152,20 +150,17 @@ async function loadServices() {
         serviceSelect.appendChild(option);
     });
 
-    // Scatena un evento "change" finto per aggiornare i prezzi mostrati sotto a schermo
     serviceSelect.dispatchEvent(new Event("change"));
-    return true; // Ritorna VERO, possiamo procedere
+    return true; 
 }
 
 // 4. Carica orari liberi incrociando con il Database!
 async function loadAvailableTimes(dateStr) {
     timeContainer.innerHTML = `<p style="color: #64748B; font-size: 0.9rem;"><i class="fa-solid fa-spinner fa-spin"></i> Ricerca disponibilità...</p>`;
     
-    // Iniziamo la giornata lavorativa fittizia (9:00 - 17:00, slot da 30 min)
     const allSlots = ["09:00", "09:30", "10:00", "10:30", "11:00", "11:30", "14:30", "15:00", "15:30", "16:00", "16:30"];
     
     try {
-        // Peschiamo gli appuntamenti ESISTENTI per questo veterinario in questa data
         const { data: bookedAppointments, error } = await supabase
             .from('appointments')
             .select('data_inizio')
@@ -175,10 +170,8 @@ async function loadAvailableTimes(dateStr) {
 
         if (error) throw error;
 
-        // Estraiamo solo gli orari "HH:MM" prenotati
         const bookedTimes = bookedAppointments.map(app => {
             const d = new Date(app.data_inizio);
-            // Formattiamo per fuso orario locale
             return d.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' }); 
         });
 
@@ -191,7 +184,6 @@ async function loadAvailableTimes(dateStr) {
             pill.textContent = slot;
 
             if (bookedTimes.includes(slot)) {
-                // Se è occupato, lo disabilitiamo
                 pill.classList.add("disabled");
             } else {
                 availableCount++;
@@ -215,16 +207,25 @@ async function loadAvailableTimes(dateStr) {
     }
 }
 
-// 5. Aggiornamento prezzi dinamico
+// 5. Aggiornamento prezzi dinamico CON CONTROLLO AUTOPRENOTAZIONE
 serviceSelect.addEventListener("change", () => {
     const selectedOption = serviceSelect.options[serviceSelect.selectedIndex];
     
-    // Prendi prezzo e durata dal database!
-    const prezzo = selectedOption.getAttribute('data-prezzo');
+    const prezzoStandard = selectedOption.getAttribute('data-prezzo');
     currentServiceDuration = parseInt(selectedOption.getAttribute('data-durata')) || 30; 
     
-    totalPrice.textContent = `${prezzo},00 €`;
-    summaryPrice.textContent = `€${prezzo},00`;
+    if (isPersonalVisit) {
+        // Se è l'animale del veterinario stesso, forziamo il prezzo a 0 graficamente
+        totalPrice.textContent = `0,00 € (Personale)`;
+        summaryPrice.textContent = `€0,00`;
+        // Se vuoi cambiare anche la label "Da pagare in struttura", potresti fare:
+        // const label = totalPrice.previousElementSibling;
+        // if(label) label.textContent = "Visita personale gratuita";
+    } else {
+        // Flusso normale per i clienti
+        totalPrice.textContent = `${prezzoStandard},00 €`;
+        summaryPrice.textContent = `€${prezzoStandard},00`;
+    }
 });
 
 // 6. Controlla se abilitare il bottone Conferma
@@ -241,14 +242,12 @@ confirmBtn.addEventListener("click", async () => {
     confirmBtn.disabled = true;
     confirmBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Prenotazione...';
     
-    // Costruiamo l'oggetto Date per inizio e fine
     const dataInizio = new Date(`${selectedDateStr}T${selectedTimeStr}:00`);
-    
-    // CORREZIONE CHIAVE: Uso currentServiceDuration invece di appointmentDurationMinutes
     const dataFine = new Date(dataInizio.getTime() + currentServiceDuration * 60000);
 
-    // Prezzo (nell'MVP non viene pagato subito, ma salvato nel record)
+    // LOGICA DI PREZZO NEL DATABASE
     const costoStr = serviceSelect.options[serviceSelect.selectedIndex].getAttribute('data-prezzo');
+    const costoFinale = isPersonalVisit ? 0 : parseFloat(costoStr);
 
     try {
         const { error } = await supabase
@@ -260,22 +259,21 @@ confirmBtn.addEventListener("click", async () => {
                 data_inizio: dataInizio.toISOString(),
                 data_fine: dataFine.toISOString(),
                 stato: 'programmato',
-                costo: parseFloat(costoStr)
+                costo: costoFinale // Sarà 0 se sei il proprietario-veterinario!
             });
 
         if (error) throw error;
 
-        statusMessage.textContent = "Appuntamento confermato con successo!";
+        statusMessage.textContent = isPersonalVisit ? "Autoprenotazione registrata!" : "Appuntamento confermato con successo!";
         statusMessage.className = "status-message success";
         statusMessage.hidden = false;
 
-        // Torna alla dashboard dopo 2 secondi
         setTimeout(() => {
             window.location.href = "dashboard-proprietario.html";
         }, 2000);
 
     } catch (err) {
-     statusMessage.textContent = "Errore Supabase: " + (err.message || JSON.stringify(err));
+        statusMessage.textContent = "Errore Supabase: " + (err.message || JSON.stringify(err));
         statusMessage.className = "status-message error";
         statusMessage.hidden = false;
         confirmBtn.disabled = false;
@@ -283,5 +281,4 @@ confirmBtn.addEventListener("click", async () => {
     }
 });
 
-// Avvia script
 initPrenota();

@@ -12,26 +12,40 @@
 
     <main class="app-container">
         
-        <!-- Header -->
         <header class="page-header">
             <a href="profilo-veterinario.html" class="back-btn"><i class="fas fa-chevron-left"></i></a>
             <div class="header-title">
-                <h2>Certificazioni</h2>
+                <h2>Profilo e Certificazioni</h2>
                 <p>Documenti e verifiche</p>
             </div>
-            <div class="header-action" style="width: 20px;"></div> <!-- Spaziatore per centrare -->
-        </header>
+            <div class="header-action" style="width: 20px;"></div> </header>
 
         <div class="dashboard-content">
             
             <div class="info-alert">
                 <i class="fa-solid fa-shield-halved"></i>
-                <p>I tuoi documenti sono archiviati in modo sicuro e utilizzati esclusivamente per la verifica dell'Ordine.</p>
+                <p>I tuoi dati e documenti sono archiviati in modo sicuro e utilizzati esclusivamente per la verifica dell'Ordine.</p>
             </div>
 
             <form id="certificationsForm">
                 
-                <!-- 1. FOTO PROFILO -->
+                <h3 class="section-title">Dati Personali</h3>
+                
+                <div class="input-group" style="margin-bottom: 15px;">
+                    <label style="display:block; font-size: 0.85rem; color: #64748B; margin-bottom: 6px; padding-left: 5px;">Nome e Cognome</label>
+                    <input type="text" id="vetNomeCognome" class="custom-input" placeholder="Es. Marco Riva">
+                </div>
+
+                <div class="input-group" style="margin-bottom: 15px;">
+                    <label style="display:block; font-size: 0.85rem; color: #64748B; margin-bottom: 6px; padding-left: 5px;">Email dell'Account</label>
+                    <input type="email" id="vetEmail" class="custom-input" placeholder="nome@email.com">
+                </div>
+
+                <div class="input-group" style="margin-bottom: 30px;">
+                    <label style="display:block; font-size: 0.85rem; color: #64748B; margin-bottom: 6px; padding-left: 5px;">Data di Nascita</label>
+                    <input type="date" id="vetDataNascita" class="custom-input">
+                </div>
+
                 <h3 class="section-title">Foto Profilo</h3>
                 <label for="avatarUpload" class="upload-card">
                     <div class="upload-icon icon-blue"><i class="fa-solid fa-camera"></i></div>
@@ -43,7 +57,6 @@
                     <input type="file" id="avatarUpload" style="display: none;" accept="image/*">
                 </label>
 
-                <!-- 2. CARTA D'IDENTITÀ -->
                 <h3 class="section-title">Documento d'Identità</h3>
                 <label for="ciUpload" class="upload-card">
                     <div class="upload-icon icon-orange"><i class="fa-regular fa-id-card"></i></div>
@@ -55,7 +68,6 @@
                     <input type="file" id="ciUpload" style="display: none;" accept=".pdf,image/*">
                 </label>
 
-                <!-- 3. TESSERA DELL'ORDINE -->
                 <h3 class="section-title">Tessera dell'Ordine</h3>
                 <label for="tesseraUpload" class="upload-card">
                     <div class="upload-icon icon-blue"><i class="fa-solid fa-address-card"></i></div>
@@ -67,17 +79,15 @@
                     <input type="file" id="tesseraUpload" style="display: none;" accept=".pdf,image/*">
                 </label>
 
-                <!-- NUMERO ORDINE MANUALE -->
                 <h3 class="section-title">Numero di Iscrizione</h3>
                 <div class="input-group">
-                    <input type="text" id="numeroOrdine" placeholder="Es. Ordine di Milano n. 5124" class="custom-input">
+                    <input type="text" id="vetNumeroOrdine" placeholder="Es. Ordine di Milano n. 5124" class="custom-input">
                 </div>
 
-                <!-- MESSAGGIO DI STATO -->
                 <div id="formMessage" style="margin-top: 15px; text-align: center; font-weight: 600; font-size: 0.9rem;"></div>
 
-                <button type="submit" id="submitBtn" class="btn-primary" style="margin-top: 25px; margin-bottom: 40px;">
-                    Salva Documenti
+                <button type="submit" id="btnModificaSalva" class="btn-primary" style="margin-top: 25px; margin-bottom: 40px; background-color: transparent; color: #F58220; border: 2px solid #F58220;">
+                    <i class="fa-solid fa-pen"></i> Modifica Profilo
                 </button>
             </form>
 

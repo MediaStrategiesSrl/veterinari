@@ -176,7 +176,7 @@ function mostraPopupApprovazione(nomeVet, dettagliOrdine, indirizzo, idRichiesta
                 </div>
                 <h1 style="margin: 0 0 10px; font-size: 1.8rem;">${nomeVet}</h1>
                 <p style="margin: 0 0 5px; font-size: 0.9rem; opacity: 0.9;">Medico veterinario &middot; ${dettagliOrdine}</p>
-                <p style="margin: 0; font-size: 0.9rem; opacity: 0.9;">Studio temporaneo: ${indirizzo}</p>
+                <p style="margin: 0; font-size: 0.9rem; opacity: 0.9;">Studio: ${indirizzo}</p>
             </div>
 
             <!-- Lista Dati Richiesti -->

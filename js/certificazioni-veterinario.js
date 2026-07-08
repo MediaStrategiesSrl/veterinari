@@ -3,14 +3,27 @@ import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./config.js";
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 let currentUser = null;
+let isEditing = false; // Controlla lo stato Lettura/Scrittura
 
-// Elementi DOM
+// Elementi DOM Principali
 const form = document.getElementById("certificationsForm");
-const submitBtn = document.getElementById("submitBtn");
+const btnModificaSalva = document.getElementById("btnModificaSalva");
 const formMessage = document.getElementById("formMessage");
-const numOrdineInput = document.getElementById("numeroOrdine");
 
-// Helper per gestire l'UI dell'upload
+// Elementi Dati Personali
+const vetNomeCognome = document.getElementById("vetNomeCognome");
+const vetEmail = document.getElementById("vetEmail");
+const vetDataNascita = document.getElementById("vetDataNascita");
+const vetNumeroOrdine = document.getElementById("vetNumeroOrdine");
+
+// Elementi File
+const avatarUpload = document.getElementById("avatarUpload");
+const ciUpload = document.getElementById("ciUpload");
+const tesseraUpload = document.getElementById("tesseraUpload");
+
+// ==========================================
+// 1. HELPER PER L'UI DEGLI UPLOAD
+// ==========================================
 function setupFileInput(inputId, nameId, subtextId) {
     const input = document.getElementById(inputId);
     const nameDisplay = document.getElementById(nameId);
@@ -21,7 +34,7 @@ function setupFileInput(inputId, nameId, subtextId) {
         const file = e.target.files[0];
         if (file) {
             nameDisplay.textContent = file.name;
-            nameDisplay.style.color = "#059669";
+            nameDisplay.style.color = "#059669"; // Verde successo
             subtextDisplay.textContent = "Pronto per l'invio";
             card.classList.add("file-selected");
         } else {
@@ -30,12 +43,14 @@ function setupFileInput(inputId, nameId, subtextId) {
     });
 }
 
-// Inizializza i 3 input
+// Inizializza i 3 input file
 setupFileInput("avatarUpload", "avatarFileName", "avatarSubtext");
 setupFileInput("ciUpload", "ciFileName", "ciSubtext");
 setupFileInput("tesseraUpload", "tesseraFileName", "tesseraSubtext");
 
-// Funzione Helper per caricare un singolo file su Supabase Storage
+// ==========================================
+// 2. HELPER UPLOAD STORAGE
+// ==========================================
 async function uploadFileToStorage(file, bucketName, folderPath) {
     if (!file) return null;
     
@@ -45,7 +60,7 @@ async function uploadFileToStorage(file, bucketName, folderPath) {
 
     const { error: uploadError } = await supabase.storage
         .from(bucketName)
-        .upload(filePath, file);
+        .upload(filePath, file, { upsert: true });
 
     if (uploadError) throw uploadError;
 
@@ -56,7 +71,9 @@ async function uploadFileToStorage(file, bucketName, folderPath) {
     return publicUrl;
 }
 
-// Inizializzazione pagina
+// ==========================================
+// 3. INIZIALIZZAZIONE E CARICAMENTO DATI
+// ==========================================
 async function initPage() {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
@@ -65,70 +82,165 @@ async function initPage() {
     }
     currentUser = user;
 
-    // Recupera il numero di iscrizione attuale se esiste
-    const { data: vetData } = await supabase
-        .from('veterinarians')
-        .select('numero_ordine')
-        .eq('user_id', currentUser.id)
-        .maybeSingle();
+    try {
+        // A. Carica Email
+        vetEmail.value = user.email;
 
-    if (vetData && vetData.numero_ordine) {
-        numOrdineInput.value = vetData.numero_ordine;
+        // B. Carica Dati Profilo (profiles)
+        const { data: profile } = await supabase
+            .from('profiles')
+            .select('nome, cognome, data_nascita')
+            .eq('id', user.id)
+            .single();
+
+        if (profile) {
+            vetNomeCognome.value = `${profile.nome || ''} ${profile.cognome || ''}`.trim();
+            if (profile.data_nascita) vetDataNascita.value = profile.data_nascita;
+        }
+
+        // C. Carica Dati Medico (veterinarians)
+        const { data: vetData } = await supabase
+            .from('veterinarians')
+            .select('numero_ordine')
+            .eq('user_id', user.id)
+            .maybeSingle();
+
+        if (vetData && vetData.numero_ordine) {
+            vetNumeroOrdine.value = vetData.numero_ordine;
+        }
+
+        // Blocca tutto all'avvio
+        disabilitaCampi(true);
+
+    } catch (error) {
+        console.error("Errore caricamento dati iniziali:", error);
     }
 }
 
-// Salvataggio form
+// Gestione blocco/sblocco interfaccia
+function disabilitaCampi(disabilita) {
+    vetNomeCognome.disabled = disabilita;
+    vetEmail.disabled = disabilita;
+    vetDataNascita.disabled = disabilita;
+    vetNumeroOrdine.disabled = disabilita;
+    avatarUpload.disabled = disabilita;
+    ciUpload.disabled = disabilita;
+    tesseraUpload.disabled = disabilita;
+    
+    if (disabilita) {
+        btnModificaSalva.innerHTML = '<i class="fa-solid fa-pen"></i> Modifica Profilo';
+        btnModificaSalva.style.backgroundColor = "transparent";
+        btnModificaSalva.style.color = "#F58220";
+        btnModificaSalva.style.border = "2px solid #F58220";
+    } else {
+        btnModificaSalva.innerHTML = '<i class="fa-solid fa-check"></i> Salva Documenti';
+        btnModificaSalva.style.backgroundColor = "#F58220";
+        btnModificaSalva.style.color = "white";
+    }
+}
+
+// ==========================================
+// 4. SALVATAGGIO (TOGGLE MODIFICA -> SALVA)
+// ==========================================
 form.addEventListener("submit", async (e) => {
     e.preventDefault();
-    submitBtn.disabled = true;
-    submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Salvataggio in corso...';
+
+    // SE IN LETTURA: SBLOCCA I CAMPI
+    if (!isEditing) {
+        isEditing = true;
+        disabilitaCampi(false);
+        vetNomeCognome.focus();
+        return;
+    }
+
+    // SE IN SCRITTURA: SALVA I DATI
+    btnModificaSalva.disabled = true;
+    btnModificaSalva.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Salvataggio in corso...';
     formMessage.textContent = "";
 
-   try {
-        const avatarFile = document.getElementById("avatarUpload").files[0];
-        const ciFile = document.getElementById("ciUpload").files[0];
-        const tesseraFile = document.getElementById("tesseraUpload").files[0];
+    try {
+        const avatarFile = avatarUpload.files[0];
+        const ciFile = ciUpload.files[0];
+        const tesseraFile = tesseraUpload.files[0];
 
-        // 1. Upload Avatar (nella tabella profiles)
-        // Usa il TUO bucket 'storage_veterinari' e crea la cartella 'avatar_vet'
+        // 1. Carica le immagini (se selezionate)
+        let newAvatarUrl = null;
+        let newCiUrl = null;
+        let newTesseraUrl = null;
+
         if (avatarFile) {
-            const avatarUrl = await uploadFileToStorage(avatarFile, 'storage_veterinari', 'avatar_vet');
-            await supabase.from('profiles').update({ avatar_url: avatarUrl }).eq('id', currentUser.id);
+            btnModificaSalva.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Upload Foto...';
+            newAvatarUrl = await uploadFileToStorage(avatarFile, 'storage_veterinari', 'avatar_vet');
         }
-
-        // 2. Upload Documenti (nella tabella veterinarians)
-        let updatesForVet = {
-            numero_ordine: numOrdineInput.value.trim()
-        };
-
-        // Usa il TUO bucket 'storage_veterinari' e crea la cartella 'certificazioni'
         if (ciFile) {
-            updatesForVet.documento_identita_url = await uploadFileToStorage(ciFile, 'storage_veterinari', 'certificazioni');
+            btnModificaSalva.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Upload Documento...';
+            newCiUrl = await uploadFileToStorage(ciFile, 'storage_veterinari', 'certificazioni');
         }
-        
         if (tesseraFile) {
-            updatesForVet.tessera_ordine_url = await uploadFileToStorage(tesseraFile, 'storage_veterinari', 'certificazioni');
+            btnModificaSalva.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Upload Tessera...';
+            newTesseraUrl = await uploadFileToStorage(tesseraFile, 'storage_veterinari', 'certificazioni');
         }
 
-        // 3. Esegue l'update sul database
-        const { error: updateError } = await supabase
+        btnModificaSalva.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Aggiornamento Database...';
+
+        // 2. Dividi il Nome dal Cognome
+        const [nuovoNome, ...restoCognome] = vetNomeCognome.value.trim().split(' ');
+        
+        // 3. Update PROFILES (Nome, Nascita, Avatar)
+        const profileUpdates = {
+            nome: nuovoNome || null,
+            cognome: restoCognome.join(' ') || null,
+            data_nascita: vetDataNascita.value || null
+        };
+        if (newAvatarUrl) profileUpdates.avatar_url = newAvatarUrl;
+
+        const { error: profileError } = await supabase
+            .from('profiles')
+            .update(profileUpdates)
+            .eq('id', currentUser.id);
+        if (profileError) throw profileError;
+
+        // 4. Update VETERINARIANS (Ordine, Documenti)
+        const vetUpdates = {
+            numero_ordine: vetNumeroOrdine.value.trim() || null
+        };
+        if (newCiUrl) vetUpdates.documento_identita_url = newCiUrl;
+        if (newTesseraUrl) vetUpdates.tessera_ordine_url = newTesseraUrl;
+
+        const { error: vetError } = await supabase
             .from('veterinarians')
-            .update(updatesForVet)
-            .eq('user_id', currentUser.id);
+            .update(vetUpdates)
+            .eq('user_id', currentUser.id); // Ricorda: la FK è user_id, non id
+        if (vetError) throw vetError;
 
-        if (updateError) throw updateError;
+        // 5. Update EMAIL (Se modificata)
+        if (vetEmail.value !== currentUser.email) {
+            const { error: emailError } = await supabase.auth.updateUser({ email: vetEmail.value });
+            if (emailError) throw emailError;
+            formMessage.textContent = "Dati salvati! Controlla la nuova email per confermare l'indirizzo.";
+        } else {
+            formMessage.textContent = "Profilo e documenti salvati con successo!";
+        }
 
-        formMessage.textContent = "Documenti salvati con successo!";
         formMessage.style.color = "#059669";
         
-        setTimeout(() => { window.location.href = "profilo-veterinario.html"; }, 1500);
+        // Ritorna alla modalità lettura e pulisci i file input
+        isEditing = false;
+        disabilitaCampi(true);
+        avatarUpload.value = "";
+        ciUpload.value = "";
+        tesseraUpload.value = "";
+
+        // Se preferisci reindirizzare automaticamente, decommenta questa riga:
+        // setTimeout(() => { window.location.href = "profilo-veterinario.html"; }, 1500);
 
     } catch (error) {
         console.error("Errore di salvataggio:", error);
-        formMessage.textContent = "Errore durante l'invio dei documenti.";
+        formMessage.textContent = "Errore durante il salvataggio dei dati.";
         formMessage.style.color = "#DC2626";
-        submitBtn.disabled = false;
-        submitBtn.innerHTML = 'Salva Documenti';
+        disabilitaCampi(false); // Lascia sbloccato per permettere di riprovare
+    } finally {
+        btnModificaSalva.disabled = false;
     }
 });
 

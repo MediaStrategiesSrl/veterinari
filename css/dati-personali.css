@@ -1,14 +1,9 @@
-body {
-    background-color: #F8F7F4;
-    margin: 0;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-}
-
-.app-container {
-    max-width: 480px;
-    margin: 0 auto;
-    background-color: #F8F7F4;
+/* Sfondo Crema Unificato per tutto */
+html, body, .app-container, .dashboard-content {
+    background-color: #FDF7F0 !important; /* Crema caldo ovunque */
     min-height: 100vh;
+    margin: 0 auto;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
 }
 
 .header-nav {

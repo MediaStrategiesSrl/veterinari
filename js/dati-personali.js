@@ -15,6 +15,7 @@ const submitBtn = document.getElementById("submitBtn");
 const formMessage = document.getElementById("formMessage");
 
 let currentUser = null;
+let isEditing = false; // <-- Variabile magica per controllare lo stato Modifica/Salva
 
 // Gestione visiva del file selezionato
 documentoFile.addEventListener("change", (e) => {
@@ -26,7 +27,7 @@ documentoFile.addEventListener("change", (e) => {
 });
 
 // ==========================================
-// 1. CARICAMENTO DATI
+// 1. CARICAMENTO DATI (Tutto bloccato di default)
 // ==========================================
 async function loadUserData() {
     const { data: { user } } = await supabase.auth.getUser();
@@ -39,7 +40,6 @@ async function loadUserData() {
     try {
         emailInput.value = user.email;
 
-        // Modifica i nomi delle colonne se nel tuo DB si chiamano diversamente!
         const { data: profile, error } = await supabase
             .from('profiles')
             .select('nome, cognome, data_nascita, documento_url') 
@@ -49,22 +49,22 @@ async function loadUserData() {
         if (error && error.code !== 'PGRST116') throw error;
 
         if (profile) {
-            // Mostriamo Nome e Cognome bloccati
             const nome = profile.nome || "";
             const cognome = profile.cognome || "";
             nomeCognomeInput.value = `${nome} ${cognome}`.trim();
 
-            // Mostriamo la data di nascita se esiste
             if (profile.data_nascita) {
                 dataNascitaInput.value = profile.data_nascita;
             }
 
-            // Mostriamo il badge se un documento è già stato caricato in passato
             if (profile.documento_url) {
                 docStatus.classList.remove("hidden");
                 fileLabelText.textContent = "Sostituisci documento esistente";
             }
         }
+
+        // BLOCCA TUTTI I CAMPI ALL'AVVIO
+        disabilitaCampi(true);
 
     } catch (error) {
         console.error("Errore recupero dati:", error);
@@ -72,11 +72,41 @@ async function loadUserData() {
     }
 }
 
+// Funzione di utilità per bloccare/sbloccare l'interfaccia
+function disabilitaCampi(disabilita) {
+    nomeCognomeInput.disabled = disabilita;
+    emailInput.disabled = disabilita;
+    dataNascitaInput.disabled = disabilita;
+    documentoFile.disabled = disabilita;
+    
+    // Cambia aspetto visivo e testo del bottone principale
+    if (disabilita) {
+        submitBtn.innerHTML = '<i class="fa-solid fa-pen"></i> Modifica Dati';
+        submitBtn.style.backgroundColor = "transparent";
+        submitBtn.style.color = "#F58220";
+        submitBtn.style.border = "2px solid #F58220";
+    } else {
+        submitBtn.innerHTML = '<i class="fa-solid fa-check"></i> Salva Modifiche';
+        submitBtn.style.backgroundColor = "#F58220";
+        submitBtn.style.color = "white";
+    }
+}
+
 // ==========================================
-// 2. SALVATAGGIO (TESTO + FILE)
+// 2. GESTIONE CLICK BOTTONE (TOGGLE MODIFICA / SALVA)
 // ==========================================
 form.addEventListener("submit", async (e) => {
     e.preventDefault();
+
+    // SE SIAMO IN MODALITÀ LETTURA -> SBLOCCA I CAMPI E FERMATI QUI
+    if (!isEditing) {
+        isEditing = true;
+        disabilitaCampi(false);
+        nomeCognomeInput.focus(); // Mette il cursore pronto per scrivere
+        return; 
+    }
+
+    // SE SIAMO IN MODALITÀ MODIFICA -> SALVA I DATI
     submitBtn.disabled = true;
     submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Salvataggio...';
     formMessage.innerHTML = "";
@@ -85,15 +115,13 @@ form.addEventListener("submit", async (e) => {
         let docUrl = null;
         const file = documentoFile.files[0];
 
-        // Se l'utente ha selezionato un file, lo carichiamo nello Storage
+        // 1. UPLOAD DOCUMENTO (Se modificato)
         if (file) {
             submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Upload documento...';
-            
             const fileExt = file.name.split('.').pop();
             const fileName = `doc_identita_${Date.now()}.${fileExt}`;
             const filePath = `documenti/${currentUser.id}/${fileName}`;
 
-            // Assicurati che il bucket "storage_veterinari" (o come lo hai chiamato) esista!
             const { error: uploadError } = await supabase.storage
                 .from('storage_veterinari')
                 .upload(filePath, file, { upsert: true });
@@ -104,16 +132,20 @@ form.addEventListener("submit", async (e) => {
 
         submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Aggiornamento profilo...';
 
-        // Prepariamo i dati da aggiornare
+        // 2. DIVIDI NOME E COGNOME
+        // Separa il campo unico alla prima riga di spazio (es. "Marco Riva" -> nome:"Marco", cognome:"Riva")
+        const [nuovoNome, ...restoCognome] = nomeCognomeInput.value.trim().split(' ');
+        const nuovoCognome = restoCognome.join(' '); 
+
+        // 3. PREPARA I DATI PER LA TABELLA PROFILES
         const updateData = {
+            nome: nuovoNome || null,
+            cognome: nuovoCognome || null,
             data_nascita: dataNascitaInput.value || null
         };
-        
-        // Aggiungiamo l'URL del documento solo se ne abbiamo appena caricato uno nuovo
-        if (docUrl) {
-            updateData.documento_url = docUrl;
-        }
+        if (docUrl) updateData.documento_url = docUrl;
 
+        // AGGIORNA TABELLA PROFILES
         const { error: updateError } = await supabase
             .from('profiles')
             .update(updateData)
@@ -121,27 +153,43 @@ form.addEventListener("submit", async (e) => {
 
         if (updateError) throw updateError;
 
-        showMessage("Dati salvati con successo!", "#059669");
+        // 4. AGGIORNA EMAIL (Richiede chiamata Auth speciale)
+        if (emailInput.value !== currentUser.email) {
+            const { error: emailError } = await supabase.auth.updateUser({
+                email: emailInput.value
+            });
+            if (emailError) throw emailError;
+            
+            showMessage("Dati salvati! Controlla la tua nuova email per confermare l'indirizzo.", "#059669");
+        } else {
+            showMessage("Dati personali salvati con successo!", "#059669");
+        }
         
+        // Aggiorniamo l'interfaccia documento
         if (docUrl) {
             docStatus.classList.remove("hidden");
             fileLabelText.textContent = "Sostituisci documento esistente";
-            documentoFile.value = ""; // Reset dell'input file
+            documentoFile.value = ""; 
         }
+
+        // SALVATAGGIO FINITO: TORNAMO IN MODALITÀ LETTURA
+        isEditing = false;
+        disabilitaCampi(true);
 
     } catch (error) {
         console.error("Errore salvataggio:", error);
         showMessage("Si è verificato un errore durante il salvataggio.", "#DC2626");
+        // In caso di errore restiamo in modalità modifica per far riprovare l'utente
+        disabilitaCampi(false);
     } finally {
         submitBtn.disabled = false;
-        submitBtn.innerHTML = 'Salva informazioni';
     }
 });
 
 function showMessage(text, color) {
     formMessage.textContent = text;
     formMessage.style.color = color;
-    setTimeout(() => { formMessage.textContent = ""; }, 4000);
+    setTimeout(() => { formMessage.textContent = ""; }, 6000);
 }
 
 loadUserData();
