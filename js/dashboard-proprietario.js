@@ -230,30 +230,43 @@ async function updateHeroCard(pet, index) {
     if (vaccineStatusContainer) {
         vaccineStatusContainer.innerHTML = "Caricamento..."; 
         
-        const { data: lastVaccineRecord, error: recordError } = await supabase
+        // Logica Fallback: Prende l'ultimo record assoluto
+        const { data: lastRecord, error: recordError } = await supabase
             .from("medical_records")
-            .select("prossimo_richiamo")
+            .select("data_visita, diagnosi, prossimo_richiamo")
             .eq("pet_id", pet.id)
-            .not("prossimo_richiamo", "is", null) 
-            .order("id", { ascending: false })
+            .order("created_at", { ascending: false }) 
             .limit(1)
             .maybeSingle();
 
-        if (recordError) console.error("Errore recupero richiamo:", recordError);
+        if (recordError) console.error("Errore recupero dati medici:", recordError);
 
-        if (lastVaccineRecord && lastVaccineRecord.prossimo_richiamo) {
-            const dataRichiamo = new Date(lastVaccineRecord.prossimo_richiamo);
+        if (lastRecord) {
             const oggi = new Date();
-            const differenzaTempo = dataRichiamo - oggi;
-            const giorniRimasti = Math.ceil(differenzaTempo / (1000 * 60 * 60 * 24));
-            
-            if (giorniRimasti > 0) {
-                vaccineStatusContainer.innerHTML = `Il prossimo richiamo vaccinale è tra <strong>${giorniRimasti}</strong> giorni.`;
-            } else if (giorniRimasti === 0) {
-                vaccineStatusContainer.innerHTML = "Il richiamo vaccinale è <strong>oggi</strong>!";
-            } else {
-                vaccineStatusContainer.innerHTML = "<span style='color: #D32F2F; font-weight: bold;'>Richiamo vaccinale scaduto!</span>";
+            let richiamoMostrato = false;
+
+            // 1. C'è un richiamo futuro?
+            if (lastRecord.prossimo_richiamo) {
+                const dataRichiamo = new Date(lastRecord.prossimo_richiamo);
+                const differenzaTempo = dataRichiamo - oggi;
+                const giorniRimasti = Math.ceil(differenzaTempo / (1000 * 60 * 60 * 24));
+                
+                if (giorniRimasti > 0) {
+                    vaccineStatusContainer.innerHTML = `<i class="fa-solid fa-syringe"></i> Il prossimo richiamo è tra <strong>${giorniRimasti}</strong> giorni.`;
+                    richiamoMostrato = true;
+                } else if (giorniRimasti === 0) {
+                    vaccineStatusContainer.innerHTML = `<i class="fa-solid fa-triangle-exclamation"></i> Il richiamo vaccinale è <strong>oggi</strong>!`;
+                    richiamoMostrato = true;
+                }
             }
+
+            // 2. Se non c'è un richiamo, mostra l'ultima visita
+            if (!richiamoMostrato && lastRecord.data_visita) {
+                const dataVisita = new Date(lastRecord.data_visita).toLocaleDateString('it-IT', { day: 'numeric', month: 'long' });
+                const sintesiDiagnosi = lastRecord.diagnosi ? lastRecord.diagnosi.substring(0, 30) + '...' : 'Controllo di routine';
+                vaccineStatusContainer.innerHTML = `<i class="fa-solid fa-stethoscope"></i> Ultima visita (${dataVisita}): <span style="color:#64748B;">${sintesiDiagnosi}</span>`;
+            }
+
         } else {
             vaccineStatusContainer.innerHTML = "Nessun dato medico registrato.";
         }
@@ -395,15 +408,45 @@ function attivaAscoltoNotificheQR(activePetId) {
                 const richiestaInArrivo = payload.new;
 
                 if (richiestaInArrivo.status === 'pending') {
-                    // Cerca il nome del vet
-                    const { data: vet } = await supabase
+                    const idVet = richiestaInArrivo.veterinarian_id; 
+
+                    const { data: vet, error: vetError } = await supabase
                         .from('profiles')
-                        .select('nome')
-                        .eq('id', richiestaInArrivo.veterinarian_id)
+                        .select(`
+                            nome,
+                            cognome,
+                            veterinarians (
+                                numero_ordine,
+                                indirizzo_clinica
+                            )
+                        `)
+                        .eq('id', idVet) 
                         .single();
                     
-                    const nomeVet = vet ? vet.nome : "Un veterinario";
-                    mostraPopupApprovazione(nomeVet, richiestaInArrivo.id);
+                    if (vetError) console.error("❌ ERRORE LETTURA DATI VET:", vetError.message);
+                    
+                    // 1. Estraiamo i dati del veterinario in modo sicuro
+                    // (Supabase potrebbe restituire un array o un oggetto singolo, li gestiamo entrambi)
+                    let vDati = null;
+                    if (vet && vet.veterinarians) {
+                        vDati = Array.isArray(vet.veterinarians) ? vet.veterinarians[0] : vet.veterinarians;
+                    }
+
+                    // 2. Creiamo i testi dinamici
+                    const nomeCompleto = vet ? `Dott. ${vet.nome} ${vet.cognome || ''}` : "Veterinario";
+                    
+                    // Sostituiamo "Medico veterinario verificato" con il numero dell'ordine
+                    const dettagliOrdine = vDati && vDati.numero_ordine
+                        ? `Ordine n. ${vDati.numero_ordine}` 
+                        : "Ordine in aggiornamento";
+                        
+                    // Inseriamo l'indirizzo vero
+                    const indirizzo = vDati && vDati.indirizzo_clinica
+                        ? vDati.indirizzo_clinica 
+                        : "Indirizzo non specificato";
+
+                    // 3. Lanciamo la modale
+                    mostraPopupApprovazione(nomeCompleto, dettagliOrdine, indirizzo, richiestaInArrivo.id);
                 }
             }
         )
@@ -423,24 +466,79 @@ window.rispondiAllaRichiesta = async function(idRichiesta, sceltaUtente) {
     }
 };
 
-// --- CREAZIONE GRAFICA DEL POPUP AUTOMATICO ---
-function mostraPopupApprovazione(nomeVet, idRichiesta) {
-    // Evita di creare due popup uguali
-    if (document.getElementById("qr-auth-popup")) return;
+// ========================================================
+// UI: VIEW A SCHERMO INTERO DINAMICA (Mockup)
+// ========================================================
+function mostraPopupApprovazione(nomeVet, dettagliOrdine, indirizzo, idRichiesta) {
+    // Evita doppioni
+    if (document.getElementById("qr-auth-fullscreen")) return;
 
     const popupHTML = `
-        <div id="qr-auth-popup" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.6); display: flex; justify-content: center; align-items: center; z-index: 9999; backdrop-filter: blur(4px);">
-            <div style="background: white; padding: 25px; border-radius: 20px; width: 90%; max-width: 350px; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.2);">
-                <div style="background: #FFF7ED; color: #F58220; width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px; margin: 0 auto 15px;">
-                    <i class="fa-solid fa-qrcode"></i>
+        <div id="qr-auth-fullscreen" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background-color: #FAF8F5; z-index: 10000; display: flex; flex-direction: column; font-family: 'Inter', sans-serif; overflow-y: auto;">
+            
+            <div style="display: flex; justify-content: space-between; align-items: center; padding: 20px;">
+                <button onclick="nascondiPopupApprovazione()" style="background: none; border: none; font-size: 20px; cursor: pointer; color: #1E293B;"><i class="fa-solid fa-chevron-left"></i></button>
+                <div style="text-align: center;">
+                    <h2 style="margin: 0; font-size: 1.2rem; color: #1E293B;">Richiesta di accesso</h2>
+                    <p style="margin: 2px 0 0; font-size: 0.85rem; color: #94A3B8;">Nuovo veterinario</p>
                 </div>
-                <h3 style="margin: 0 0 10px; color: #1E293B; font-size: 1.2rem;">Richiesta di Accesso</h3>
-                <p style="color: #64748B; font-size: 0.95rem; margin-bottom: 25px; line-height: 1.4;">
-                    <strong>${nomeVet}</strong> ha scansionato la medaglietta. Vuoi consentire l'accesso alla cartella clinica?
+                <div style="width: 40px; height: 40px; background: white; border-radius: 50%; display: flex; justify-content: center; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.05); color: #1E293B;">
+                    <i class="fa-solid fa-diamond"></i>
+                </div>
+            </div>
+
+            <div style="margin: 10px 20px; background: linear-gradient(135deg, #41AECF, #2E8CAE); border-radius: 20px; padding: 25px; color: white; box-shadow: 0 10px 20px rgba(65, 174, 207, 0.2);">
+                <div style="background: rgba(255,255,255,0.3); display: inline-block; padding: 4px 10px; border-radius: 8px; font-size: 0.7rem; font-weight: bold; letter-spacing: 0.5px; margin-bottom: 15px;">
+                    IDENTITÀ VERIFICATA
+                </div>
+                <h1 style="margin: 0 0 10px; font-size: 1.8rem;">${nomeVet}</h1>
+                <p style="margin: 0 0 5px; font-size: 0.9rem; opacity: 0.9;">Medico veterinario &middot; ${dettagliOrdine}</p>
+                <p style="margin: 0; font-size: 0.9rem; opacity: 0.9;">Studio temporaneo: ${indirizzo}</p>
+            </div>
+
+            <div style="padding: 20px;">
+                <h3 style="margin: 0 0 15px; font-size: 1.1rem; color: #1E293B;">Dati richiesti</h3>
+                
+                <div style="display: flex; align-items: center; background: white; padding: 15px; border-radius: 16px; margin-bottom: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.03);">
+                    <div style="width: 50px; height: 50px; background: #FFF7ED; color: #F58220; border-radius: 12px; display: flex; justify-content: center; align-items: center; font-size: 20px; margin-right: 15px;">
+                        <i class="fa-solid fa-plus"></i>
+                    </div>
+                    <div style="flex: 1;">
+                        <h4 style="margin: 0 0 4px; font-size: 1rem; color: #1E293B;">Cartella clinica completa</h4>
+                        <p style="margin: 0; font-size: 0.8rem; color: #94A3B8;">Visite, diagnosi, terapie e allegati</p>
+                    </div>
+                    <i class="fa-solid fa-chevron-right" style="color: #CBD5E1; font-size: 0.9rem;"></i>
+                </div>
+
+                <div style="display: flex; align-items: center; background: white; padding: 15px; border-radius: 16px; margin-bottom: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.03);">
+                    <div style="width: 50px; height: 50px; background: #F0F9FA; color: #41AECF; border-radius: 12px; display: flex; justify-content: center; align-items: center; font-size: 20px; margin-right: 15px;">
+                        <i class="fa-solid fa-clover"></i>
+                    </div>
+                    <div style="flex: 1;">
+                        <h4 style="margin: 0 0 4px; font-size: 1rem; color: #1E293B;">Storico attività</h4>
+                        <p style="margin: 0; font-size: 0.8rem; color: #94A3B8;">Appuntamenti e passeggiate</p>
+                    </div>
+                    <i class="fa-solid fa-chevron-right" style="color: #CBD5E1; font-size: 0.9rem;"></i>
+                </div>
+
+                <div style="display: flex; align-items: center; background: white; padding: 15px; border-radius: 16px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.03);">
+                    <div style="width: 50px; height: 50px; background: #FFF7ED; color: #F58220; border-radius: 12px; display: flex; justify-content: center; align-items: center; font-size: 20px; margin-right: 15px;">
+                        <i class="fa-solid fa-square"></i>
+                    </div>
+                    <div style="flex: 1;">
+                        <h4 style="margin: 0 0 4px; font-size: 1rem; color: #1E293B;">Documenti dell'animale</h4>
+                        <p style="margin: 0; font-size: 0.8rem; color: #94A3B8;">Microchip, passaporto, assicurazione</p>
+                    </div>
+                    <i class="fa-solid fa-chevron-right" style="color: #CBD5E1; font-size: 0.9rem;"></i>
+                </div>
+
+                <p style="font-size: 0.8rem; color: #94A3B8; line-height: 1.5; margin-bottom: 30px;">
+                    L'autorizzazione resterà valida fino alla revoca. Ogni consultazione e modifica sarà registrata.
                 </p>
-                <div style="display: flex; gap: 10px;">
-                    <button onclick="rispondiAllaRichiesta('${idRichiesta}', 'rejected')" style="flex: 1; padding: 12px; border-radius: 12px; border: 1px solid #E2E8F0; background: white; color: #64748B; font-weight: bold; cursor: pointer;">Rifiuta</button>
-                    <button onclick="rispondiAllaRichiesta('${idRichiesta}', 'approved')" style="flex: 1; padding: 12px; border-radius: 12px; border: none; background: #059669; color: white; font-weight: bold; cursor: pointer; box-shadow: 0 4px 12px rgba(5, 150, 105, 0.2);">Consenti</button>
+
+                <div style="display: flex; gap: 15px; padding-bottom: 20px;">
+                    <button onclick="rispondiAllaRichiesta('${idRichiesta}', 'rejected')" style="flex: 1; padding: 16px; border-radius: 16px; border: 2px solid #E2E8F0; background: transparent; color: #1E293B; font-weight: bold; font-size: 1rem; cursor: pointer;">Rifiuta</button>
+                    <button onclick="rispondiAllaRichiesta('${idRichiesta}', 'approved')" style="flex: 1; padding: 16px; border-radius: 16px; border: none; background: #F58220; color: white; font-weight: bold; font-size: 1rem; cursor: pointer; box-shadow: 0 4px 12px rgba(245, 130, 32, 0.2);">Conferma accesso</button>
                 </div>
             </div>
         </div>
@@ -449,7 +547,7 @@ function mostraPopupApprovazione(nomeVet, idRichiesta) {
     document.body.insertAdjacentHTML("beforeend", popupHTML);
 }
 
-function nascondiPopupApprovazione() {
-    const popup = document.getElementById("qr-auth-popup");
+window.nascondiPopupApprovazione = function() {
+    const popup = document.getElementById("qr-auth-fullscreen");
     if (popup) popup.remove();
 }
