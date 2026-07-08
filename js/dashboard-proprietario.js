@@ -33,8 +33,9 @@ const dashAvatarWrapper = document.getElementById("dashAvatarWrapper");
 const dashboardAvatarUpload = document.getElementById("dashboardAvatarUpload");
 const avatarOverlay = document.getElementById("avatarOverlay");
 
-// Variabile globale per ricordarci quale animale stiamo guardando
+// Variabili globali
 let currentActivePetId = null;
+let qrChannel = null; // Memorizza l'antenna realtime per poterla spegnere quando cambi animale
 
 // 1. ASCOLTA SESSIONE
 supabase.auth.onAuthStateChange((event, session) => {
@@ -61,9 +62,8 @@ async function loadDashboardData(user) {
 
         // --- 3. GESTIONE PALLINI E CARD ---
         if (pets && pets.length > 0) {
-            userPetsList = pets; // Salviamo l'array globale
+            userPetsList = pets;
 
-            // Gestione visibilità frecce
             if (pets.length > 1) {
                 if (btnPrevPet) btnPrevPet.classList.remove("hidden");
                 if (btnNextPet) btnNextPet.classList.remove("hidden");
@@ -77,20 +77,18 @@ async function loadDashboardData(user) {
                 pets.forEach((pet, index) => {
                     const dot = document.createElement("span");
                     dot.className = index === 0 ? "dot active" : "dot"; 
-                    // Rende il pallino cliccabile per cambiare animale
                     dot.addEventListener("click", () => updateHeroCard(pet, index)); 
                     if (paginationContainer) paginationContainer.appendChild(dot);
                 });
             }
 
-            // Carica i dati del primo animale di default
+            // Carica i dati del primo animale di default (questo attiverà anche l'antenna QR!)
             updateHeroCard(pets[0], 0);
 
         } else {
             userPetsList = [];
             if (btnPrevPet) btnPrevPet.classList.add("hidden");
             if (btnNextPet) btnNextPet.classList.add("hidden");
-            // Nessun animale registrato
             if (petNameDisplay) petNameDisplay.textContent = "Nessun animale";
             if (btnOpenProfile) btnOpenProfile.innerHTML = `Aggiungi un cucciolo <i class="fa-solid fa-plus"></i>`;
             if (qrPetName) qrPetName.textContent = "tuo animale";
@@ -106,93 +104,92 @@ async function loadDashboardData(user) {
         }
 
         // --- 4. CARICA I PROSSIMI IMPEGNI (Agenda Orizzontale) ---
-if (agendaContainer) agendaContainer.innerHTML = ''; 
+        if (agendaContainer) agendaContainer.innerHTML = ''; 
 
-const oggi = new Date();
-oggi.setHours(0, 0, 0, 0);
-const oggiISO = oggi.toISOString();
+        const oggi = new Date();
+        oggi.setHours(0, 0, 0, 0);
+        const oggiISO = oggi.toISOString();
 
-// 1. CARICAMENTO APPUNTAMENTI VETERINARIO (Intatto dal tuo codice)
-const { data: appuntamenti, error: appError } = await supabase
-    .from("appointments")
-    .select("id, data_inizio, provider_id")
-    .eq("owner_id", user.id)
-    .gte("data_inizio", oggiISO)
-    .order("data_inizio", { ascending: true })
-    .limit(1);
+        // Appuntamenti
+        const { data: appuntamenti, error: appError } = await supabase
+            .from("appointments")
+            .select("id, data_inizio, provider_id")
+            .eq("owner_id", user.id)
+            .gte("data_inizio", oggiISO)
+            .order("data_inizio", { ascending: true })
+            .limit(1);
 
-if (appError) {
-    console.error("ERRORE DATABASE:", appError);
-    if (agendaContainer) agendaContainer.innerHTML = `<p style="color:red; text-align:center; padding:10px;">Errore DB: ${appError.message}</p>`;
-    return; // Blocchiamo l'esecuzione qui
-}
+        if (appError) {
+            console.error("ERRORE DATABASE:", appError);
+            if (agendaContainer) agendaContainer.innerHTML = `<p style="color:red; text-align:center; padding:10px;">Errore DB: ${appError.message}</p>`;
+            return;
+        }
 
-// 2. CARICAMENTO PASSEGGIATE (CORRETTO!)
-// Ora peschiamo dalle "partecipazioni", così prende TUTTE le passeggiate a cui sei iscritto
-const { data: partecipazioni } = await supabase
-    .from("walk_participants")
-    .select(`
-        walks ( id, luogo, data_passeggiata )
-    `)
-    .eq("owner_id", user.id);
+        // Passeggiate
+        const { data: partecipazioni } = await supabase
+            .from("walk_participants")
+            .select(`walks ( id, luogo, data_passeggiata )`)
+            .eq("owner_id", user.id);
 
-// Filtriamo le passeggiate future e prendiamo la più vicina (come faceva il tuo limit(1))
-let passeggiate = [];
-if (partecipazioni && partecipazioni.length > 0) {
-    const passeggiateFuture = partecipazioni
-        .map(p => p.walks)
-        .filter(w => w && w.data_passeggiata >= oggiISO)
-        .sort((a, b) => new Date(a.data_passeggiata) - new Date(b.data_passeggiata));
+        let passeggiate = [];
+        if (partecipazioni && partecipazioni.length > 0) {
+            const passeggiateFuture = partecipazioni
+                .map(p => p.walks)
+                .filter(w => w && w.data_passeggiata >= oggiISO)
+                .sort((a, b) => new Date(a.data_passeggiata) - new Date(b.data_passeggiata));
 
-    if (passeggiateFuture.length > 0) {
-        passeggiate = [passeggiateFuture[0]]; 
-    }
-}
+            if (passeggiateFuture.length > 0) {
+                passeggiate = [passeggiateFuture[0]]; 
+            }
+        }
 
-// 3. DISEGNO A SCHERMO DEGLI APPUNTAMENTI E PASSEGGIATE (Intatto dal tuo codice)
-if (appuntamenti && appuntamenti.length > 0) {
-    const apt = appuntamenti[0];
-    const dataFormattata = formattaData(apt.data_inizio);
-    const dottore = apt.provider?.cognome ? `Dott.ssa/Dott. ${apt.provider.cognome}` : "Veterinario";
+        let nuovoHTML = '';
 
-    agendaContainer.innerHTML += `
-        <div class="agenda-card">
-            <div class="agenda-icon icon-orange">
-                <i class="fa-solid fa-shield-halved"></i>
-            </div>
-            <div class="agenda-info">
-                <div class="agenda-title">Controllo veterinario <span>></span></div>
-                <div class="agenda-desc">${dataFormattata} – ${dottore}</div>
-            </div>
-        </div>
-    `;
-}
+        if (appuntamenti && appuntamenti.length > 0) {
+            const apt = appuntamenti[0];
+            const dataFormattata = formattaData(apt.data_inizio);
+            const dottore = apt.provider?.cognome ? `Dott.ssa/Dott. ${apt.provider.cognome}` : "Veterinario";
 
-if (passeggiate && passeggiate.length > 0) {
-    const pass = passeggiate[0];
-    const dataFormattata = formattaData(pass.data_passeggiata);
+            nuovoHTML += `
+                <div class="agenda-card">
+                    <div class="agenda-icon icon-orange">
+                        <i class="fa-solid fa-shield-halved"></i>
+                    </div>
+                    <div class="agenda-info">
+                        <div class="agenda-title">Controllo veterinario <span>></span></div>
+                        <div class="agenda-desc">${dataFormattata} – ${dottore}</div>
+                    </div>
+                </div>
+            `;
+        }
 
-    agendaContainer.innerHTML += `
-        <div class="agenda-card">
-            <div class="agenda-icon icon-blue">
-                <i class="fa-solid fa-tree"></i>
-            </div>
-            <div class="agenda-info">
-                <div class="agenda-title">Passeggiata ${pass.luogo} <span>></span></div>
-                <div class="agenda-desc">${dataFormattata}</div>
-            </div>
-        </div>
-    `;
-}
+        if (passeggiate && passeggiate.length > 0) {
+            const pass = passeggiate[0];
+            const dataFormattata = formattaData(pass.data_passeggiata);
 
-if ((!appuntamenti || appuntamenti.length === 0) && (!passeggiate || passeggiate.length === 0)) {
-    if (agendaContainer) {
-        agendaContainer.innerHTML = '<p style="text-align:center; color:#888; padding: 1rem;">Nessun impegno in programma per i prossimi giorni.</p>';
-    }
-}
+            nuovoHTML += `
+                <div class="agenda-card">
+                    <div class="agenda-icon icon-blue">
+                        <i class="fa-solid fa-tree"></i>
+                    </div>
+                    <div class="agenda-info">
+                        <div class="agenda-title">Passeggiata ${pass.luogo} <span>></span></div>
+                        <div class="agenda-desc">${dataFormattata}</div>
+                    </div>
+                </div>
+            `;
+        }
+
+        if (nuovoHTML === '') {
+            nuovoHTML = '<p style="text-align:center; color:#888; padding: 1rem;">Nessun impegno in programma per i prossimi giorni.</p>';
+        }
+
+        if (agendaContainer) {
+            agendaContainer.innerHTML = nuovoHTML;
+        }
 
     } catch (error) {
-        console.error("Errore nel caricamento della dashboard:", error);
+        console.error("Errore in loadDashboardData:", error);
         if (agendaContainer) agendaContainer.innerHTML = '<p style="text-align:center; color:red; padding: 1rem;">Errore nel caricamento dei dati.</p>';
     }
 }
@@ -202,9 +199,12 @@ if ((!appuntamenti || appuntamenti.length === 0) && (!passeggiate || passeggiate
 // ==========================================
 async function updateHeroCard(pet, index) {
     currentActivePetId = pet.id;
-    currentPetIndex = index; // Salviamo l'indice attivo per l'upload dell'avatar
+    currentPetIndex = index; 
 
     localStorage.setItem("activePetId", currentActivePetId);
+
+    // ATTIVA L'ASCOLTO DELLE NOTIFICHE QR PER QUESTO ANIMALE!
+    attivaAscoltoNotificheQR(currentActivePetId);
 
     if (petNameDisplay) petNameDisplay.textContent = pet.nome;
     if (btnOpenProfile) btnOpenProfile.innerHTML = `Apri la scheda <i class="fa-solid fa-paw"></i>`;
@@ -272,7 +272,6 @@ if (dashAvatarWrapper && dashboardAvatarUpload) {
         const file = e.target.files[0];
         if (!file || !currentActivePetId) return;
 
-        // Effetto caricamento
         if (avatarOverlay) avatarOverlay.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
 
         try {
@@ -318,17 +317,12 @@ function formattaData(isoString) {
 // ==========================================
 // INTERATTIVITÀ DEI BOTTONI E NAVIGAZIONE
 // ==========================================
-
 if (btnAddPet) {
-    btnAddPet.addEventListener("click", () => {
-        window.location.href = "aggiungi-animale.html"; 
-    });
+    btnAddPet.addEventListener("click", () => window.location.href = "aggiungi-animale.html");
 }
 
 if (btnOpenProfile) {
-    btnOpenProfile.addEventListener("click", () => {
-        window.location.href = "profilo-animale.html"; 
-    });
+    btnOpenProfile.addEventListener("click", () => window.location.href = "profilo-animale.html");
 }
 
 const btnVetSubito = document.getElementById("btnVetSubito");
@@ -337,7 +331,6 @@ if (btnVetSubito) btnVetSubito.addEventListener("click", () => alert("Avvio rice
 const btnMostraQR = document.getElementById("btnMostraQR");
 if (btnMostraQR) {
     btnMostraQR.addEventListener("click", () => {
-        // Se abbiamo un ID animale attivo, lo passiamo nell'URL della pagina QR
         if (currentActivePetId) {
             window.location.href = `qr-pets.html?petId=${currentActivePetId}`;
         } else {
@@ -358,22 +351,10 @@ if (btnShop) btnShop.addEventListener("click", () => alert("Shop Veterinario in 
 const btnMercatino = document.getElementById("btnMercatino");
 if (btnMercatino) btnMercatino.addEventListener("click", () => window.location.href = "mercatino.html");
 
-if (agendaContainer) {
-    agendaContainer.addEventListener("click", (e) => {
-        const clickedCard = e.target.closest(".agenda-card");
-        if (clickedCard) {
-            alert("Apertura dettagli appuntamento...");
-        }
-    });
-}
-
-// ==========================================
 // SCORRIMENTO ANIMALI TRAMITE FRECCE
-// ==========================================
 if (btnPrevPet) {
     btnPrevPet.addEventListener("click", () => {
         if (userPetsList.length > 1) {
-            // Calcola l'indice precedente (con ciclo circolare)
             const newIndex = (currentPetIndex - 1 + userPetsList.length) % userPetsList.length;
             updateHeroCard(userPetsList[newIndex], newIndex);
         }
@@ -383,9 +364,92 @@ if (btnPrevPet) {
 if (btnNextPet) {
     btnNextPet.addEventListener("click", () => {
         if (userPetsList.length > 1) {
-            // Calcola l'indice successivo (con ciclo circolare)
             const newIndex = (currentPetIndex + 1) % userPetsList.length;
             updateHeroCard(userPetsList[newIndex], newIndex);
         }
     });
+}
+
+// ========================================================
+// REATIME: ASCOLTO RICHIESTE DI ACCESSO QR IN TEMPO REALE
+// ========================================================
+function attivaAscoltoNotificheQR(activePetId) {
+    if (!activePetId) return;
+
+    // Se c'è già un canale aperto (perché abbiamo cambiato animale), lo chiudiamo prima
+    if (qrChannel) {
+        supabase.removeChannel(qrChannel);
+    }
+
+    qrChannel = supabase
+        .channel(`ascolto-qr-${activePetId}`)
+        .on(
+            'postgres_changes',
+            {
+                event: 'INSERT',
+                schema: 'public',
+                table: 'pet_access_requests',
+                filter: `pet_id=eq.${activePetId}`
+            },
+            async (payload) => {
+                const richiestaInArrivo = payload.new;
+
+                if (richiestaInArrivo.status === 'pending') {
+                    // Cerca il nome del vet
+                    const { data: vet } = await supabase
+                        .from('profiles')
+                        .select('nome')
+                        .eq('id', richiestaInArrivo.veterinarian_id)
+                        .single();
+                    
+                    const nomeVet = vet ? vet.nome : "Un veterinario";
+                    mostraPopupApprovazione(nomeVet, richiestaInArrivo.id);
+                }
+            }
+        )
+        .subscribe();
+}
+
+window.rispondiAllaRichiesta = async function(idRichiesta, sceltaUtente) {
+    const { error } = await supabase
+        .from('pet_access_requests')
+        .update({ status: sceltaUtente })
+        .eq('id', idRichiesta);
+
+    if (!error) {
+        nascondiPopupApprovazione();
+    } else {
+        alert("Errore di connessione. Riprova.");
+    }
+};
+
+// --- CREAZIONE GRAFICA DEL POPUP AUTOMATICO ---
+function mostraPopupApprovazione(nomeVet, idRichiesta) {
+    // Evita di creare due popup uguali
+    if (document.getElementById("qr-auth-popup")) return;
+
+    const popupHTML = `
+        <div id="qr-auth-popup" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.6); display: flex; justify-content: center; align-items: center; z-index: 9999; backdrop-filter: blur(4px);">
+            <div style="background: white; padding: 25px; border-radius: 20px; width: 90%; max-width: 350px; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.2);">
+                <div style="background: #FFF7ED; color: #F58220; width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px; margin: 0 auto 15px;">
+                    <i class="fa-solid fa-qrcode"></i>
+                </div>
+                <h3 style="margin: 0 0 10px; color: #1E293B; font-size: 1.2rem;">Richiesta di Accesso</h3>
+                <p style="color: #64748B; font-size: 0.95rem; margin-bottom: 25px; line-height: 1.4;">
+                    <strong>${nomeVet}</strong> ha scansionato la medaglietta. Vuoi consentire l'accesso alla cartella clinica?
+                </p>
+                <div style="display: flex; gap: 10px;">
+                    <button onclick="rispondiAllaRichiesta('${idRichiesta}', 'rejected')" style="flex: 1; padding: 12px; border-radius: 12px; border: 1px solid #E2E8F0; background: white; color: #64748B; font-weight: bold; cursor: pointer;">Rifiuta</button>
+                    <button onclick="rispondiAllaRichiesta('${idRichiesta}', 'approved')" style="flex: 1; padding: 12px; border-radius: 12px; border: none; background: #059669; color: white; font-weight: bold; cursor: pointer; box-shadow: 0 4px 12px rgba(5, 150, 105, 0.2);">Consenti</button>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.body.insertAdjacentHTML("beforeend", popupHTML);
+}
+
+function nascondiPopupApprovazione() {
+    const popup = document.getElementById("qr-auth-popup");
+    if (popup) popup.remove();
 }

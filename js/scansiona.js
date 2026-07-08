@@ -43,6 +43,8 @@ async function onScanSuccess(decodedText) {
     
     // Mostra caricamento UI
     scanStatus.classList.remove("hidden");
+    scanStatus.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Ricerca animale in corso...`;
+    scanStatus.style.backgroundColor = "#F58220"; // Arancione
     
     try {
         // 2. Cerca l'animale nel DB usando il codice QR (qr_code_hash)
@@ -56,27 +58,77 @@ async function onScanSuccess(decodedText) {
             throw new Error("Codice QR non valido o animale non trovato.");
         }
 
-        // 3. Aggiunge l'animale alla lista pazienti del Veterinario
-        const { error: insertError } = await supabase
-            .from('veterinarian_patients')
+        // ==========================================
+        // 3. INVIA RICHIESTA DI ACCESSO E METTITI IN ASCOLTO
+        // ==========================================
+        scanStatus.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Attesa approvazione da parte del proprietario...`;
+
+        // Calcoliamo la data di scadenza (Es: tra 1 ora esatta da adesso)
+        const scadenza = new Date();
+        scadenza.setHours(scadenza.getHours() + 1);
+
+        // Crea la richiesta pendente
+        const { data: richiesta, error: requestError } = await supabase
+            .from('pet_access_requests')
             .insert({
+                pet_id: petData.id,
                 veterinarian_id: currentUser.id,
-                pet_id: petData.id
-            });
+                status: 'pending', // Stato iniziale
+                expires_at: scadenza.toISOString()
+            })
+            .select()
+            .single();
 
-        // Se l'animale è già in lista (errore 23505 di chiave duplicata), va bene lo stesso
-        if (insertError && insertError.code !== '23505') {
-            throw insertError;
-        }
+        if (requestError) throw new Error(requestError.message);
 
-        // 4. Successo!
-        scanStatus.innerHTML = `<i class="fa-solid fa-check"></i> ${petData.nome} aggiunto ai pazienti!`;
-        scanStatus.style.backgroundColor = "#059669"; // Verde successo
+        // Accende l'antenna Realtime per ascoltare i cambiamenti su QUESTA specifica richiesta
+        const canaleVet = supabase
+            .channel(`attesa-accesso-${richiesta.id}`)
+            .on(
+                'postgres_changes',
+                {
+                    event: 'UPDATE',
+                    schema: 'public',
+                    table: 'pet_access_requests',
+                    filter: `id=eq.${richiesta.id}`
+                },
+                async (payload) => {
+                    const nuovoStato = payload.new.status;
 
-        // Reindirizza alla pagina pazienti dopo 2 secondi (oppure apri la sua scheda medica)
-        setTimeout(() => {
-            window.location.href = "dashboard-veterinario.html"; // Puoi cambiarlo con la pagina Pazienti in futuro
-        }, 2000);
+                    if (nuovoStato === 'approved') {
+                        // SPEGNE L'ANTENNA
+                        supabase.removeChannel(canaleVet); 
+
+                        // ORA CHE HA IL PERMESSO, AGGIUNGE L'ANIMALE ALLA LISTA PAZIENTI
+                        await supabase
+                            .from('veterinarian_patients')
+                            .insert({
+                                veterinarian_id: currentUser.id,
+                                pet_id: petData.id
+                            });
+
+                        // Successo visivo!
+                        scanStatus.innerHTML = `<i class="fa-solid fa-check"></i> Accesso approvato! ${petData.nome} aggiunto.`;
+                        scanStatus.style.backgroundColor = "#059669"; // Verde successo
+
+                        // Reindirizza alla cartella clinica dopo 2 secondi
+                        setTimeout(() => {
+                            window.location.href = `/storia-clinica.html?petId=${petData.id}`;
+                        }, 2000);
+
+                    } else if (nuovoStato === 'rejected') {
+                        // SPEGNE L'ANTENNA E MOSTRA ERRORE
+                        supabase.removeChannel(canaleVet);
+                        scanStatus.innerHTML = `<i class="fa-solid fa-xmark"></i> Accesso negato dal proprietario.`;
+                        scanStatus.style.backgroundColor = "#DC2626"; // Rosso errore
+
+                        setTimeout(() => {
+                            window.location.href = "dashboard-veterinario.html";
+                        }, 2500);
+                    }
+                }
+            )
+            .subscribe();
 
     } catch (error) {
         console.error(error);
