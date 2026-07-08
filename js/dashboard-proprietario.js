@@ -228,46 +228,30 @@ async function updateHeroCard(pet, index) {
     }
 
     if (vaccineStatusContainer) {
-        vaccineStatusContainer.innerHTML = "Caricamento..."; 
+        vaccineStatusContainer.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Caricamento...'; 
         
-        // Logica Fallback: Prende l'ultimo record assoluto
-        const { data: lastRecord, error: recordError } = await supabase
+        // 1. Peschiamo l'ultima visita dalla cartella clinica usando 'created_at' e 'motivo'
+        const { data: ultimaVisita, error: recordError } = await supabase
             .from("medical_records")
-            .select("data_visita, diagnosi, prossimo_richiamo")
+            .select("*")
             .eq("pet_id", pet.id)
-            .order("created_at", { ascending: false }) 
+            .order("id", { ascending: false }) // Prende la più recente
             .limit(1)
             .maybeSingle();
 
-        if (recordError) console.error("Errore recupero dati medici:", recordError);
+        if (recordError) console.error("❌ ERRORE SUPABASE:", recordError.message);
 
-        if (lastRecord) {
-            const oggi = new Date();
-            let richiamoMostrato = false;
+        if (ultimaVisita) {
+            
+            // 3. Prendiamo il motivo (o la diagnosi se il motivo è vuoto) e lo tagliamo a 30 caratteri
+            let motivoTesto = ultimaVisita.motivo || ultimaVisita.diagnosi || "Controllo generale";
+            if (motivoTesto.length > 30) motivoTesto = motivoTesto.substring(0, 30) + '...';
 
-            // 1. C'è un richiamo futuro?
-            if (lastRecord.prossimo_richiamo) {
-                const dataRichiamo = new Date(lastRecord.prossimo_richiamo);
-                const differenzaTempo = dataRichiamo - oggi;
-                const giorniRimasti = Math.ceil(differenzaTempo / (1000 * 60 * 60 * 24));
-                
-                if (giorniRimasti > 0) {
-                    vaccineStatusContainer.innerHTML = `<i class="fa-solid fa-syringe"></i> Il prossimo richiamo è tra <strong>${giorniRimasti}</strong> giorni.`;
-                    richiamoMostrato = true;
-                } else if (giorniRimasti === 0) {
-                    vaccineStatusContainer.innerHTML = `<i class="fa-solid fa-triangle-exclamation"></i> Il richiamo vaccinale è <strong>oggi</strong>!`;
-                    richiamoMostrato = true;
-                }
-            }
-
-            // 2. Se non c'è un richiamo, mostra l'ultima visita
-            if (!richiamoMostrato && lastRecord.data_visita) {
-                const dataVisita = new Date(lastRecord.data_visita).toLocaleDateString('it-IT', { day: 'numeric', month: 'long' });
-                const sintesiDiagnosi = lastRecord.diagnosi ? lastRecord.diagnosi.substring(0, 30) + '...' : 'Controllo di routine';
-                vaccineStatusContainer.innerHTML = `<i class="fa-solid fa-stethoscope"></i> Ultima visita (${dataVisita}): <span style="color:#64748B;">${sintesiDiagnosi}</span>`;
-            }
-
+            // 4. Stampiamo il risultato nella card arancione
+            vaccineStatusContainer.innerHTML = `<i class="fa-solid fa-stethoscope"></i> Ultima visita: <span style="color:#64748B;">${motivoTesto}</span>`;
+            
         } else {
+            // Se non c'è davvero nessuna visita nel DB per questo cane
             vaccineStatusContainer.innerHTML = "Nessun dato medico registrato.";
         }
     }
