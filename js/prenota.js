@@ -3,11 +3,16 @@ import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./config.js";
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-// ID presi dall'URL e Sessione
+// ID presi dall'URL (Puliti da eventuali slash o spazi!)
 const urlParams = new URLSearchParams(window.location.search);
-const vetId = urlParams.get('user_id'); 
+let vetId = urlParams.get('user_id'); 
+if (vetId) vetId = vetId.replace(/\/$/, '').trim(); // Rimuove sporcizia dall'URL
+
+// Se l'utente ha cliccato un servizio specifico nella pagina precedente
+const urlServiceId = urlParams.get('service_id');
+
 let currentUser = null;
-let isPersonalVisit = false; // <-- LA NOSTRA VARIABILE MAGICA PER L'AUTOPRENOTAZIONE
+let isPersonalVisit = false; // <-- VARIABILE MAGICA
 
 // Stato della prenotazione
 let selectedDateStr = null;
@@ -40,8 +45,14 @@ async function initPrenota() {
     }
     currentUser = user;
     
-    // CONTROLLO AUTOPRENOTAZIONE: Siamo lo stesso utente del medico?
-    isPersonalVisit = (currentUser.id === vetId);
+    // CONTROLLO BLINDATO AUTOPRENOTAZIONE
+    // Trasformiamo in stringa e togliamo gli spazi per essere sicuri al 1000%
+    isPersonalVisit = (String(currentUser.id).trim() === String(vetId).trim());
+    
+    // Debug in console per tua sicurezza
+    console.log("ID Mio:", currentUser.id);
+    console.log("ID Vet:", vetId);
+    console.log("È una visita personale?", isPersonalVisit);
 
     await loadVetInfo();
     await loadPets();
@@ -147,6 +158,12 @@ async function loadServices() {
         option.dataset.prezzo = srv.prezzo;
         option.dataset.durata = srv.durata_minuti;
         option.textContent = `${srv.nome_servizio} · ${srv.durata_minuti} min · €${srv.prezzo}`;
+        
+        // Auto-selezione se l'ID servizio combacia con quello nell'URL
+        if (urlServiceId && urlServiceId === srv.id) {
+            option.selected = true;
+        }
+
         serviceSelect.appendChild(option);
     });
 
@@ -215,16 +232,13 @@ serviceSelect.addEventListener("change", () => {
     currentServiceDuration = parseInt(selectedOption.getAttribute('data-durata')) || 30; 
     
     if (isPersonalVisit) {
-        // Se è l'animale del veterinario stesso, forziamo il prezzo a 0 graficamente
-        totalPrice.textContent = `0,00 € (Personale)`;
-        summaryPrice.textContent = `€0,00`;
-        // Se vuoi cambiare anche la label "Da pagare in struttura", potresti fare:
-        // const label = totalPrice.previousElementSibling;
-        // if(label) label.textContent = "Visita personale gratuita";
+        // Grafica per l'autoprenotazione (Veterinario cura il proprio cane)
+        totalPrice.textContent = `0,00 € (Visita Personale)`;
+        summaryPrice.textContent = `€ 0,00`;
     } else {
-        // Flusso normale per i clienti
+        // Grafica normale per i clienti paganti
         totalPrice.textContent = `${prezzoStandard},00 €`;
-        summaryPrice.textContent = `€${prezzoStandard},00`;
+        summaryPrice.textContent = `€ ${prezzoStandard},00`;
     }
 });
 
@@ -240,12 +254,14 @@ function checkFormValidity() {
 // 7. PRENOTA (Scrittura nel Database)
 confirmBtn.addEventListener("click", async () => {
     confirmBtn.disabled = true;
-    confirmBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Prenotazione...';
+    confirmBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Elaborazione in corso...';
     
     const dataInizio = new Date(`${selectedDateStr}T${selectedTimeStr}:00`);
     const dataFine = new Date(dataInizio.getTime() + currentServiceDuration * 60000);
 
-    // LOGICA DI PREZZO NEL DATABASE
+    // ==========================================
+    // LOGICA DI PREZZO: La prova del 9 per il Database!
+    // ==========================================
     const costoStr = serviceSelect.options[serviceSelect.selectedIndex].getAttribute('data-prezzo');
     const costoFinale = isPersonalVisit ? 0 : parseFloat(costoStr);
 
@@ -259,12 +275,15 @@ confirmBtn.addEventListener("click", async () => {
                 data_inizio: dataInizio.toISOString(),
                 data_fine: dataFine.toISOString(),
                 stato: 'programmato',
-                costo: costoFinale // Sarà 0 se sei il proprietario-veterinario!
+                costo: costoFinale // Sarà ESATTAMENTE 0 se sei tu!
             });
 
         if (error) throw error;
 
-        statusMessage.textContent = isPersonalVisit ? "Autoprenotazione registrata!" : "Appuntamento confermato con successo!";
+        statusMessage.textContent = isPersonalVisit 
+            ? "Visita personale inserita correttamente!" 
+            : "Appuntamento confermato con successo!";
+            
         statusMessage.className = "status-message success";
         statusMessage.hidden = false;
 
