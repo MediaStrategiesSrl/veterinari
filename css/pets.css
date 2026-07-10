@@ -114,3 +114,37 @@ html, body, .app-container, .dashboard-content {
 .nav-arrow.hidden {
     display: none;
 }
+
+/* Bottone Aggiungi Animale - Pagina Animali */
+.add-pet-btn {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: #ffffff;
+    color: #1E293B;
+    font-weight: 800;
+    font-size: 1.1rem;
+    padding: 20px;
+    border-radius: 20px;
+    text-decoration: none;
+    margin-top: 25px; 
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.03);
+    border: 1px solid #E2E8F0;
+    transition: all 0.2s ease;
+}
+
+.add-pet-btn i {
+    margin-right: 10px;
+    font-size: 1.2rem;
+}
+
+.add-pet-btn:hover {
+    background-color: #F8FAFC; 
+    border-color: #CBD5E1;     
+    transform: translateY(-2px); 
+    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.06); 
+}
+
+.add-pet-btn:active {
+    transform: translateY(0);
+}

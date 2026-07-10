@@ -3,146 +3,224 @@ import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./config.js";
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 let currentUser = null;
+let serviziDisponibili = []; // Salveremo qui i servizi scaricati dal DB
 
 // Elementi DOM
 const form = document.getElementById("appointmentForm");
 const petSelect = document.getElementById("petSelect");
+const servizioSelect = document.getElementById("servizioSelect"); // IL NUOVO MENU A TENDINA
 const dataInizioInput = document.getElementById("dataInizio");
-const dataFineInput = document.getElementById("dataFine");
+const dataFineInput = document.getElementById("dataFine"); // Ora verrà calcolato in automatico
 const costoInput = document.getElementById("costo");
 const submitBtn = document.getElementById("submitBtn");
 const formMessage = document.getElementById("formMessage");
 
+// ---> IMPORTANTE: Definisci qui in che sezione sei (cambialo in 'professionista' nell'altro file)
+const RUOLO_ATTUALE = 'veterinario'; 
+
 async function initPage() {
-    // 1. Configura i limiti temporali minimi (No appuntamenti nel passato)
     impostaDataMinima();
 
-    // 2. Controllo Autenticazione
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
-        window.location.href = "login.html";
+        window.location.href = "../../index.html";
         return;
     }
     currentUser = user;
 
-    // 3. Scarica i pazienti del veterinario per riempire il menu a tendina
-    await caricaPazientiDropdown();
+    // Scarica sia i pazienti che i servizi
+    await Promise.all([
+        caricaPazientiDropdown(),
+        caricaServiziDropdown()
+    ]);
 }
 
-// Forza il calendario HTML a rifiutare orari passati
 function impostaDataMinima() {
     const oraAttuale = new Date();
-    // Converte l'orario locale in formato richiesto da datetime-local (YYYY-MM-DDTHH:MM)
     const offsetMilitari = oraAttuale.getTimezoneOffset() * 60000;
     const isoLocale = new Date(oraAttuale.getTime() - offsetMilitari).toISOString().slice(0, 16);
-    
     dataInizioInput.min = isoLocale;
-    dataFineInput.min = isoLocale;
 }
 
+// 1. CARICA PAZIENTI (Versione Definitiva e Sicura)
+// ==========================================
 async function caricaPazientiDropdown() {
     try {
-        const { data, error } = await supabase
+        // STEP 1: Prendi i pet_id dalla tua tabella veterinarian_patients (solo quelli attivi)
+        const { data: vetPatients, error: vpError } = await supabase
             .from('veterinarian_patients')
-            .select(`
-                pet_id,
-                pets ( nome, owner_id )
-            `)
-            .eq('veterinarian_id', currentUser.id);
+            .select('pet_id')
+            .eq('veterinarian_id', currentUser.id)
+            .eq('status', 'active'); // Sfruttiamo la colonna che hai creato!
 
-        if (error) throw error;
+        if (vpError) throw vpError;
 
-        petSelect.innerHTML = ""; // Svuota loading
+        petSelect.innerHTML = ""; 
 
-        if (!data || data.length === 0) {
-            petSelect.innerHTML = `<option value="" disabled selected>Nessun paziente in lista. Scansiona prima un QR.</option>`;
+        // Se il veterinario non ha ancora pazienti, blocca e avvisa
+        if (!vetPatients || vetPatients.length === 0) {
+            petSelect.innerHTML = `<option value="" disabled selected>Nessun paziente in lista.</option>`;
             return;
         }
 
-        // Aggiungi l'opzione di default neutra
+        // Estrae un array con solo gli ID degli animali (es. ['id1', 'id2'])
+        const petIds = vetPatients.map(vp => vp.pet_id);
+
+        // STEP 2: Cerca i dettagli di quegli animali direttamente nella tabella pets
+        const { data: petsData, error: petsError } = await supabase
+            .from('pets')
+            .select('id, nome, owner_id')
+            .in('id', petIds); // Cerca solo gli animali che corrispondono a quegli ID
+
+        if (petsError) throw petsError;
+
+        // STEP 3: Costruisci il menu a tendina
         petSelect.innerHTML = `<option value="" disabled selected>Scegli un animale...</option>`;
 
-        // Popola la select salvando l'owner_id dentro un attributo custom HTML5 (data-owner)
-        data.forEach(item => {
-            if (item.pets) {
-                const opt = document.createElement("option");
-                opt.value = item.pet_id;
-                opt.dataset.owner = item.pets.owner_id;
-                opt.textContent = item.pets.nome;
-                petSelect.appendChild(opt);
-            }
+        petsData.forEach(pet => {
+            const opt = document.createElement("option");
+            opt.value = pet.id;
+            opt.dataset.owner = pet.owner_id;
+            opt.textContent = pet.nome;
+            petSelect.appendChild(opt);
         });
 
-        // Abilita la select e il bottone di salvataggio
+        // Finalmente, SBLOCCA IL MENU!
         petSelect.disabled = false;
-        submitBtn.disabled = false;
 
     } catch (error) {
         console.error("Errore caricamento pazienti:", error);
-        formMessage.textContent = "Impossibile caricare la lista pazienti.";
-        formMessage.style.color = "#DC2626";
+        petSelect.innerHTML = `<option value="" disabled>Errore di caricamento</option>`;
     }
 }
 
 // ==========================================
-// SALVATAGGIO APPUNTAMENTO NEL DB
+// 1. SCARICA I SERVIZI DALLA TABELLA provider_services
+// ==========================================
+async function caricaServiziDropdown() {
+    try {
+        const { data, error } = await supabase
+            .from('provider_services')
+            .select('*')
+            .eq('provider_id', currentUser.id);
+
+        if (error) throw error;
+        
+        serviziDisponibili = data || [];
+        servizioSelect.innerHTML = `<option value="" disabled selected>Scegli un servizio...</option>`;
+
+        serviziDisponibili.forEach(servizio => {
+            const opt = document.createElement("option");
+            opt.value = servizio.id; // Salviamo l'ID del servizio
+            opt.textContent = `${servizio.nome_servizio} (${servizio.durata_minuti} min - €${servizio.prezzo})`;
+            servizioSelect.appendChild(opt);
+        });
+
+    } catch (error) {
+        console.error("Errore caricamento servizi:", error);
+    }
+}
+
+// ==========================================
+// 2. CALCOLO AUTOMATICO COSTO E ORARIO
+// ==========================================
+function aggiornaDettagliServizio() {
+    // Evita errori se l'utente non ha ancora selezionato nulla
+    if (petSelect.selectedIndex <= 0 || servizioSelect.selectedIndex <= 0) return;
+
+    const selectedPetOpt = petSelect.options[petSelect.selectedIndex];
+    const ownerId = selectedPetOpt ? selectedPetOpt.dataset.owner : null;
+    
+    const selectedServizioId = servizioSelect.value;
+    const servizioObj = serviziDisponibili.find(s => s.id === selectedServizioId);
+
+    // Se abbiamo selezionato sia l'animale che il servizio
+    if (servizioObj) {
+        
+        // A prescindere da chi sia il cane, il costo NON è MAI modificabile a mano!
+        costoInput.readOnly = true;
+        costoInput.style.backgroundColor = "#F1F5F9"; // Sfondo grigino "bloccato"
+        costoInput.style.color = "#475569";
+        
+        // A) Calcolo del costo: Se è il mio cane costa 0, altrimenti prende il prezzo dal DB
+        if (ownerId === currentUser.id) {
+            costoInput.value = "0.00";
+        } else {
+            costoInput.value = servizioObj.prezzo;
+        }
+
+        // B) Calcolo dell'orario di fine in automatico
+        if (dataInizioInput.value) {
+            const dataInizio = new Date(dataInizioInput.value);
+            // Aggiungiamo i minuti del servizio all'orario di inizio
+            const dataFine = new Date(dataInizio.getTime() + (servizioObj.durata_minuti * 60000));
+            
+            // Formattiamo la data per inserirla nell'input
+            const offsetMilitari = dataFine.getTimezoneOffset() * 60000;
+            dataFineInput.value = new Date(dataFine.getTime() - offsetMilitari).toISOString().slice(0, 16);
+            dataFineInput.readOnly = true; 
+            dataFineInput.style.backgroundColor = "#F1F5F9"; // Mostra anche l'orario di fine come "bloccato"
+        }
+    }
+}
+
+// Ascoltatori per far scattare il ricalcolo in tempo reale
+petSelect.addEventListener("change", aggiornaDettagliServizio);
+servizioSelect.addEventListener("change", aggiornaDettagliServizio);
+dataInizioInput.addEventListener("change", aggiornaDettagliServizio);
+
+// ==========================================
+// 3. SALVATAGGIO CON RUOLO E CONTROLLO SOVRAPPOSIZIONE
 // ==========================================
 form.addEventListener("submit", async (e) => {
     e.preventDefault();
-
-    // SICUREZZA 1: Disabilita subito il bottone (Blocco totale dei cloni da doppio-click)
     submitBtn.disabled = true;
     submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Salvataggio...';
     formMessage.innerHTML = "";
 
-    // Recupera l'opzione selezionata per estrarre pet_id e owner_id
-    const selectedOption = petSelect.options[petSelect.selectedIndex];
-    const petId = selectedOption.value;
-    const ownerId = selectedOption.dataset.owner;
-
+    const selectedPetOpt = petSelect.options[petSelect.selectedIndex];
     const dataInizio = new Date(dataInizioInput.value);
     const dataFine = new Date(dataFineInput.value);
-    const costo = parseFloat(costoInput.value);
-
+    
     try {
-        // SICUREZZA 2: Controllo logico delle date prima di disturbare il database
-        if (dataFine <= dataInizio) {
-            throw new Error("L'orario di fine visita deve essere successivo all'orario di inizio.");
-        }
+        // Controllo Sovrapposizione
+        const { data: overlaps, error: checkError } = await supabase
+            .from('appointments')
+            .select('id')
+            .eq('provider_id', currentUser.id)
+            .lt('data_inizio', dataFine.toISOString()) 
+            .gt('data_fine', dataInizio.toISOString()); 
 
-        // Esegui l'inserimento rispettando al 100% i campi e i vincoli inviati
+        if (checkError) throw checkError;
+        if (overlaps && overlaps.length > 0) throw new Error("Hai già un appuntamento in questo orario!");
+
+        // Inserimento con il RUOLO così non si mischiano più!
         const { error: insertError } = await supabase
             .from('appointments')
             .insert({
-                owner_id: ownerId,
-                provider_id: currentUser.id, // ID del veterinario loggato
-                pet_id: petId,
+                owner_id: selectedPetOpt.dataset.owner,
+                provider_id: currentUser.id, 
+                pet_id: selectedPetOpt.value,
                 data_inizio: dataInizio.toISOString(),
                 data_fine: dataFine.toISOString(),
-                stato: 'programmato', // Stato di default come richiesto dal tuo schema
-                costo: costo
+                stato: 'programmato', 
+                costo: parseFloat(costoInput.value),
+                ruolo_provider: RUOLO_ATTUALE // <--- INSERISCE 'veterinario' o 'professionista'
+                // opzionale: salva anche servizioSelect.value se hai una colonna service_id nella tabella appointments
             });
 
         if (insertError) throw insertError;
 
-        // Successo! Mostra messaggio verde e torna all'agenda
-        formMessage.textContent = "Appuntamento registrato con successo!";
+        formMessage.textContent = "Salvato con successo!";
         formMessage.style.color = "#059669";
-
-        setTimeout(() => {
-            window.location.href = "pages/veterinario/agenda.html";
-        }, 1500);
+        setTimeout(() => window.location.href = "agenda.html", 1500);
 
     } catch (error) {
-        console.error("Errore salvataggio:", error);
-        formMessage.textContent = error.message || "Errore durante il salvataggio dell'appuntamento.";
+        formMessage.textContent = error.message || "Errore salvataggio.";
         formMessage.style.color = "#DC2626";
-        
-        // In caso di errore riabilita il bottone per permettere la correzione
         submitBtn.disabled = false;
         submitBtn.innerHTML = 'Conferma Appuntamento';
     }
 });
 
-// Avvia la pagina
 initPage();

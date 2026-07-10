@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Il mio profilo - Professionista</title>
+    <link rel="stylesheet" href="../../css/global.css">
+    <link rel="stylesheet" href="../../css/profile.css"> 
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+
+    <main class="app-container">
+        
+        <header class="header-nav">
+            <a href="dashboard-professionista.html" class="back-btn"><i class="fas fa-chevron-left"></i></a>
+            <div class="header-title">
+                <h2>Il mio profilo</h2>
+                <p>Professionista</p> 
+            </div>
+            <div class="header-icon">
+                <i class="fa-solid fa-diamond"></i>
+            </div>
+        </header>
+
+        <div id="profileHeaderContainer" class="user-profile-header">
+            <div class="user-initials-avatar">...</div>
+            <h1>Caricamento...</h1>
+            <p>Recupero dati in corso...</p>
+        </div>
+
+        <div class="section-container">
+            
+            <a href="datipersonali-pro.html" class="menu-action-card" style="text-decoration: none;">
+                <div class="info-icon icon-blue">
+                    <i class="fa-solid fa-puzzle-piece"></i>
+                </div>
+                <div class="menu-action-text">
+                    <div class="menu-action-title">Dati personali</div>
+                    <div class="menu-action-desc">Identità, contatti e documenti</div>
+                </div>
+                <i class="fa-solid fa-chevron-right" style="color: #ccc;"></i>
+            </a>
+
+            <a href="../../ruoli.html" class="menu-action-card" style="text-decoration: none;">
+                <div class="info-icon icon-blue">
+                    <i class="fa-solid fa-puzzle-piece"></i>
+                </div>
+                <div class="menu-action-text">
+                    <div class="menu-action-title">Ruoli dell'account</div>
+                    <div class="menu-action-desc">Professionista &middot; gestisci ruolo</div>
+                </div>
+                <i class="fa-solid fa-chevron-right" style="color: #ccc;"></i>
+            </a>
+
+            <a href="#" class="menu-action-card" style="text-decoration: none;">
+                <div class="info-icon icon-orange">
+                    <i class="fa-solid fa-diamond"></i>
+                </div>
+                <div class="menu-action-text">
+                    <div class="menu-action-title">Privacy e autorizzazioni</div>
+                    <div class="menu-action-desc">Accessi, consensi e sicurezza</div>
+                </div>
+                <i class="fa-solid fa-chevron-right" style="color: #ccc;"></i>
+            </a>
+
+            <a href="#" class="menu-action-card" style="text-decoration: none;">
+                <div class="info-icon" style="background-color: #E6F4FA; color: #00BFA5;">
+                    <i class="fa-solid fa-bell"></i>
+                </div>
+                <div class="menu-action-text">
+                    <div class="menu-action-title">Notifiche</div>
+                    <div class="menu-action-desc">Promemoria e preferenze</div>
+                </div>
+                <i class="fa-solid fa-chevron-right" style="color: #ccc;"></i>
+            </a>
+
+        </div>
+        
+        <div class="section-container">
+            <button id="btnLogout" class="btn-demo">Esci dall'account</button>
+        </div>
+
+        <nav class="bottom-nav">
+            <a href="dashboard-professionista.html" class="nav-item">
+                <i class="fa-solid fa-house"></i>
+                <span>Home</span>
+            </a>
+            <a href="agenda-pro.html" class="nav-item">
+                <i class="fa-solid fa-table-cells"></i>
+                <span>Agenda</span>
+            </a>
+            <a href="clienti-pro.html" class="nav-item">
+                <i class="fa-solid fa-clover"></i>
+                <span>Clienti</span>
+            </a>
+            <a href="servizi-pro.html" class="nav-item">
+                <i class="fa-solid fa-bars"></i>
+                <span>Servizi</span>
+            </a>
+            <a href="profilo-pro.html" class="nav-item active">
+                <i class="fa-solid fa-user"></i>
+                <span>Profilo</span>
+            </a>
+        </nav>
+
+    </main>
+
+    <script type="module" src="../../js/profilo-pro.js"></script>
+</body>
+</html>

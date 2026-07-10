@@ -18,7 +18,7 @@ const formatterMeseAnno = new Intl.DateTimeFormat('it-IT', { month: 'long', year
 async function initAgenda() {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
-        window.location.href = "index.html";
+        window.location.href = "index.html"; // Adatta alla tua pagina di login
         return;
     }
     currentUser = user;
@@ -74,7 +74,7 @@ async function caricaAppuntamentiPerData(dateObj) {
     endOfDay.setHours(23, 59, 59, 999);
 
     try {
-        // LA QUERY CORRETTA BASATA SULLA TUA TABELLA
+        // Query identica (senza "luogo" per evitare l'errore di Supabase)
         const { data: appts, error } = await supabase
             .from('appointments')
             .select(`
@@ -86,7 +86,7 @@ async function caricaAppuntamentiPerData(dateObj) {
                 pets ( nome )
             `)
             .eq('provider_id', currentUser.id)
-            .eq('ruolo_provider', 'veterinario') // <-- FILTRA PER VETERINARIO
+            .eq('ruolo_provider', 'professionista') // <-- FILTRA PER PROFESSIONISTA
             .gte('data_inizio', startOfDay.toISOString())
             .lte('data_inizio', endOfDay.toISOString())
             .order('data_inizio', { ascending: true });
@@ -96,7 +96,7 @@ async function caricaAppuntamentiPerData(dateObj) {
         renderizzaAppuntamenti(appts || []);
 
     } catch (error) {
-        console.error("Errore recupero agenda:", error);
+        console.error("Errore recupero agenda professionista:", error);
         appointmentsList.innerHTML = `<div style="color:red; text-align:center; padding: 20px;">Errore caricamento. Controlla la console.</div>`;
         appointmentsCount.textContent = "Errore";
     }
@@ -119,14 +119,13 @@ function renderizzaAppuntamenti(appts) {
         const start = new Date(app.data_inizio).toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' });
         const end = new Date(app.data_fine).toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' });
         
-        // I dati che peschiamo dalle tabelle collegate e dalla tua
         const nomeAnimale = app.pets ? app.pets.nome : "Animale sconosciuto";
         const stato = app.stato ? app.stato.toUpperCase() : "PROGRAMMATO";
         const costoStr = app.costo ? ` · costo €${app.costo}` : "";
 
-        // Siccome non abbiamo indirizzo e tipo nel DB, mettiamo dei default sensati
-        const tipoVisita = "Visita"; 
-        const indirizzo = "In studio";
+        // Testi adattati per il Professionista
+        const tipoServizio = "Servizio"; 
+        const indirizzo = "In sede / Domicilio";
 
         const borderClass = (index % 2 === 1) ? 'border-blue' : 'border-orange';
 
@@ -135,7 +134,7 @@ function renderizzaAppuntamenti(appts) {
         
         card.innerHTML = `
             <div class="appt-time">${start} - ${end}</div>
-            <div class="appt-title">${nomeAnimale} · ${tipoVisita}</div>
+            <div class="appt-title">${nomeAnimale} · ${tipoServizio}</div>
             <div class="appt-details">${indirizzo}${costoStr} · STATO: ${stato}</div>
         `;
 

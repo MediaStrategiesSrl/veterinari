@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>I miei clienti — Professionista</title>
+    <link rel="stylesheet" href="../../css/global.css">
+    <link rel="stylesheet" href="../../css/clienti.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+
+    <main class="app-container">
+        
+        <header class="header-nav">
+            <a href="dashboard-professionista.html" class="back-btn"><i class="fas fa-chevron-left"></i></a>
+            <div class="header-title">
+                <h2>I miei clienti</h2>
+                <p>Accessi attivi</p>
+            </div>
+            <div class="header-icon">
+                <i class="fa-solid fa-diamond"></i>
+            </div>
+        </header>
+
+        <div class="dashboard-content" style="padding: 0 15px;">
+            
+            <div class="search-container">
+                <i class="fa-solid fa-magnifying-glass search-icon"></i>
+                <input type="text" id="searchInput" class="search-input" placeholder="Nome o microchip">
+            </div>
+
+            <h3 class="section-title">Recenti</h3>
+            <div id="clientsListContainer">
+                <div style="text-align: center; padding: 20px; color: #64748B;">
+                    <i class="fa-solid fa-spinner fa-spin"></i> Caricamento clienti...
+                </div>
+            </div>
+
+        </div>
+
+        <nav class="bottom-nav">
+            <a href="dashboard-professionista.html" class="nav-item">
+                <i class="fa-solid fa-house"></i>
+                <span>Home</span>
+            </a>
+            <a href="agenda-pro.html" class="nav-item">
+                <i class="fa-solid fa-table-cells"></i>
+                <span>Agenda</span>
+            </a>
+            <a href="clienti-pro.html" class="nav-item active">
+                <i class="fa-solid fa-clover"></i>
+                <span>Clienti</span>
+            </a>
+            <a href="servizi-pro.html" class="nav-item">
+                <i class="fa-solid fa-bars"></i>
+                <span>Servizi</span>
+            </a>
+            <a href="profilo-pro.html" class="nav-item">
+                <i class="fa-solid fa-user"></i>
+                <span>Profilo</span>
+            </a>
+        </nav>
+
+    </main>
+
+    <script type="module" src="../../js/clienti-pro.js"></script>
+</body>
+</html>

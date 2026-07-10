@@ -63,10 +63,24 @@ async function initRuoli() {
         if (userRolesData) {
             userRolesData.forEach(item => {
                 if (item.roles) {
+                    // Estrai il nome dal DB, che sia in un oggetto o in un array
+                    let dbRoleName = "";
                     if (item.roles.nome) {
-                        activeRoles.push(item.roles.nome.toLowerCase());
+                        dbRoleName = item.roles.nome.toLowerCase();
                     } else if (Array.isArray(item.roles) && item.roles[0] && item.roles[0].nome) {
-                        activeRoles.push(item.roles[0].nome.toLowerCase());
+                        dbRoleName = item.roles[0].nome.toLowerCase();
+                    }
+
+                    if (dbRoleName) {
+                        // ========================================================
+                        // TRADUZIONE: Se nel DB si chiama "altro professionista" 
+                        // lo traduciamo nel nostro id "professionista"
+                        // ========================================================
+                        if (dbRoleName.includes("professionista") || dbRoleName.includes("sitter") || dbRoleName.includes("educatore")) {
+                            dbRoleName = "professionista";
+                        }
+                        
+                        activeRoles.push(dbRoleName.trim());
                     }
                 }
             });

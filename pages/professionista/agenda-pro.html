@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Agenda Professionista — Veterinari.it</title>
+    <link rel="stylesheet" href="../../css/global.css">
+    <link rel="stylesheet" href="../../css/agenda.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+
+    <main class="app-container">
+        
+        <header class="page-header">
+            <a href="dashboard-professionista.html" class="back-btn"><i class="fas fa-chevron-left"></i></a>
+            <div class="header-title">
+                <h2>Agenda</h2>
+                <p id="currentMonthYear">Caricamento...</p>
+            </div>
+            <div class="header-action">
+                <i class="fa-solid fa-diamond"></i>
+            </div>
+        </header>
+
+        <div class="date-carousel-container">
+            <ul id="dateCarousel" class="date-carousel">
+                </ul>
+        </div>
+
+        <div class="dashboard-content">
+            
+            <div class="section-header">
+                <h3 id="appointmentsCount">0 appuntamenti</h3>
+                <a href="#" class="link-action">Disponibilità</a>
+            </div>
+
+            <div id="appointmentsList" class="appointments-list">
+                <div style="text-align: center; padding: 20px; color: #64748B;">
+                    <i class="fa-solid fa-spinner fa-spin"></i> Caricamento agenda...
+                </div>
+            </div>
+
+            <a href="aggiungi-disponibilita.html" id="addAvailabilityBtn" class="btn-primary" style="display: block; text-align: center; text-decoration: none; margin-top: 20px; width: 100%; box-sizing: border-box;">
+                <i class="fa-solid fa-plus"></i> Aggiungi disponibilità
+            </a>
+
+            <div class="ad-banner">
+                <strong>PETCARE+</strong> Protezione completa da €9,90/mese &middot; <span>Scopri</span>
+            </div>
+
+        </div>
+
+        <nav class="bottom-nav">
+            <a href="dashboard-professionista.html" class="nav-item">
+                <i class="fa-solid fa-house"></i>
+                <span>Home</span>
+            </a>
+            <a href="agenda-pro.html" class="nav-item active">
+                <i class="fa-solid fa-table-cells"></i>
+                <span>Agenda</span>
+            </a>
+            <a href="clienti-pro.html" class="nav-item">
+                <i class="fa-solid fa-clover"></i>
+                <span>Clienti</span>
+            </a>
+            <a href="servizi-pro.html" class="nav-item">
+                <i class="fa-solid fa-bars"></i>
+                <span>Servizi</span>
+            </a>
+            <a href="profilo-pro.html" class="nav-item">
+                <i class="fa-solid fa-user"></i>
+                <span>Profilo</span>
+            </a>
+        </nav>
+
+    </main>
+
+    <script type="module" src="../../js/agenda-pro.js"></script>
+</body>
+</html>

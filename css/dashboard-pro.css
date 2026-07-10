@@ -1,0 +1,195 @@
+/* =========================================
+   HERO CARD PROFESSIONISTA
+   ========================================= */
+/* =========================================
+   HERO CARD PROFESSIONISTA (FEDELE AL MOCKUP)
+   ========================================= */
+.hero-pro-card {
+    margin: 0 20px 25px 20px;
+    background: linear-gradient(135deg, #41AECF, #2E8CAE);
+    border-radius: 24px;
+    padding: 25px;
+    color: white;
+    display: flex;
+    flex-direction: column; /* Imposta in verticale le due righe */
+    box-shadow: 0 10px 25px rgba(65, 174, 207, 0.25);
+    position: relative;
+    overflow: hidden;
+}
+
+/* Riga Alta: Foto + Testo affiancati */
+.hero-top-row {
+    display: flex;
+    align-items: center;
+    gap: 18px; /* Spazio tra foto e testo */
+    margin-bottom: 15px;
+}
+
+.hero-pro-avatar {
+    width: 75px;
+    height: 75px;
+    border-radius: 22px; /* Leggermente smussato come nel mockup */
+    border: 3px solid rgba(255,255,255,0.4);
+    overflow: hidden;
+    flex-shrink: 0;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+}
+
+.hero-pro-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.badge-verified {
+    background: rgba(255, 255, 255, 0.25);
+    padding: 5px 10px;
+    border-radius: 8px;
+    font-size: 0.65rem;
+    font-weight: 800;
+    letter-spacing: 0.5px;
+    display: inline-block;
+    margin-bottom: 5px;
+    text-transform: uppercase;
+}
+
+.hero-pro-greeting h1 {
+    font-size: 1.6rem;
+    margin: 0;
+    line-height: 1.2;
+    font-weight: 800;
+}
+
+/* Riga Bassa: Testo e Bottone */
+.hero-bottom-row p {
+    font-size: 0.95rem;
+    opacity: 0.95;
+    margin: 0 0 18px 0;
+    font-weight: 500;
+}
+
+.btn-white {
+    background: white;
+    color: #D97706; /* Arancione per riprendere il mockup */
+    border: none;
+    padding: 12px 24px;
+    border-radius: 12px;
+    font-weight: 800;
+    font-size: 1rem;
+    cursor: pointer;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    transition: transform 0.2s;
+    display: inline-block;
+}
+
+.btn-white:active { transform: scale(0.95); }
+
+.hero-pro-avatar {
+    width: 70px;
+    height: 70px;
+    border-radius: 18px;
+    border: 3px solid rgba(255,255,255,0.3);
+    overflow: hidden;
+    z-index: 2;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+}
+
+.hero-pro-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* =========================================
+   APPUNTAMENTI OGGI
+   ========================================= */
+.section-container {
+    padding: 0 20px;
+    margin-bottom: 30px;
+}
+
+.section-title {
+    font-size: 1.2rem;
+    color: #1E293B;
+    margin-bottom: 15px;
+}
+
+.apt-card {
+    background: white;
+    border-radius: 16px;
+    padding: 18px;
+    margin-bottom: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+    border-left: 4px solid transparent;
+}
+
+.apt-card.border-orange { border-left-color: #F58220; }
+.apt-card.border-blue { border-left-color: #41AECF; }
+
+.apt-time {
+    font-weight: 800;
+    color: #D97706; /* Arancio scuro per l'orario */
+    font-size: 0.85rem;
+    margin-bottom: 5px;
+}
+
+.apt-title {
+    font-weight: 700;
+    color: #1E293B;
+    font-size: 1rem;
+    margin-bottom: 4px;
+}
+
+.apt-details {
+    font-size: 0.8rem;
+    color: #64748B;
+}
+
+/* =========================================
+   GRIGLIA LA TUA ATTIVITÀ
+   ========================================= */
+.activity-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+}
+
+.activity-card {
+    background: white;
+    border-radius: 20px;
+    padding: 20px 15px;
+    text-decoration: none;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    transition: transform 0.2s;
+}
+
+.activity-card:active { transform: scale(0.97); }
+
+.act-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 1.2rem;
+    margin-bottom: 12px;
+}
+
+.bg-orange { background: #FFF7ED; color: #1E293B; }
+.bg-light-blue { background: #F0F9FF; color: #41AECF; }
+
+.activity-card h3 {
+    margin: 0 0 4px 0;
+    font-size: 1.05rem;
+    color: #1E293B;
+}
+
+.activity-card p {
+    margin: 0;
+    font-size: 0.75rem;
+    color: #94A3B8;
+}

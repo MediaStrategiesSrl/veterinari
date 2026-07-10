@@ -61,3 +61,61 @@ button[type="submit"]:active, .btn-simulate:active { transform: scale(0.97); box
 .profile-text h3 { font-size: 1rem; font-weight: 700; margin-bottom: 0.2rem; }
 .profile-text p { font-size: 0.8rem; color: var(--text-muted); }
 .profile-arrow { color: #CCC; font-size: 0.85rem; }
+
+/* =========================================
+   UPLOAD AVATAR (AGGIUNGI ANIMALE)
+   ========================================= */
+.avatar-upload-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 2rem;
+    margin-top: 1rem;
+    cursor: pointer;
+}
+
+.avatar-preview {
+    width: 110px;
+    height: 110px;
+    border-radius: 50%;
+    background-color: #F8FAFC;
+    border: 2px dashed #CBD5E1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 0.75rem;
+    transition: all 0.2s ease;
+    overflow: hidden; /* Mantiene la foto rotonda quando verrà caricata */
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.02);
+}
+
+.avatar-preview:hover {
+    background-color: #F1F5F9;
+    border-color: var(--orange-accent, #F58220); /* Diventa arancione al passaggio */
+    transform: scale(1.02);
+}
+
+.camera-icon {
+    font-size: 2.2rem;
+    color: #94A3B8;
+    transition: color 0.2s ease;
+}
+
+.avatar-preview:hover .camera-icon {
+    color: var(--orange-accent, #F58220);
+}
+
+.upload-text {
+    font-size: 0.85rem;
+    color: #64748B;
+    font-weight: 600;
+    margin: 0;
+}
+
+/* Immagine una volta caricata */
+.avatar-preview img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover; /* Evita che l'immagine si deformi */
+}

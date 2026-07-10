@@ -1,15 +1,9 @@
-/* Sfondo Crema Forzato */
-body, .app-container {
-    background-color: #F8F7F4 !important;
-    margin: 0;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-}
-
-.app-container {
-    max-width: 480px;
-    margin: 0 auto;
+/* Sfondo Crema Unificato per tutto */
+html, body, .app-container, .dashboard-content {
+    background-color: #FDF7F0 !important; /* Crema caldo ovunque */
     min-height: 100vh;
-    padding-bottom: 40px;
+    margin: 0 auto;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
 }
 
 /* Header */
