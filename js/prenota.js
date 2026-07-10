@@ -46,7 +46,6 @@ async function initPrenota() {
     currentUser = user;
     
     // CONTROLLO BLINDATO AUTOPRENOTAZIONE
-    // Trasformiamo in stringa e togliamo gli spazi per essere sicuri al 1000%
     isPersonalVisit = (String(currentUser.id).trim() === String(vetId).trim());
     
     // Debug in console per tua sicurezza
@@ -159,7 +158,6 @@ async function loadServices() {
         option.dataset.durata = srv.durata_minuti;
         option.textContent = `${srv.nome_servizio} · ${srv.durata_minuti} min · €${srv.prezzo}`;
         
-        // Auto-selezione se l'ID servizio combacia con quello nell'URL
         if (urlServiceId && urlServiceId === srv.id) {
             option.selected = true;
         }
@@ -232,11 +230,9 @@ serviceSelect.addEventListener("change", () => {
     currentServiceDuration = parseInt(selectedOption.getAttribute('data-durata')) || 30; 
     
     if (isPersonalVisit) {
-        // Grafica per l'autoprenotazione (Veterinario cura il proprio cane)
         totalPrice.textContent = `0,00 € (Visita Personale)`;
         summaryPrice.textContent = `€ 0,00`;
     } else {
-        // Grafica normale per i clienti paganti
         totalPrice.textContent = `${prezzoStandard},00 €`;
         summaryPrice.textContent = `€ ${prezzoStandard},00`;
     }
@@ -251,7 +247,7 @@ function checkFormValidity() {
     }
 }
 
-// 7. PRENOTA (Scrittura nel Database)
+// 7. PRENOTA (Scrittura nel Database e Invio Email)
 confirmBtn.addEventListener("click", async () => {
     confirmBtn.disabled = true;
     confirmBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Elaborazione in corso...';
@@ -259,13 +255,11 @@ confirmBtn.addEventListener("click", async () => {
     const dataInizio = new Date(`${selectedDateStr}T${selectedTimeStr}:00`);
     const dataFine = new Date(dataInizio.getTime() + currentServiceDuration * 60000);
 
-    // ==========================================
-    // LOGICA DI PREZZO: La prova del 9 per il Database!
-    // ==========================================
     const costoStr = serviceSelect.options[serviceSelect.selectedIndex].getAttribute('data-prezzo');
     const costoFinale = isPersonalVisit ? 0 : parseFloat(costoStr);
 
     try {
+        // A. SALVATAGGIO NEL DATABASE
         const { error } = await supabase
             .from('appointments')
             .insert({
@@ -275,21 +269,57 @@ confirmBtn.addEventListener("click", async () => {
                 data_inizio: dataInizio.toISOString(),
                 data_fine: dataFine.toISOString(),
                 stato: 'programmato',
-                costo: costoFinale // Sarà ESATTAMENTE 0 se sei tu!
+                costo: costoFinale
             });
 
         if (error) throw error;
 
+        // ==========================================
+        // B. INVIO EMAIL TRAMITE EDGE FUNCTION
+        // ==========================================
+        try {
+            // Estrapola il nome del cane pulito (rimuove il "· Specie")
+            const nomePetCompleto = petSelect.options[petSelect.selectedIndex].textContent;
+            const nomeAnimale = nomePetCompleto.split(' · ')[0].trim();
+            
+            // Estrapola il nome del dottore e formatta la data
+            const nomeProfessionista = vetNameSubtitle.textContent.replace('Dott. ', '').trim();
+            const dataVisitaFormattata = dataInizio.toLocaleString('it-IT', { dateStyle: 'long', timeStyle: 'short' });
+
+            const datiEmail = {
+                // ATTENZIONE: per i test, inserisci qui la tua mail usata su Resend
+                emailProprietario: currentUser.email, 
+                emailProfessionista: "mediastrategiessrl@gmail.com", // Sostituisci con la tua vera email di test!
+                nomeAnimale: nomeAnimale,
+                nomeProfessionista: nomeProfessionista,
+                dataVisita: dataVisitaFormattata,
+                noteAggiuntive: "Prenotazione effettuata autonomamente tramite l'applicazione."
+            };
+
+            const { data: funcData, error: funcError } = await supabase.functions.invoke('send-booking-email', {
+                body: datiEmail
+            });
+
+            if (funcError) {
+                console.warn("Appuntamento salvato, ma errore nell'invio della mail:", funcError);
+            } else {
+                console.log("Email inviate con successo alla clinica e al cliente!");
+            }
+        } catch (emailErr) {
+            console.error("Errore imprevisto durante la chiamata email:", emailErr);
+        }
+        // ==========================================
+
         statusMessage.textContent = isPersonalVisit 
             ? "Visita personale inserita correttamente!" 
-            : "Appuntamento confermato con successo!";
+            : "Appuntamento confermato! Ti abbiamo inviato una mail di riepilogo.";
             
         statusMessage.className = "status-message success";
         statusMessage.hidden = false;
 
         setTimeout(() => {
             window.location.href = "dashboard-proprietario.html";
-        }, 2000);
+        }, 2500);
 
     } catch (err) {
         statusMessage.textContent = "Errore Supabase: " + (err.message || JSON.stringify(err));
