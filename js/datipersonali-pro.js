@@ -1,7 +1,9 @@
-import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
-import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./config.js";
+// 1. IMPORT CENTRALIZZATI
+// ==========================================
+// Assicurati che i percorsi puntino alla cartella corretta (es. ../utils/)
+import { supabase } from '../utils/supabaseClient.js';
+import { logError } from '../utils/logger.js';
 
-const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 // Elementi DOM
 const form = document.getElementById("profileForm");
@@ -46,7 +48,10 @@ async function loadUserData() {
             .eq('id', user.id)
             .single();
 
-        if (error && error.code !== 'PGRST116') throw error;
+        // Mappiamo l'errore per il logger
+        if (error && error.code !== 'PGRST116') {
+            throw Object.assign(new Error(error.message), { code: error.code || 'DB_PROFILE_FETCH_ERROR' });
+        }
 
         if (profile) {
             const nome = profile.nome || "";
@@ -68,6 +73,18 @@ async function loadUserData() {
 
     } catch (error) {
         console.error("Errore recupero dati:", error);
+        
+        // --- INIZIO AGGIUNTA LOG ---
+        await logError({
+            source: 'frontend_dati_personali',
+            action: 'load_user_profile',
+            errorMessage: error.message || "Errore durante il recupero dei dati dal database",
+            errorCode: error.code || 'DB_PROFILE_FETCH_ERROR',
+            stackTrace: error.stack,
+            context: { user_id: currentUser ? currentUser.id : 'sconosciuto' }
+        });
+        // --- FINE AGGIUNTA LOG ---
+
         showMessage("Impossibile caricare i dati del profilo.", "#DC2626");
     }
 }
@@ -126,7 +143,7 @@ form.addEventListener("submit", async (e) => {
                 .from('storage_veterinari')
                 .upload(filePath, file, { upsert: true });
 
-            if (uploadError) throw uploadError;
+            if (uploadError) throw Object.assign(new Error(uploadError.message), { code: uploadError.code || 'STORAGE_UPLOAD_ERROR' });
             docUrl = filePath;
         }
 
@@ -151,14 +168,14 @@ form.addEventListener("submit", async (e) => {
             .update(updateData)
             .eq('id', currentUser.id);
 
-        if (updateError) throw updateError;
+        if (updateError) throw Object.assign(new Error(updateError.message), { code: updateError.code || 'DB_PROFILE_UPDATE_ERROR' });
 
         // 4. AGGIORNA EMAIL (Richiede chiamata Auth speciale)
         if (emailInput.value !== currentUser.email) {
             const { error: emailError } = await supabase.auth.updateUser({
                 email: emailInput.value
             });
-            if (emailError) throw emailError;
+            if (emailError) throw Object.assign(new Error(emailError.message), { code: emailError.code || 'AUTH_EMAIL_UPDATE_ERROR' });
             
             showMessage("Dati salvati! Controlla la tua nuova email per confermare l'indirizzo.", "#059669");
         } else {
@@ -178,6 +195,22 @@ form.addEventListener("submit", async (e) => {
 
     } catch (error) {
         console.error("Errore salvataggio:", error);
+        
+        // --- INIZIO AGGIUNTA LOG ---
+        await logError({
+            source: 'frontend_dati_personali',
+            action: 'update_user_data',
+            errorMessage: error.message || "Eccezione durante l'aggiornamento del profilo utente",
+            errorCode: error.code || 'PROFILE_SAVE_ERROR',
+            stackTrace: error.stack,
+            context: {
+                user_id: currentUser ? currentUser.id : 'sconosciuto',
+                attempted_email_update: emailInput.value !== (currentUser ? currentUser.email : ''),
+                uploaded_document: !!documentoFile.files[0]
+            }
+        });
+        // --- FINE AGGIUNTA LOG ---
+
         showMessage("Si è verificato un errore durante il salvataggio.", "#DC2626");
         // In caso di errore restiamo in modalità modifica per far riprovare l'utente
         disabilitaCampi(false);

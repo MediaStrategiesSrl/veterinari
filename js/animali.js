@@ -1,7 +1,9 @@
-import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
-import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./config.js";
+// 1. IMPORT CENTRALIZZATI
+// ==========================================
+// Assicurati che i percorsi puntino alla cartella corretta (es. ../utils/)
+import { supabase } from '../utils/supabaseClient.js';
+import { logError } from '../utils/logger.js';
 
-const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 const activeProfilesCount = document.getElementById("activeProfilesCount");
 const petsCarousel = document.getElementById("petsCarousel");
@@ -10,12 +12,21 @@ const btnPrevProfile = document.getElementById("btnPrevProfile");
 const btnNextProfile = document.getElementById("btnNextProfile");
 
 async function loadAnimaliData() {
+    // Inizializziamo l'ID utente fuori dal try per poterlo passare al logger in caso di errore
+    let currentUserId = null; 
+
     try {
-        const { data: { user } } = await supabase.auth.getUser();
+        const { data: { user }, error: authError } = await supabase.auth.getUser();
+        
+        // Se c'è un errore di autenticazione, lo lanciamo con un codice specifico
+        if (authError) throw Object.assign(new Error(authError.message), { code: 'AUTH_FETCH_ERROR' });
+
         if (!user) {
             window.location.href = "../../index.html";
             return;
         }
+        
+        currentUserId = user.id;
 
         const { data: pets, error } = await supabase
             .from('pets')
@@ -23,7 +34,8 @@ async function loadAnimaliData() {
             .eq('owner_id', user.id)
             .order('id', { ascending: true });
 
-        if (error) throw error;
+        // Assegniamo il codice di errore originale di Supabase se presente
+        if (error) throw Object.assign(new Error(error.message), { code: error.code || 'DB_FETCH_PETS_ERROR' });
 
         if (pets && pets.length > 0) {
             activeProfilesCount.textContent = pets.length === 1 ? "1 profilo attivo" : `${pets.length} profili attivi`;
@@ -37,7 +49,6 @@ async function loadAnimaliData() {
                 if (btnNextProfile) btnNextProfile.classList.add("hidden");
             }
             
-
             petsCarousel.innerHTML = "";
             carouselDots.innerHTML = "";
 
@@ -76,13 +87,13 @@ async function loadAnimaliData() {
                         </div>
 
                        <div class="menu-action-card btn-cartella" data-id="${pet.id}">
-    <div class="info-icon icon-blue"><i class="fa-solid fa-plus"></i></div>
-    <div class="menu-action-text">
-        <div class="menu-action-title">Cartella sanitaria</div>
-        <div class="menu-action-desc">Visite, farmaci, interventi e referti</div>
-    </div>
-    <i class="fa-solid fa-chevron-right chevron-icon"></i>
-</div>
+                            <div class="info-icon icon-blue"><i class="fa-solid fa-plus"></i></div>
+                            <div class="menu-action-text">
+                                <div class="menu-action-title">Cartella sanitaria</div>
+                                <div class="menu-action-desc">Visite, farmaci, interventi e referti</div>
+                            </div>
+                            <i class="fa-solid fa-chevron-right chevron-icon"></i>
+                        </div>
 
                         <div class="menu-action-card btn-qr" data-id="${pet.id}">
                             <div class="info-icon icon-orange"><i class="fa-solid fa-qrcode"></i></div>
@@ -132,19 +143,18 @@ async function loadAnimaliData() {
                 });
             });
 
-          document.querySelectorAll('.btn-cartella').forEach(btn => {
-    btn.addEventListener('click', (e) => {
-        const idAnimale = e.currentTarget.getAttribute('data-id');
-        
-        if (!idAnimale || idAnimale === "null") {
-            alert("Errore: ID animale non trovato sul bottone!");
-            return;
-        }
+            document.querySelectorAll('.btn-cartella').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const idAnimale = e.currentTarget.getAttribute('data-id');
+                    
+                    if (!idAnimale || idAnimale === "null") {
+                        alert("Errore: ID animale non trovato sul bottone!");
+                        return;
+                    }
+                    window.location.href = `/storia-clinica.html?petId=${idAnimale}`;
+                });
+            });
 
-        // Il '/' all'inizio lo riporta alla radice del sito, dove si trova il file
-        window.location.href = `/storia-clinica.html?petId=${idAnimale}`;
-    });
-});
             document.querySelectorAll('.btn-qr').forEach(btn => {
                 btn.addEventListener('click', (e) => {
                     window.location.href = `qr-pets.html?petId=${e.currentTarget.getAttribute('data-id')}`;
@@ -170,7 +180,33 @@ async function loadAnimaliData() {
 
     } catch (err) {
         console.error("ERRORE COMPLETO:", err);
+        
+        // 2. LOGGA L'ERRORE NEL DATABASE TRAMITE LA TUA FUNZIONE
+        await logError({
+            source: 'frontend_pets_carousel',
+            action: 'load_animali_data',
+            errorMessage: err.message,
+            errorCode: err.code || 'UNKNOWN_FETCH_ERROR',
+            stackTrace: err.stack,
+            context: {
+                user_id: currentUserId || 'Non autenticato'
+            }
+        });
+
+        // 3. AGGIORNA LA UI PER MOSTRARE L'ERRORE ALL'UTENTE IN MODO ELEGANTE
         activeProfilesCount.textContent = "Errore di caricamento";
+        petsCarousel.innerHTML = `
+            <div class="pet-slide" style="display: flex; align-items: center; justify-content: center; height: 100%; border: 1px dashed #ef4444; border-radius: 16px; background-color: #fef2f2;">
+                <div style="text-align: center; padding: 20px; color: #b91c1c;">
+                    <i class="fa-solid fa-triangle-exclamation" style="font-size: 24px; margin-bottom: 10px;"></i>
+                    <p style="margin: 0; font-weight: 500;">Ops! Non siamo riusciti a caricare i tuoi profili.</p>
+                    <p style="margin: 5px 0 0 0; font-size: 14px; color: #ef4444;">Il team tecnico è stato avvisato in automatico.</p>
+                </div>
+            </div>
+        `;
+        // Nascondiamo le frecce se c'è un errore
+        if (btnPrevProfile) btnPrevProfile.classList.add("hidden");
+        if (btnNextProfile) btnNextProfile.classList.add("hidden");
     }
 }
 

@@ -1,7 +1,8 @@
-import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
-import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./config.js";
-
-const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+// 1. IMPORT CENTRALIZZATI
+// ==========================================
+// Assicurati che i percorsi puntino alla cartella corretta (es. ../utils/)
+import { supabase } from '../utils/supabaseClient.js';
+import { logError } from '../utils/logger.js';
 
 const addPetForm = document.getElementById('addPetForm');
 const petAvatarInput = document.getElementById('petAvatar');
@@ -46,8 +47,7 @@ addPetForm.addEventListener('submit', async (e) => {
                 .upload(`pets_avatar/${fileName}`, selectedFile);
             
             if (uploadError) {
-                console.error("Errore Storage:", uploadError);
-                throw new Error("Errore nel caricamento della foto: " + uploadError.message);
+               throw Object.assign(new Error("Errore nel caricamento della foto: " + uploadError.message), { code: 'STORAGE_UPLOAD_ERROR' });
             }
             avatarPath = data.path;
         }
@@ -78,6 +78,23 @@ addPetForm.addEventListener('submit', async (e) => {
     } catch (err) {
         // Ora se c'è un errore te lo stampa in faccia, non puoi sbagliarti
         console.error("ERRORE COMPLETO:", err);
+
+        await logError({
+            source: 'frontend_add_pet',
+            action: 'insert_pet_profile',
+            errorMessage: err.message,
+            errorCode: err.code || 'UNKNOWN_ERROR',
+            stackTrace: err.stack,
+            context: {
+                user_id: currentUser ? currentUser.id : 'Non autenticato',
+                has_avatar: !!selectedFile,
+                avatar_size_kb: selectedFile ? Math.round(selectedFile.size / 1024) : null,
+                avatar_type: selectedFile ? selectedFile.type : null,
+                attempted_pet_name: document.getElementById('petName').value,
+                attempted_species: document.getElementById('petSpecies').value
+            }
+        });
+
         statusMessage.textContent = "Errore: " + err.message;
         statusMessage.className = "status-message error visible";
         

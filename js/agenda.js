@@ -1,7 +1,9 @@
-import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
-import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./config.js";
+// 1. IMPORT CENTRALIZZATI
+// ==========================================
+// Assicurati che i percorsi puntino alla cartella corretta (es. ../utils/)
+import { supabase } from '../utils/supabaseClient.js';
+import { logError } from '../utils/logger.js';
 
-const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 let currentUser = null;
 
 // DOM Elements
@@ -14,6 +16,17 @@ const appointmentsList = document.getElementById("appointmentsList");
 const formatterGiornoNum = new Intl.DateTimeFormat('it-IT', { day: 'numeric' });
 const formatterGiornoLettera = new Intl.DateTimeFormat('it-IT', { weekday: 'short' });
 const formatterMeseAnno = new Intl.DateTimeFormat('it-IT', { month: 'long', year: 'numeric' });
+
+/**
+ * Sanitizza una stringa prima di inserirla via innerHTML,
+ * per evitare XSS con dati che arrivano dal DB (es. nome animale).
+ */
+function escapeHtml(str) {
+    if (typeof str !== 'string') return str;
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+}
 
 async function initAgenda() {
     const { data: { user } } = await supabase.auth.getUser();
@@ -67,6 +80,7 @@ async function caricaAppuntamentiPerData(dateObj) {
     appointmentsList.innerHTML = `<div style="text-align: center; padding: 20px; color: #64748B;"><i class="fa-solid fa-spinner fa-spin"></i> Caricamento...</div>`;
     appointmentsCount.textContent = "...";
 
+    // Confine del giorno LOCALE, poi convertito correttamente in UTC per il DB
     const startOfDay = new Date(dateObj);
     startOfDay.setHours(0, 0, 0, 0);
     
@@ -74,7 +88,6 @@ async function caricaAppuntamentiPerData(dateObj) {
     endOfDay.setHours(23, 59, 59, 999);
 
     try {
-        // LA QUERY CORRETTA BASATA SULLA TUA TABELLA
         const { data: appts, error } = await supabase
             .from('appointments')
             .select(`
@@ -97,6 +110,21 @@ async function caricaAppuntamentiPerData(dateObj) {
 
     } catch (error) {
         console.error("Errore recupero agenda:", error);
+
+        await logError({
+            source: 'frontend_agenda',
+            action: 'fetch_appointments',
+            errorMessage: error.message || "Impossibile recuperare gli appuntamenti dal database",
+            errorCode: error.code || 'SUPABASE_QUERY_ERROR',
+            stackTrace: error.stack,
+            context: {
+                target_date: dateObj.toISOString(),
+                start_boundary: startOfDay.toISOString(),
+                end_boundary: endOfDay.toISOString(),
+                provider_id: currentUser.id
+            }
+        });
+
         appointmentsList.innerHTML = `<div style="color:red; text-align:center; padding: 20px;">Errore caricamento. Controlla la console.</div>`;
         appointmentsCount.textContent = "Errore";
     }
@@ -119,10 +147,10 @@ function renderizzaAppuntamenti(appts) {
         const start = new Date(app.data_inizio).toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' });
         const end = new Date(app.data_fine).toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' });
         
-        // I dati che peschiamo dalle tabelle collegate e dalla tua
-        const nomeAnimale = app.pets ? app.pets.nome : "Animale sconosciuto";
-        const stato = app.stato ? app.stato.toUpperCase() : "PROGRAMMATO";
-        const costoStr = app.costo ? ` · costo €${app.costo}` : "";
+        // Dati dal DB: SEMPRE sanitizzati prima di finire in innerHTML
+        const nomeAnimale = escapeHtml(app.pets ? app.pets.nome : "Animale sconosciuto");
+        const stato = escapeHtml(app.stato ? app.stato.toUpperCase() : "PROGRAMMATO");
+        const costoStr = app.costo ? ` · costo €${Number(app.costo)}` : "";
 
         // Siccome non abbiamo indirizzo e tipo nel DB, mettiamo dei default sensati
         const tipoVisita = "Visita"; 

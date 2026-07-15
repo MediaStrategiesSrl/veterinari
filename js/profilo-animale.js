@@ -1,7 +1,9 @@
-import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
-import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./config.js";
-
-const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+// ==========================================
+// 1. IMPORT CENTRALIZZATI
+// ==========================================
+// Assicurati che il percorso (../utils/) punti alla tua cartella corretta
+import { supabase } from '../utils/supabaseClient.js';
+import { logError } from '../utils/logger.js';
 
 // Elementi DOM
 const pageHeaderTitle = document.getElementById("pageHeaderTitle");
@@ -15,9 +17,16 @@ const authorizedVetsContainer = document.getElementById("authorizedVetsContainer
 const recentActivitiesContainer = document.getElementById("recentActivitiesContainer");
 const linkModifica = document.getElementById("linkModifica");
 
+let currentPetId = null; // Salviamo l'ID globalmente per usarlo nei log di errore
+
 async function loadPetProfile() {
     try {
-        const { data: { user } } = await supabase.auth.getUser();
+        const { data: { user }, error: authError } = await supabase.auth.getUser();
+        
+        // ERRORE DI SISTEMA: Auth fallita
+        if (authError) throw Object.assign(new Error(authError.message), { code: authError.code || 'AUTH_SYS_ERROR' });
+        
+        // ERRORE LOGICO: Nessun utente, lo rimandiamo al login senza loggare nulla
         if (!user) {
             window.location.href = "../../index.html";
             return;
@@ -26,6 +35,7 @@ async function loadPetProfile() {
         // 1. Prendi il petId dall'URL
         const urlParams = new URLSearchParams(window.location.search);
         let petId = urlParams.get('petId');
+        currentPetId = petId; // Lo salviamo per i contesti di errore
 
         // Query per prendere i dati dell'animale
         let query = supabase.from('pets').select('*');
@@ -39,10 +49,17 @@ async function loadPetProfile() {
 
         const { data: pet, error } = await query.maybeSingle();
 
-        if (error) throw error;
-        if (!pet) throw new Error("Animale non trovato");
+        // ERRORE DI SISTEMA DB
+        if (error) throw Object.assign(new Error(error.message), { code: error.code || 'DB_FETCH_PET_ERROR' });
+        
+        // ERRORE LOGICO: Animale non trovato. Nessun log tecnico necessario, solo UI.
+        if (!pet) {
+            alert("Animale non trovato.");
+            window.location.href = "dashboard-proprietario.html";
+            return;
+        }
 
-        //tasto modifica aninale
+        // Tasto modifica animale
         if (linkModifica) {
             // Se sei dentro pages/proprietario/, non servono i puntini!
             linkModifica.href = `modifica-animale.html?petId=${pet.id}`;
@@ -60,12 +77,11 @@ async function loadPetProfile() {
         const razzaText = pet.razza ? ` · ${pet.razza}` : '';
         petSpeciesBreed.textContent = `${pet.specie}${razzaText}`;
 
-        // Compila il Microchip se esiste!
+        // Compila il Microchip se esiste
         petMicrochip.textContent = pet.microchip ? pet.microchip : "Non inserito";
 
         // Avatar
         if (pet.avatar_url) {
-            // Assicurati che il bucket si chiami davvero 'avatars', se usi 'storage_veterinari' modificalo!
             const { data: publicUrlData } = supabase.storage.from('avatars').getPublicUrl(pet.avatar_url);
             petProfileAvatar.src = publicUrlData.publicUrl;
         } else {
@@ -89,7 +105,9 @@ async function loadPetProfile() {
             `)
             .eq('pet_id', pet.id)
             .eq('status', 'active');
-        if (vetError) throw vetError;
+            
+        // Lancio errore in caso di fallimento query accessi
+        if (vetError) throw Object.assign(new Error(vetError.message), { code: vetError.code || 'DB_FETCH_VET_ACCESS_ERROR' });
 
         if (!vets || vets.length === 0) {
             authorizedVetsContainer.innerHTML = `
@@ -124,14 +142,18 @@ async function loadPetProfile() {
                 authorizedVetsContainer.insertAdjacentHTML('beforeend', vetHTML);
             });
         }
+
         // ==========================================
-        // 4. POPOLA ATTIVITÀ RECENTI (Ancora finto per ora)
+        // 4. POPOLA ATTIVITÀ RECENTI
         // ==========================================
         const { data: activities, error: actError } = await supabase
             .from('walks') 
             .select('*')
             .eq('creator_id', user.id)
             .limit(0); 
+
+        // Logghiamo eventuali problemi con la tabella activities
+        if (actError) throw Object.assign(new Error(actError.message), { code: actError.code || 'DB_FETCH_ACTIVITIES_ERROR' });
 
         if (!activities || activities.length === 0) {
             recentActivitiesContainer.innerHTML = `
@@ -143,7 +165,19 @@ async function loadPetProfile() {
 
     } catch (err) {
         console.error("Errore nel caricamento profilo:", err);
-        alert("Impossibile caricare il profilo: " + err.message);
+        
+        // ==========================================
+        // TRIGGER LOG ERROR
+        // ==========================================
+        await logError({
+            source: 'profilo_animale',
+            action: 'load_pet_profile',
+            errorMessage: err.message || "Errore di sistema nel caricamento del profilo animale",
+            errorCode: err.code || 'UNKNOWN_SYS_ERROR',
+            context: { petId: currentPetId }
+        });
+
+        alert("Impossibile caricare il profilo a causa di un errore tecnico. I nostri tecnici sono stati avvisati.");
     }
 }
 
@@ -163,15 +197,16 @@ window.revocaAccesso = async function(relationId, vetName) {
         // 2. Cancelliamo fisicamente il permesso da Supabase
         const { error } = await supabase
             .from('veterinarian_patients')
-            .update()({
+            .update({
                 status: 'revoked',
-                revoked_at: new Date().toISOString() // Salva la data e l'ora spaccata di adesso
+                revoked_at: new Date().toISOString() 
             })
             .eq('id', relationId);
 
-        if (error) throw error;
+        // Lancio errore in caso di fail
+        if (error) throw Object.assign(new Error(error.message), { code: error.code || 'DB_REVOKE_ACCESS_ERROR' });
 
-        // 3. Rimuoviamo la card dalla grafica con una piccola animazione!
+        // 3. Rimuoviamo la card dalla grafica con una piccola animazione
         const card = document.getElementById(`vetCard_${relationId}`);
         if (card) {
             card.style.opacity = '0';
@@ -191,7 +226,19 @@ window.revocaAccesso = async function(relationId, vetName) {
 
     } catch (err) {
         console.error("Errore durante la revoca:", err);
-        alert("Impossibile revocare l'accesso. Riprova tra poco.");
+        
+        // ==========================================
+        // TRIGGER LOG ERROR (FALLIMENTO REVOCA)
+        // ==========================================
+        await logError({
+            source: 'profilo_animale',
+            action: 'revoca_accesso',
+            errorMessage: err.message || "Errore durante il salvataggio della revoca nel DB",
+            errorCode: err.code || 'UNKNOWN_DB_ERROR',
+            context: { relationId, vetName, petId: currentPetId }
+        });
+
+        alert("Impossibile revocare l'accesso a causa di un problema tecnico. Riprova tra poco.");
         
         // Se c'è errore, ripristiniamo il bottone
         const btn = document.querySelector(`#vetCard_${relationId} button`);
@@ -199,4 +246,5 @@ window.revocaAccesso = async function(relationId, vetName) {
     }
 };
 
+// Avvio applicazione
 loadPetProfile();

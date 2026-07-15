@@ -1,7 +1,9 @@
-import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
-import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./config.js";
+// 1. IMPORT CENTRALIZZATI
+// ==========================================
+// Assicurati che i percorsi puntino alla cartella corretta (es. ../utils/)
+import { supabase } from '../utils/supabaseClient.js';
+import { logError } from '../utils/logger.js';
 
-const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 // Elementi DOM
 const profGreeting = document.getElementById('profGreeting');
@@ -16,13 +18,31 @@ if (btnApriAgenda) {
 
 // Funzione principale
 async function loadProfessionalDashboard() {
+    // Salviamo l'ID utente fuori per averlo a disposizione nel blocco catch
+    let currentUserId = null;
+
     try {
         // 1. Controllo Autenticazione
         const { data: { user }, error: authError } = await supabase.auth.getUser();
+        
         if (authError || !user) {
+            // --- INIZIO AGGIUNTA LOG ---
+            if (authError) {
+                await logError({
+                    source: 'frontend_dashboard_pro',
+                    action: 'auth_check',
+                    errorMessage: authError.message || "Errore durante la validazione del token utente",
+                    errorCode: authError.code || 'AUTH_VALIDATION_ERROR',
+                    context: { userAgent: navigator.userAgent }
+                });
+            }
+            // --- FINE AGGIUNTA LOG ---
+            
             window.location.href = "../../index.html";
             return;
         }
+
+        currentUserId = user.id;
 
         // 2. Carica Dati Base (Solo nome, cognome e avatar da profiles)
         const { data: profile, error: profError } = await supabase
@@ -31,7 +51,7 @@ async function loadProfessionalDashboard() {
             .eq('id', user.id)
             .single();
 
-        if (profError) throw profError;
+        if (profError) throw Object.assign(new Error(profError.message), { code: profError.code || 'DB_PROFILE_FETCH_ERROR' });
 
         // 3. Carica Qualifica (Da professionals)
         const { data: proData, error: proError } = await supabase
@@ -69,7 +89,7 @@ async function loadProfessionalDashboard() {
             .lte('data_inizio', endOfToday.toISOString())
             .order('data_inizio', { ascending: true });
 
-        if (aptError) throw aptError;
+        if (aptError) throw Object.assign(new Error(aptError.message), { code: aptError.code || 'DB_APPOINTMENTS_FETCH_ERROR' });
 
         // 5. Aggiorna Sottotitolo
         const numAppuntamenti = appuntamenti ? appuntamenti.length : 0;
@@ -82,6 +102,21 @@ async function loadProfessionalDashboard() {
 
     } catch (error) {
         console.error("Errore caricamento dashboard:", error);
+        
+        // --- INIZIO AGGIUNTA LOG ---
+        await logError({
+            source: 'frontend_dashboard_pro',
+            action: 'load_dashboard_data',
+            errorMessage: error.message || "Fallimento durante il recupero dei dati della dashboard",
+            errorCode: error.code || 'DASHBOARD_DATA_ERROR',
+            stackTrace: error.stack,
+            context: {
+                user_id: currentUserId || 'sconosciuto',
+                target_date: new Date().toISOString()
+            }
+        });
+        // --- FINE AGGIUNTA LOG ---
+
         todayAppointmentsContainer.innerHTML = `<p style="color:#EF4444; padding: 20px;">Errore nel caricamento dei dati.</p>`;
     }
 }

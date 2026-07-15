@@ -1,7 +1,9 @@
-import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
-import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./config.js";
-
-const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+// ==========================================
+// 1. IMPORT CENTRALIZZATI
+// ==========================================
+// Assicurati che i percorsi puntino correttamente alle tue cartelle utils
+import { supabase } from '../utils/supabaseClient.js';
+import { logError } from '../utils/logger.js';
 
 let currentUser = null;
 let allPatients = []; // Salveremo i dati qui per la ricerca locale
@@ -9,20 +11,42 @@ let allPatients = []; // Salveremo i dati qui per la ricerca locale
 const patientsList = document.getElementById("patientsList");
 const searchInput = document.getElementById("searchInput");
 const activeCountText = document.getElementById("activeCount");
-// NUOVO DOM ELEMENT: Assicurati che l'HTML del contatore revocati abbia id="revokedCount"
 const revokedCountText = document.getElementById("revokedCount"); 
 
+// ==========================================
+// INIZIALIZZAZIONE PAGINA
+// ==========================================
 async function initPazienti() {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-        window.location.href = "../../index.html";
-        return;
-    }
-    currentUser = user;
+    try {
+        const { data: { user }, error: authError } = await supabase.auth.getUser();
+        
+        // ERRORE DI SISTEMA: Errore nel recupero della sessione
+        if (authError) throw Object.assign(new Error(authError.message), { code: authError.code || 'AUTH_SYS_ERROR' });
 
-    await caricaPazienti();
+        // ERRORE LOGICO: Utente non loggato. Redirezione senza log.
+        if (!user) {
+            window.location.href = "../../index.html";
+            return;
+        }
+        
+        currentUser = user;
+        await caricaPazienti();
+
+    } catch (error) {
+        console.error("Errore critico di autenticazione:", error);
+        await logError({
+            source: 'lista_pazienti',
+            action: 'init_auth',
+            errorMessage: error.message || "Errore imprevisto durante il controllo auth",
+            errorCode: error.code || 'UNKNOWN_SYS_ERROR',
+            context: {}
+        });
+    }
 }
 
+// ==========================================
+// RECUPERO PAZIENTI DA SUPABASE
+// ==========================================
 async function caricaPazienti() {
     try {
         // 1. QUERY PAZIENTI ATTIVI (per la lista e il contatore "ATTIVI")
@@ -42,7 +66,8 @@ async function caricaPazienti() {
             .eq('status', 'active') // FILTRO FONDAMENTALE!
             .order('created_at', { ascending: false });
 
-        if (attiviError) throw attiviError;
+        // Lanciamo l'errore al catch se fallisce
+        if (attiviError) throw Object.assign(new Error(attiviError.message), { code: attiviError.code || 'DB_FETCH_ACTIVE_PATIENTS_ERROR' });
 
         // 2. QUERY CONTATORE REVOCATI (solo il numero, non ci servono i dati completi)
         const { count: countRevocati, error: revocatiError } = await supabase
@@ -51,9 +76,10 @@ async function caricaPazienti() {
             .eq('veterinarian_id', currentUser.id)
             .eq('status', 'revoked'); // FILTRO FONDAMENTALE!
 
-        if (revocatiError) throw revocatiError;
+        // Lanciamo l'errore al catch se fallisce
+        if (revocatiError) throw Object.assign(new Error(revocatiError.message), { code: revocatiError.code || 'DB_FETCH_REVOKED_COUNT_ERROR' });
 
-        // Estraiamo in modo pulito l'array di pazienti (solo quelli attivi!)
+        // Estraiamo in modo pulito l'array di pazienti (solo quelli attivi)
         allPatients = attiviData.map(item => {
             let finalAvatarUrl = "https://images.unsplash.com/photo-1543466835-00a7907e9de1?auto=format&fit=crop&w=150&q=80"; // Default
             
@@ -83,11 +109,22 @@ async function caricaPazienti() {
 
     } catch (error) {
         console.error("Errore recupero pazienti:", error);
-        patientsList.innerHTML = `<div style="text-align: center; color: red; padding: 20px;">Errore nel caricamento.</div>`;
+        patientsList.innerHTML = `<div style="text-align: center; color: #DC2626; padding: 20px; font-weight: bold;">Errore di sistema nel caricamento dell'archivio. Riprova più tardi.</div>`;
+        
+        // ERRORE DI SISTEMA: Registriamo e lanciamo l'allarme
+        await logError({
+            source: 'lista_pazienti',
+            action: 'fetch_patients_data',
+            errorMessage: error.message || "Impossibile recuperare i dati dei pazienti dal DB",
+            errorCode: error.code || 'UNKNOWN_DB_ERROR',
+            context: { vetId: currentUser?.id }
+        });
     }
 }
 
-// Funzione per disegnare le card HTML
+// ==========================================
+// RENDERIZZAZIONE UI E RICERCA
+// ==========================================
 function renderPatients(patientsToRender) {
     patientsList.innerHTML = "";
 
@@ -128,7 +165,7 @@ if (searchInput) {
     searchInput.addEventListener("input", (e) => {
         const searchTerm = e.target.value.toLowerCase().trim();
         
-        // Filtriamo in base al nome OPPURE al microchip (solo tra gli attivi)
+        // Filtriamo in base al nome OPPURE al microchip (solo tra gli attivi in memoria)
         const filtered = allPatients.filter(pet => {
             const matchNome = pet.nome.toLowerCase().includes(searchTerm);
             const matchMicrochip = pet.microchip.toLowerCase().includes(searchTerm);

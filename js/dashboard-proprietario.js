@@ -1,9 +1,9 @@
-import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
-import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./config.js";
+// 1. IMPORT CENTRALIZZATI
+// ==========================================
+// Assicurati che i percorsi puntino alla cartella corretta (es. ../utils/)
+import { supabase } from '../utils/supabaseClient.js';
+import { logError } from '../utils/logger.js';
 
-const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-    auth: { persistSession: true, storage: localStorage, autoRefreshToken: true },
-});
 
 // Elementi DOM da aggiornare
 const userNameDisplay = document.getElementById("userNameDisplay");
@@ -58,7 +58,7 @@ async function loadDashboardData(user) {
             .select("id, nome, avatar_url")
             .eq("owner_id", user.id);
 
-        if (petsError) throw petsError;
+        if (petsError) throw Object.assign(new Error(petsError.message), { code: petsError.code || 'DB_PETS_FETCH_ERROR' });
 
         // --- 3. GESTIONE PALLINI E CARD ---
         if (pets && pets.length > 0) {
@@ -121,6 +121,15 @@ async function loadDashboardData(user) {
 
         if (appError) {
             console.error("ERRORE DATABASE:", appError);
+            // --- AGGIUNTA LOG ---
+            await logError({
+                source: 'frontend_dashboard_proprietario',
+                action: 'load_agenda',
+                errorMessage: appError.message,
+                errorCode: appError.code || 'DB_AGENDA_FETCH_ERROR',
+                context: { user_id: user.id }
+            });
+            // --------------------
             if (agendaContainer) agendaContainer.innerHTML = `<p style="color:red; text-align:center; padding:10px;">Errore DB: ${appError.message}</p>`;
             return;
         }
@@ -190,6 +199,16 @@ async function loadDashboardData(user) {
 
     } catch (error) {
         console.error("Errore in loadDashboardData:", error);
+        // --- AGGIUNTA LOG ---
+        await logError({
+            source: 'frontend_dashboard_proprietario',
+            action: 'load_dashboard_data',
+            errorMessage: error.message,
+            errorCode: error.code || 'UNKNOWN_ERROR',
+            stackTrace: error.stack,
+            context: { user_id: user?.id }
+        });
+        // --------------------
         if (agendaContainer) agendaContainer.innerHTML = '<p style="text-align:center; color:red; padding: 1rem;">Errore nel caricamento dei dati.</p>';
     }
 }
@@ -239,7 +258,18 @@ async function updateHeroCard(pet, index) {
             .limit(1)
             .maybeSingle();
 
-        if (recordError) console.error("❌ ERRORE SUPABASE:", recordError.message);
+        if (recordError) {
+            console.error("❌ ERRORE SUPABASE:", recordError.message);
+            // --- AGGIUNTA LOG ---
+            await logError({
+                source: 'frontend_dashboard_proprietario',
+                action: 'load_last_visit',
+                errorMessage: recordError.message,
+                errorCode: recordError.code || 'DB_RECORD_FETCH_ERROR',
+                context: { pet_id: pet.id }
+            });
+            // --------------------
+        }
 
         if (ultimaVisita) {
             
@@ -279,20 +309,30 @@ if (dashAvatarWrapper && dashboardAvatarUpload) {
                 .from('avatars')
                 .upload(fileName, file);
 
-            if (uploadError) throw uploadError;
+            if (uploadError) throw Object.assign(new Error(uploadError.message), { code: uploadError.code || 'STORAGE_UPLOAD_ERROR' });
 
             const { error: dbError } = await supabase
                 .from('pets')
                 .update({ avatar_url: uploadData.path })
                 .eq('id', currentActivePetId);
 
-            if (dbError) throw dbError;
+            if (dbError) throw Object.assign(new Error(dbError.message), { code: dbError.code || 'DB_PET_UPDATE_ERROR' });
 
             const { data } = supabase.storage.from('avatars').getPublicUrl(uploadData.path);
             petImage.src = data.publicUrl;
 
         } catch (error) {
             console.error("Errore durante l'upload:", error);
+            // --- AGGIUNTA LOG ---
+            await logError({
+                source: 'frontend_dashboard_proprietario',
+                action: 'upload_avatar',
+                errorMessage: error.message,
+                errorCode: error.code || 'AVATAR_UPLOAD_ERROR',
+                stackTrace: error.stack,
+                context: { pet_id: currentActivePetId }
+            });
+            // --------------------
             alert("Impossibile caricare la foto. Riprova.");
         } finally {
             if (avatarOverlay) avatarOverlay.innerHTML = '<i class="fa-solid fa-camera"></i>';
@@ -407,7 +447,18 @@ function attivaAscoltoNotificheQR(activePetId) {
                         .eq('id', idVet) 
                         .single();
                     
-                    if (vetError) console.error("❌ ERRORE LETTURA DATI VET:", vetError.message);
+                    if (vetError) {
+                        console.error("❌ ERRORE LETTURA DATI VET:", vetError.message);
+                        // --- AGGIUNTA LOG ---
+                        await logError({
+                            source: 'frontend_dashboard_proprietario',
+                            action: 'read_vet_qr_request',
+                            errorMessage: vetError.message,
+                            errorCode: vetError.code || 'DB_VET_FETCH_ERROR',
+                            context: { vet_id: idVet }
+                        });
+                        // --------------------
+                    }
                     
                     // 1. Estraiamo i dati del veterinario in modo sicuro
                     // (Supabase potrebbe restituire un array o un oggetto singolo, li gestiamo entrambi)
@@ -446,6 +497,16 @@ window.rispondiAllaRichiesta = async function(idRichiesta, sceltaUtente) {
     if (!error) {
         nascondiPopupApprovazione();
     } else {
+        console.error(error);
+        // --- AGGIUNTA LOG ---
+        await logError({
+            source: 'frontend_dashboard_proprietario',
+            action: 'answer_qr_request',
+            errorMessage: error.message,
+            errorCode: error.code || 'DB_QR_UPDATE_ERROR',
+            context: { request_id: idRichiesta, status: sceltaUtente }
+        });
+        // --------------------
         alert("Errore di connessione. Riprova.");
     }
 };

@@ -1,7 +1,8 @@
-import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
-import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./config.js";
-
-const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+// 1. IMPORT CENTRALIZZATI
+// ==========================================
+// Assicurati che i percorsi puntino alla cartella corretta (es. ../utils/)
+import { supabase } from '../utils/supabaseClient.js';
+import { logError } from '../utils/logger.js';
 
 let currentUser = null;
 
@@ -15,18 +16,43 @@ const agendaContainer = document.getElementById("agendaContainer");
 async function initDashboard() {
     impostaDataOggi();
 
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-        window.location.href = "../../index.html";
-        return;
-    }
-    currentUser = user;
+    try {
+        // Estraiamo anche un eventuale errore dal controllo autenticazione
+        const { data: { user }, error: authError } = await supabase.auth.getUser();
+        
+        if (authError) {
+            // --- AGGIUNTA LOG: Tracciamento errore auth ---
+            await logError({
+                source: 'frontend_dashboard_vet',
+                action: 'auth_check',
+                errorMessage: authError.message || "Errore lettura token sessione",
+                errorCode: authError.code || 'AUTH_FETCH_ERROR',
+                context: { userAgent: navigator.userAgent }
+            });
+        }
 
-    // Eseguiamo i caricamenti in parallelo
-    await Promise.all([
-        caricaStatoDisponibilita(),
-        caricaAgendaDinamica()
-    ]);
+        if (!user) {
+            window.location.href = "../../index.html";
+            return;
+        }
+        currentUser = user;
+
+        // Eseguiamo i caricamenti in parallelo
+        await Promise.all([
+            caricaStatoDisponibilita(),
+            caricaAgendaDinamica()
+        ]);
+        
+    } catch (err) {
+        // --- AGGIUNTA LOG: Fallimento generico dell'inizializzazione ---
+        await logError({
+            source: 'frontend_dashboard_vet',
+            action: 'init_dashboard_unexpected',
+            errorMessage: err.message,
+            errorCode: err.code || 'UNKNOWN_INIT_ERROR',
+            stackTrace: err.stack
+        });
+    }
 }
 
 function impostaDataOggi() {
@@ -53,7 +79,7 @@ async function caricaStatoDisponibilita() {
             availabilityToggle.disabled = true;
             return;
         } else if (error) {
-            throw error;
+            throw Object.assign(new Error(error.message), { code: error.code || 'DB_VET_STATUS_ERROR' });
         }
 
         // Se il veterinario esiste nel DB
@@ -66,6 +92,18 @@ async function caricaStatoDisponibilita() {
 
     } catch (error) {
         console.error("Errore nel recupero dati veterinario:", error);
+        
+        // --- AGGIUNTA LOG: Errore lettura disponibilità ---
+        await logError({
+            source: 'frontend_dashboard_vet',
+            action: 'fetch_availability',
+            errorMessage: error.message,
+            errorCode: error.code || 'FETCH_VET_DATA_ERROR',
+            stackTrace: error.stack,
+            context: { user_id: currentUser ? currentUser.id : null }
+        });
+        // --------------------------------------------------
+
         availabilityText.textContent = "Errore di connessione";
     }
 }
@@ -81,10 +119,25 @@ availabilityToggle.addEventListener('change', async (e) => {
             .update({ is_available_now: isNowAvailable })
             .eq('user_id', currentUser.id);
 
-        if (error) throw error;
+        if (error) throw Object.assign(new Error(error.message), { code: error.code || 'DB_VET_UPDATE_ERROR' });
+        
         aggiornaTestoUrgenze(isNowAvailable);
 
     } catch (error) {
+        // --- AGGIUNTA LOG: Fallimento aggiornamento stato ---
+        await logError({
+            source: 'frontend_dashboard_vet',
+            action: 'update_availability_toggle',
+            errorMessage: error.message,
+            errorCode: error.code || 'UPDATE_AVAILABILITY_ERROR',
+            context: { 
+                user_id: currentUser.id, 
+                attempted_status: isNowAvailable 
+            }
+        });
+        // ----------------------------------------------------
+
+        // Rollback visivo dell'UI
         availabilityToggle.checked = !isNowAvailable;
         aggiornaTestoUrgenze(!isNowAvailable);
         alert("Impossibile aggiornare lo stato.");
@@ -129,7 +182,7 @@ async function caricaAgendaDinamica() {
             .lte('data_inizio', oggiFine.toISOString())
             .order('data_inizio', { ascending: true });
 
-        if (error) throw error;
+        if (error) throw Object.assign(new Error(error.message), { code: error.code || 'DB_AGENDA_FETCH_ERROR' });
 
         // Puliamo il contenitore
         agendaContainer.innerHTML = "";
@@ -170,6 +223,21 @@ async function caricaAgendaDinamica() {
 
     } catch (error) {
         console.error("Errore nel recupero dell'agenda:", error);
+        
+        // --- AGGIUNTA LOG: Errore caricamento appuntamenti ---
+        await logError({
+            source: 'frontend_dashboard_vet',
+            action: 'fetch_dynamic_agenda',
+            errorMessage: error.message,
+            errorCode: error.code || 'FETCH_AGENDA_ERROR',
+            stackTrace: error.stack,
+            context: { 
+                user_id: currentUser ? currentUser.id : null,
+                target_date: new Date().toISOString()
+            }
+        });
+        // -----------------------------------------------------
+
         agendaContainer.innerHTML = `<p style="color:red; text-align:center;">Errore nel caricamento dell'agenda.</p>`;
     }
 }

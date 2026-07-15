@@ -1,7 +1,10 @@
-import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
-import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./config.js";
+// ==========================================
+// 1. IMPORT CENTRALIZZATI E SETUP
+// ==========================================
+// Assicurati che i percorsi (../utils/) puntino alla tua struttura reale
+import { supabase } from '../utils/supabaseClient.js';
+import { logError } from '../utils/logger.js';
 
-const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 let currentUser = null; // Variabile globale per sapere chi è loggato
 
 // Elementi del DOM
@@ -33,7 +36,10 @@ function getInitials(firstName, lastName) {
 async function loadUserProfile() {
     try {
         // Controlla chi è loggato
-        const { data: { user } } = await supabase.auth.getUser();
+        const { data: { user }, error: authError } = await supabase.auth.getUser();
+        
+        if (authError) throw Object.assign(new Error(authError.message), { code: authError.code || 'AUTH_SYS_ERROR' });
+        
         if (!user) {
             window.location.href = "../../index.html";
             return;
@@ -41,13 +47,13 @@ async function loadUserProfile() {
         currentUser = user; // Salviamo l'utente!
 
         // Prendi i dati dalla tabella profiles
-        const { data: profileData, error } = await supabase
+        const { data: profileData, error: profileError } = await supabase
             .from('profiles')
             .select('*')
             .eq('id', user.id)
             .single();
 
-        if (error) throw error;
+        if (profileError) throw Object.assign(new Error(profileError.message), { code: profileError.code || 'DB_FETCH_PROFILE_ERROR' });
 
         // Popola l'interfaccia
         let nomeUtente = profileData.nome?.trim() || "";
@@ -75,6 +81,18 @@ async function loadUserProfile() {
 
     } catch (err) {
         console.error("Errore nel caricamento del profilo:", err);
+        
+        // ==========================================
+        // TRIGGER LOG ERROR
+        // ==========================================
+        await logError({
+            source: 'profilo_proprietario',
+            action: 'load_user_profile',
+            errorMessage: err.message || "Errore imprevisto caricamento profilo",
+            errorCode: err.code || 'UNKNOWN_SYS_ERROR',
+            context: { userId: currentUser?.id }
+        });
+
         if (userNameDisplay) userNameDisplay.textContent = "Errore";
         if (userDetailsDisplay) userDetailsDisplay.textContent = "Impossibile caricare i dati";
     }
@@ -85,11 +103,26 @@ async function loadUserProfile() {
 // ==========================================
 if (btnLogout) {
     btnLogout.addEventListener("click", async () => {
-        const { error } = await supabase.auth.signOut();
-        if (error) {
-            alert("Errore durante il logout: " + error.message);
-        } else {
+        try {
+            const { error } = await supabase.auth.signOut();
+            if (error) throw Object.assign(new Error(error.message), { code: error.code || 'AUTH_SIGNOUT_ERROR' });
+            
             window.location.href = "../../index.html";
+        } catch (err) {
+            console.error("Errore durante il logout:", err);
+            
+            // ==========================================
+            // TRIGGER LOG ERROR
+            // ==========================================
+            await logError({
+                source: 'profilo_proprietario',
+                action: 'logout_user',
+                errorMessage: err.message || "Logout fallito",
+                errorCode: err.code || 'UNKNOWN_AUTH_ERROR',
+                context: { userId: currentUser?.id }
+            });
+            
+            alert("Errore durante il logout. Riprova.");
         }
     });
 }
@@ -113,43 +146,55 @@ if (deleteRoleBtn) {
                     .ilike('nome', '%proprietario%')
                     .single();
                     
-                if (roleError) throw roleError;
+                if (roleError) throw Object.assign(new Error(roleError.message), { code: roleError.code || 'DB_FETCH_ROLE_ERROR' });
 
                 // B. Pulisci Appuntamenti
                 const { error: apptError } = await supabase
                     .from('appointments')
                     .delete()
                     .eq('owner_id', currentUser.id);
-                if (apptError) throw apptError;
+                if (apptError) throw Object.assign(new Error(apptError.message), { code: apptError.code || 'DB_DELETE_APPT_ERROR' });
 
                 // C. Pulisci Consulti urgenti
                 const { error: urgentError } = await supabase
                     .from('urgent_consultations')
                     .delete()
                     .eq('owner_id', currentUser.id);
-                if (urgentError) throw urgentError;
+                if (urgentError) throw Object.assign(new Error(urgentError.message), { code: urgentError.code || 'DB_DELETE_URGENT_ERROR' });
 
                 // D. Elimina gli animali (Questo attiverà il CASCADE interno del DB per distruggere in automatico anche i 'medical_records')
                 const { error: petsError } = await supabase
                     .from('pets')
                     .delete()
                     .eq('owner_id', currentUser.id);
-                if (petsError) throw petsError;
+                if (petsError) throw Object.assign(new Error(petsError.message), { code: petsError.code || 'DB_DELETE_PETS_ERROR' });
 
-                // E. Infine, sgancia chirurgicamente il ruolo dalla tabella user_roles
+                // E. Infine, sgancia chirurgicamente il ruolo dalla tabella user_roles (Usiamo doppio .eq per sicurezza)
                 const { error: unlinkError } = await supabase
                     .from('user_roles')
                     .delete()
                     .eq('user_id', currentUser.id)
                     .eq('role_id', roleData.id);
-                if (unlinkError) throw unlinkError;
+                if (unlinkError) throw Object.assign(new Error(unlinkError.message), { code: unlinkError.code || 'DB_DELETE_USER_ROLE_ERROR' });
 
                 alert("Ruolo Proprietario e relativi animali rimossi con successo!");
                 window.location.href = "../../ruoli.html";
 
             } catch (error) {
                 console.error("Errore durante l'eliminazione del ruolo proprietario:", error);
-                alert("Si è verificato un errore di sistema. Nessun dato è stato rimosso.");
+                
+                // ==========================================
+                // TRIGGER LOG ERROR
+                // ==========================================
+                await logError({
+                    source: 'profilo_proprietario',
+                    action: 'delete_owner_role',
+                    errorMessage: error.message || "Fallimento durante l'eliminazione a cascata del ruolo proprietario",
+                    errorCode: error.code || 'UNKNOWN_DB_ERROR',
+                    context: { userId: currentUser?.id }
+                });
+
+                alert("Si è verificato un errore di sistema critico. L'operazione è stata interrotta e i tecnici sono stati avvisati.");
                 
                 deleteRoleBtn.innerHTML = 'Elimina Ruolo Proprietario';
                 deleteRoleBtn.style.pointerEvents = 'auto';

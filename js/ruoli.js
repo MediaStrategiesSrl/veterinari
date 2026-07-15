@@ -1,7 +1,9 @@
-import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
-import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./config.js";
-
-const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+// ==========================================
+// 1. IMPORT CENTRALIZZATI E SETUP
+// ==========================================
+// Assicurati che i percorsi (es. ./utils/) puntino alla tua struttura reale
+import { supabase } from '../utils/supabaseClient.js';
+import { logError } from '../utils/logger.js';
 
 const activeRolesList = document.getElementById("activeRolesList");
 const availableRolesList = document.getElementById("availableRolesList");
@@ -37,15 +39,23 @@ const ALL_ROLES = [
     }
 ];
 
+// ==========================================
+// 2. INIZIALIZZAZIONE E RECUPERO RUOLI
+// ==========================================
 async function initRuoli() {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-        window.location.href = "index.html";
-        return;
-    }
-
     try {
-        const { data: userRolesData, error } = await supabase
+        // 1. Check Autenticazione
+        const { data: { user }, error: authError } = await supabase.auth.getUser();
+        
+        if (authError) throw Object.assign(new Error(authError.message), { code: authError.code || 'AUTH_SYS_ERROR' });
+        
+        if (!user) {
+            window.location.href = "index.html";
+            return;
+        }
+
+        // 2. Recupero Ruoli dal Database
+        const { data: userRolesData, error: dbError } = await supabase
             .from('user_roles')
             .select(`
                 roles (
@@ -54,7 +64,7 @@ async function initRuoli() {
             `)
             .eq('user_id', user.id);
 
-        if (error) throw error;
+        if (dbError) throw Object.assign(new Error(dbError.message), { code: dbError.code || 'DB_FETCH_ROLES_ERROR' });
 
         console.log("--- DEBUG SUPABASE ---");
         console.log("Dati grezzi ricevuti:", userRolesData);
@@ -73,8 +83,7 @@ async function initRuoli() {
 
                     if (dbRoleName) {
                         // ========================================================
-                        // TRADUZIONE: Se nel DB si chiama "altro professionista" 
-                        // lo traduciamo nel nostro id "professionista"
+                        // TRADUZIONE: Mappatura ruoli flessibili in ruoli di sistema
                         // ========================================================
                         if (dbRoleName.includes("professionista") || dbRoleName.includes("sitter") || dbRoleName.includes("educatore")) {
                             dbRoleName = "professionista";
@@ -89,14 +98,35 @@ async function initRuoli() {
         console.log("Ruoli attivi elaborati finali:", activeRoles);
         console.log("----------------------");
 
+        // 3. Renderizzazione UI
         renderRoles(activeRoles);
 
     } catch (error) {
         console.error("ERRORE CRITICO RECUPERO RUOLI:", error);
-        activeRolesList.innerHTML = "<p style='color:red;'>Errore nel caricamento dei profili.</p>";
+        
+        // ==========================================
+        // TRIGGER LOG ERROR
+        // ==========================================
+        await logError({
+            source: 'selezione_ruoli',
+            action: 'init_ruoli',
+            errorMessage: error.message || "Impossibile recuperare i ruoli dell'utente",
+            errorCode: error.code || 'UNKNOWN_SYS_ERROR',
+            context: {}
+        });
+
+        activeRolesList.innerHTML = `
+            <div style="text-align: center; padding: 20px; background: #FEF2F2; border-radius: 12px; border: 1px dashed #EF4444;">
+                <p style="color: #DC2626; margin: 0; font-weight: bold;">Errore di sistema.</p>
+                <p style="color: #EF4444; margin-top: 5px; font-size: 0.9rem;">Impossibile caricare i profili. I nostri tecnici sono stati avvisati.</p>
+            </div>
+        `;
     }
 }
 
+// ==========================================
+// 3. RENDERIZZAZIONE INTERFACCIA
+// ==========================================
 function renderRoles(activeRoles) {
     activeRolesList.innerHTML = "";
     availableRolesList.innerHTML = "";
@@ -145,8 +175,9 @@ function renderRoles(activeRoles) {
     });
 
     if (availableRolesList.innerHTML === "") {
-        availableRolesList.innerHTML = "<p class='section-desc'>Hai sbloccato tutti i profili disponibili!</p>";
+        availableRolesList.innerHTML = "<p class='section-desc' style='text-align:center; color:#10B981; font-weight:bold;'>Hai sbloccato tutti i profili disponibili!</p>";
     }
 }
 
+// Avvio
 initRuoli();

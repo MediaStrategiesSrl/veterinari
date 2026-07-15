@@ -1,7 +1,9 @@
-import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
-import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./config.js";
-
-const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+// ==========================================
+// 1. IMPORT CENTRALIZZATI
+// ==========================================
+// Controlla sempre che i percorsi puntino alla cartella 'utils' corretta
+import { supabase } from '../utils/supabaseClient.js';
+import { logError } from '../utils/logger.js';
 
 // Variabile globale per sapere chi sta usando l'app in questo momento
 let currentUser = null; 
@@ -11,7 +13,7 @@ const profileHeaderContainer = document.getElementById("profileHeaderContainer")
 const userNameDisplay = document.getElementById("userNameDisplay");
 const userDetailsDisplay = document.getElementById("userDetailsDisplay");
 const btnLogout = document.getElementById("btnLogout");
-const deleteRoleBtn = document.getElementById('deleteRoleBtn'); // Il nostro nuovo bottone rosso!
+const deleteRoleBtn = document.getElementById('deleteRoleBtn'); 
 
 // Funzione utile: Estrae le iniziali da Nome e Cognome
 function getInitials(firstName, lastName) {
@@ -35,21 +37,24 @@ function getInitials(firstName, lastName) {
 async function loadUserProfile() {
     try {
         // Controlla chi è loggato
-        const { data: { user } } = await supabase.auth.getUser();
+        const { data: { user }, error: authError } = await supabase.auth.getUser();
+        
+        if (authError) throw Object.assign(new Error(authError.message), { code: authError.code || 'AUTH_SYS_ERROR' });
+        
         if (!user) {
-            window.location.href = "../../index.html"; // Path corretto per tornare alla home
+            window.location.href = "../../index.html"; 
             return;
         }
-        currentUser = user; // Salviamo l'utente nella variabile globale!
+        currentUser = user; 
 
         // Prendi i dati dalla tabella profiles
-        const { data: profileData, error } = await supabase
+        const { data: profileData, error: profileError } = await supabase
             .from('profiles')
             .select('*')
             .eq('id', user.id)
             .single();
 
-        if (error) throw error;
+        if (profileError) throw Object.assign(new Error(profileError.message), { code: profileError.code || 'DB_FETCH_PROFILE_ERROR' });
 
         // Popola l'interfaccia
         let nomeUtente = profileData.nome?.trim() || "";
@@ -77,6 +82,16 @@ async function loadUserProfile() {
 
     } catch (err) {
         console.error("Errore nel caricamento del profilo:", err);
+        
+        // LOG DI SISTEMA
+        await logError({
+            source: 'impostazioni_profilo',
+            action: 'load_user_profile',
+            errorMessage: err.message || "Errore imprevisto caricamento profilo",
+            errorCode: err.code || 'UNKNOWN_SYS_ERROR',
+            context: { userId: currentUser?.id }
+        });
+
         if (userNameDisplay) userNameDisplay.textContent = "Errore";
         if (userDetailsDisplay) userDetailsDisplay.textContent = "Impossibile caricare i dati";
     }
@@ -87,67 +102,84 @@ async function loadUserProfile() {
 // ==========================================
 if (btnLogout) {
     btnLogout.addEventListener("click", async () => {
-        const { error } = await supabase.auth.signOut();
-        if (error) {
-            alert("Errore durante il logout: " + error.message);
-        } else {
+        try {
+            const { error } = await supabase.auth.signOut();
+            if (error) throw Object.assign(new Error(error.message), { code: error.code || 'AUTH_SIGNOUT_ERROR' });
+            
             window.location.href = "../../index.html";
+        } catch (err) {
+            console.error("Errore durante il logout:", err);
+            
+            await logError({
+                source: 'impostazioni_profilo',
+                action: 'logout_user',
+                errorMessage: err.message || "Logout fallito",
+                errorCode: err.code || 'UNKNOWN_AUTH_ERROR',
+                context: { userId: currentUser?.id }
+            });
+            
+            alert("Errore durante il logout. Riprova.");
         }
     });
 }
 
 // ==========================================
-// 3. TASTO ELIMINA RUOLO (Solo ruolo, non profilo!)
+// 3. TASTO ELIMINA RUOLO
 // ==========================================
 if (deleteRoleBtn) {
     deleteRoleBtn.addEventListener('click', async () => {
-        // Chiedi conferma
         const confermato = confirm("Attenzione: Sei sicuro di voler rinunciare al ruolo di Professionista (Pet Sitter/Educatore)? Il tuo account generale rimarrà intatto.");
-        
-        if (confermato) {
-            deleteRoleBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Rimozione in corso...';
-            deleteRoleBtn.style.pointerEvents = 'none';
+        if (!confermato) return;
 
-            try {
-                // A. Trova l'ID del ruolo "Professionista"
-                const { data: roleData, error: roleError } = await supabase
-                    .from('roles')
-                    .select('id')
-                    .ilike('nome', '%professionista%')
-                    .single();
-                    
-                if (roleError) throw roleError;
+        deleteRoleBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Rimozione in corso...';
+        deleteRoleBtn.style.pointerEvents = 'none';
 
-                // B. Sgancia il ruolo da user_roles (Eliminazione chirurgica)
-                const { error: unlinkError } = await supabase
-                    .from('user_roles')
-                    .delete()
-                    .eq('user_id', currentUser.id)
-                    .eq('role_id', roleData.id);
-                    
-                if (unlinkError) throw unlinkError;
-
-                // C. Cancella i dati specifici del listino/professione
-                const { error: deleteProError } = await supabase
-                    .from('professionals')
-                    .delete()
-                    .eq('user_id', currentUser.id);
-
-                if (deleteProError) throw deleteProError;
-
-                alert("Ruolo rimosso con successo!");
+        try {
+            // A. Trova l'ID del ruolo "Professionista"
+            const { data: roleData, error: roleError } = await supabase
+                .from('roles')
+                .select('id')
+                .ilike('nome', '%professionista%')
+                .single();
                 
-                // Rimanda alla schermata di selezione dei ruoli! (Aggiusta i puntini ../ se serve)
-                window.location.href = "../../ruoli.html"; 
+            if (roleError) throw Object.assign(new Error(roleError.message), { code: roleError.code || 'DB_FETCH_ROLE_ERROR' });
 
-            } catch (error) {
-                console.error("Errore durante l'eliminazione del ruolo:", error);
-                alert("Errore di sistema. Riprova più tardi.");
+            // B. Sgancia il ruolo da user_roles
+            const { error: unlinkError } = await supabase
+                .from('user_roles')
+                .delete()
+                .eq('user_id', currentUser.id)
+                .eq('role_id', roleData.id);
                 
-                // Ripristina il bottone in caso di errore
-                deleteRoleBtn.innerHTML = 'Elimina Ruolo Professionista';
-                deleteRoleBtn.style.pointerEvents = 'auto';
-            }
+            if (unlinkError) throw Object.assign(new Error(unlinkError.message), { code: unlinkError.code || 'DB_DELETE_USER_ROLE_ERROR' });
+
+            // C. Cancella i dati specifici del listino/professione
+            const { error: deleteProError } = await supabase
+                .from('professionals')
+                .delete()
+                .eq('user_id', currentUser.id);
+
+            if (deleteProError) throw Object.assign(new Error(deleteProError.message), { code: deleteProError.code || 'DB_DELETE_PROFESSIONAL_ERROR' });
+
+            alert("Ruolo rimosso con successo!");
+            window.location.href = "../../ruoli.html"; 
+
+        } catch (error) {
+            console.error("Errore durante l'eliminazione del ruolo:", error);
+            
+            // LOG DI SISTEMA
+            await logError({
+                source: 'impostazioni_profilo',
+                action: 'delete_professional_role',
+                errorMessage: error.message || "Fallimento durante la rimozione a cascata del ruolo",
+                errorCode: error.code || 'UNKNOWN_DB_ERROR',
+                context: { userId: currentUser?.id }
+            });
+
+            alert("Errore di sistema. Riprova più tardi. I tecnici sono stati informati.");
+            
+            deleteRoleBtn.innerHTML = 'Elimina Ruolo Professionista';
+            deleteRoleBtn.style.pointerEvents = 'auto';
         }
     });
 }

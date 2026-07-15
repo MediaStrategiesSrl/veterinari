@@ -1,7 +1,9 @@
-import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
-import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./config.js";
+// 1. IMPORT CENTRALIZZATI
+// ==========================================
+// Assicurati che i percorsi puntino alla cartella corretta (es. ../utils/)
+import { supabase } from '../utils/supabaseClient.js';
+import { logError } from '../utils/logger.js';
 
-const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 let currentUser = null;
 let serviziDisponibili = []; // Salveremo qui i servizi scaricati dal DB
 
@@ -53,7 +55,7 @@ async function caricaPazientiDropdown() {
             .eq('veterinarian_id', currentUser.id)
             .eq('status', 'active');
 
-        if (vpError) throw vpError;
+        if (vpError) throw Object.assign(new Error(vpError.message), { code: vpError.code });
 
         petSelect.innerHTML = ""; 
 
@@ -69,7 +71,7 @@ async function caricaPazientiDropdown() {
             .select('id, nome, owner_id')
             .in('id', petIds);
 
-        if (petsError) throw petsError;
+        if (petsError) throw Object.assign(new Error(petsError.message), { code: petsError.code });
 
         petSelect.innerHTML = `<option value="" disabled selected>Scegli un animale...</option>`;
 
@@ -85,6 +87,17 @@ async function caricaPazientiDropdown() {
 
     } catch (error) {
         console.error("Errore caricamento pazienti:", error);
+        
+        // LOG ERRORE: Caricamento pazienti
+        await logError({
+            source: 'frontend_add_appointment',
+            action: 'fetch_patients',
+            errorMessage: error.message,
+            errorCode: error.code || 'FETCH_PATIENTS_ERROR',
+            stackTrace: error.stack,
+            context: { provider_id: currentUser ? currentUser.id : null }
+        });
+
         petSelect.innerHTML = `<option value="" disabled>Errore di caricamento</option>`;
     }
 }
@@ -99,7 +112,7 @@ async function caricaServiziDropdown() {
             .select('*')
             .eq('provider_id', currentUser.id);
 
-        if (error) throw error;
+        if (error) throw Object.assign(new Error(error.message), { code: error.code });
         
         serviziDisponibili = data || [];
         servizioSelect.innerHTML = `<option value="" disabled selected>Scegli un servizio...</option>`;
@@ -113,14 +126,23 @@ async function caricaServiziDropdown() {
 
     } catch (error) {
         console.error("Errore caricamento servizi:", error);
+        
+        // LOG ERRORE: Caricamento servizi
+        await logError({
+            source: 'frontend_add_appointment',
+            action: 'fetch_services',
+            errorMessage: error.message,
+            errorCode: error.code || 'FETCH_SERVICES_ERROR',
+            stackTrace: error.stack,
+            context: { provider_id: currentUser ? currentUser.id : null }
+        });
     }
 }
 
 // ==========================================
-// 3. CALCOLO AUTOMATICO COSTO E ORARIO (SBLOCCO BOTTONE QUI)
+// 3. CALCOLO AUTOMATICO COSTO E ORARIO
 // ==========================================
 function aggiornaDettagliServizio() {
-    // Se manca l'animale, il servizio o la data iniziale, teniamo bloccato
     if (petSelect.selectedIndex <= 0 || servizioSelect.selectedIndex <= 0 || !dataInizioInput.value) {
         submitBtn.disabled = true;
         return;
@@ -152,7 +174,6 @@ function aggiornaDettagliServizio() {
             dataFineInput.readOnly = true; 
             dataFineInput.style.backgroundColor = "#F1F5F9";
 
-            // SBLOCCO BOTTONE! Quando tutto è compilato correttamente, accendiamo il bottone
             submitBtn.disabled = false;
         }
     }
@@ -184,8 +205,8 @@ form.addEventListener("submit", async (e) => {
             .lt('data_inizio', dataFine.toISOString()) 
             .gt('data_fine', dataInizio.toISOString()); 
 
-        if (checkError) throw checkError;
-        if (overlaps && overlaps.length > 0) throw new Error("Hai già un appuntamento in questo orario!");
+        if (checkError) throw Object.assign(new Error(checkError.message), { code: checkError.code });
+        if (overlaps && overlaps.length > 0) throw Object.assign(new Error("Hai già un appuntamento in questo orario!"), { code: 'APPOINTMENT_OVERLAP' });
 
         // 4A. INSERIMENTO NEL DATABASE
         const { error: insertError } = await supabase
@@ -201,7 +222,7 @@ form.addEventListener("submit", async (e) => {
                 ruolo_provider: RUOLO_ATTUALE
             });
 
-        if (insertError) throw insertError;
+        if (insertError) throw Object.assign(new Error(insertError.message), { code: insertError.code });
 
         // ==========================================
         // 4B. INVIO EMAIL TRAMITE EDGE FUNCTION
@@ -231,11 +252,27 @@ form.addEventListener("submit", async (e) => {
 
             if (funcError) {
                 console.warn("Appuntamento salvato, ma errore nell'invio della mail:", funcError);
+                // LOG ERRORE: Fallimento email non bloccante
+                await logError({
+                    source: 'edge_function',
+                    action: 'send_booking_email',
+                    errorMessage: funcError.message || "Errore chiamata function send-booking-email",
+                    errorCode: 'EMAIL_SEND_WARNING',
+                    context: { payload_sent: datiEmail }
+                });
             } else {
                 console.log("Email transazionali inviate con successo!", funcData);
             }
         } catch (emailErr) {
             console.error("Errore imprevisto durante l'invio delle email:", emailErr);
+            // LOG ERRORE: Fallimento imprevisto blocco email
+            await logError({
+                source: 'frontend_add_appointment',
+                action: 'process_email_block',
+                errorMessage: emailErr.message,
+                errorCode: 'EMAIL_BLOCK_UNEXPECTED_ERROR',
+                context: { pet_id: selectedPetOpt.value }
+            });
         }
         // ==========================================
 
@@ -245,6 +282,21 @@ form.addEventListener("submit", async (e) => {
         setTimeout(() => window.location.href = "agenda.html", 2000);
 
     } catch (error) {
+        // LOG ERRORE: Fallimento salvataggio appuntamento o overlap
+        await logError({
+            source: 'frontend_add_appointment',
+            action: 'insert_appointment',
+            errorMessage: error.message,
+            errorCode: error.code || 'APPOINTMENT_SAVE_ERROR',
+            stackTrace: error.stack,
+            context: {
+                provider_id: currentUser ? currentUser.id : null,
+                pet_id: selectedPetOpt ? selectedPetOpt.value : null,
+                requested_start: dataInizio.toISOString(),
+                requested_end: dataFine.toISOString()
+            }
+        });
+
         formMessage.textContent = error.message || "Errore salvataggio.";
         formMessage.style.color = "#DC2626";
         submitBtn.disabled = false;

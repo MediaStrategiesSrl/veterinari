@@ -1,15 +1,8 @@
-// Importa libreria Supabase per autenticazione
-import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
-import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./config.js";
-
-// Inizializza client Supabase con credenziali e memorizzazione della sessione
-const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-    auth: {
-        persistSession: true,
-        storage: localStorage,
-        autoRefreshToken: true,
-    },
-});
+// 1. IMPORT CENTRALIZZATI
+// ==========================================
+// Assicurati che i percorsi puntino alla cartella corretta (es. ../utils/)
+import { supabase } from '../utils/supabaseClient.js';
+import { logError } from '../utils/logger.js';
 
 // Elementi DOM
 const form = document.getElementById("loginForm");
@@ -66,6 +59,17 @@ form.addEventListener("submit", async function (event) {
             .eq('user_id', user.id)
             .maybeSingle(); // Evita di andare in crash se la riga non esiste
 
+        if (vetTableError) {
+            console.warn("Errore durante il controllo veterinario:", vetTableError.message);
+            await logError({
+                source: 'frontend_index_login',
+                action: 'check_veterinarian',
+                errorMessage: vetTableError.message,
+                errorCode: vetTableError.code || 'DB_VET_CHECK_ERROR',
+                context: { user_id: user.id }
+            });
+        }
+
         if (isVet) {
             // Se esiste nella tabella veterinari, il ruolo è confermato!
             userRole = "veterinario";
@@ -75,7 +79,6 @@ form.addEventListener("submit", async function (event) {
                 .from('user_roles')
                 .select(`
                     roles (
-                        nome_ruolo,
                         nome
                     )
                 `)
@@ -85,11 +88,18 @@ form.addEventListener("submit", async function (event) {
 
             if (roleError) {
                 console.warn("Impossibile recuperare il ruolo o utente senza ruolo:", roleError.message);
+                await logError({
+                    source: 'frontend_index_login',
+                    action: 'fetch_user_role',
+                    errorMessage: roleError.message,
+                    errorCode: roleError.code || 'DB_USER_ROLE_FETCH_ERROR',
+                    context: { user_id: user.id }
+                });
             }
 
             if (roleData?.roles) {
                 // Estrae il testo del ruolo convertendolo in minuscolo
-                userRole = (roleData.roles.nome_ruolo || roleData.roles.nome || "").toLowerCase();
+                userRole = (roleData.roles.nome || "").toLowerCase();
             }
         }
 

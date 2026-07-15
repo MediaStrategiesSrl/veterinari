@@ -1,14 +1,8 @@
-import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
-import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./config.js";
-
-// Inizializza client Supabase
-const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-    auth: {
-        persistSession: true,
-        storage: localStorage,
-        autoRefreshToken: true,
-    },
-});
+// 1. IMPORT CENTRALIZZATI
+// ==========================================
+// Assicurati che i percorsi puntino alla cartella corretta (es. ../utils/)
+import { supabase } from '../utils/supabaseClient.js';
+import { logError } from '../utils/logger.js';
 
 // Elementi DOM
 const form = document.getElementById("completeProfileForm");
@@ -42,19 +36,76 @@ const roleDescriptions = {
 };
 
 // ==========================================
-// 1. INIZIALIZZAZIONE SICURA DELLA PAGINA
+// 1. INIZIALIZZAZIONE SICURA E PRE-FILL ANAGRAFICA
 // ==========================================
 async function initializePage() {
     const { data: { session }, error } = await supabase.auth.getSession();
     
     if (error || !session) {
         console.warn("Nessuna sessione attiva. Reindirizzo al login/signup.");
+        if (error) {
+            await logError({
+                source: 'frontend_complete_profile',
+                action: 'init_get_session',
+                errorMessage: error.message,
+                errorCode: error.code || 'SESSION_FETCH_ERROR',
+                context: { userAgent: navigator.userAgent }
+            });
+        }
         window.location.href = "signup.html";
         return;
     }
     
     console.log("Utente autenticato. ID:", session.user.id);
+    
+    // NUOVO: Controlla e pre-compila i dati se l'utente esiste già
+    await prefillExistingProfile(session.user.id);
+    
     await loadRoles();
+}
+
+// Funzione dedicata al recupero e blocco dei dati anagrafici esistenti
+async function prefillExistingProfile(userId) {
+    try {
+        const { data: profile, error } = await supabase
+            .from('profiles')
+            .select('nome, cognome, data_nascita, telefono, citta, indirizzo')
+            .eq('id', userId)
+            .single();
+
+        // Se l'errore è PGRST116 significa "Nessuna riga trovata" (è un utente nuovo), quindi ignoriamo l'errore
+        if (error && error.code !== 'PGRST116') {
+            console.error("Errore durante il controllo del profilo esistente:", error);
+            return;
+        }
+
+        // Se il profilo esiste, auto-compiliamo i campi e li blocchiamo
+        if (profile) {
+            const fieldsToFill = {
+                'firstName': profile.nome,
+                'lastName': profile.cognome,
+                'birthDate': profile.data_nascita,
+                'phone': profile.telefono,
+                'city': profile.citta,
+                'address': profile.indirizzo
+            };
+
+            for (const [elementId, value] of Object.entries(fieldsToFill)) {
+                const inputElement = document.getElementById(elementId);
+                if (inputElement && value) {
+                    inputElement.value = value;
+                    // Blocchiamo il campo per evitare disallineamenti nel DB
+                    inputElement.setAttribute('readonly', true);
+                    // Diamo un feedback visivo (grigetto) per far capire che il dato è bloccato
+                    inputElement.style.backgroundColor = '#F8FAFC';
+                    inputElement.style.color = '#94A3B8';
+                    inputElement.style.cursor = 'not-allowed';
+                }
+            }
+        }
+    } catch (err) {
+        console.error("Eccezione durante il prefill:", err);
+    }
 }
 
 supabase.auth.onAuthStateChange((event, session) => {
@@ -89,7 +140,7 @@ async function loadRoles() {
             rolesMap[role.nome] = role.id;
 
             const card = document.createElement('div');
-            card.className = 'profile-row-card'; // <-- NUOVA CLASSE DEL MOCKUP
+            card.className = 'profile-row-card'; 
             card.dataset.value = role.nome;
 
             const descText = roleDescriptions[role.nome] || "Esplora le funzionalità dedicate";
@@ -108,6 +159,14 @@ async function loadRoles() {
             roleCardsContainer.appendChild(card);
         });
     } catch (error) {
+        // --- LOG ERRORE DB ---
+        await logError({
+            source: 'frontend_complete_profile',
+            action: 'load_roles',
+            errorMessage: error.message,
+            errorCode: error.code || 'DB_ROLES_FETCH_ERROR',
+            stackTrace: error.stack
+        });
         showStatus("Errore nel caricamento dei ruoli: " + error.message, "error");
     }
 }
@@ -116,22 +175,17 @@ async function loadRoles() {
 // 3. GESTIONE INTERFACCIA
 // ==========================================
 function handleRoleSelection(selectedCard, roleName) {
-    // Rimuove la selezione visiva dalle altre card e l'aggiunge a quella cliccata
     document.querySelectorAll('.profile-row-card').forEach(c => c.classList.remove('selected'));
     selectedCard.classList.add('selected');
     
     roleSelectHidden.value = roleName;
 
-    // MOSTRA IL FORM NASCOSTO CON UN'ANIMAZIONE (se vogliamo)
     dynamicFormFields.classList.remove("hidden");
     
-    // Reset di tutti i sottomenu specifici
     [professionalFields, clientFields, vetFields, sponsorFields, specificPetTypeGroup, specificProfessionOtherGroup].forEach(el => { if(el) el.classList.add("hidden"); });
     
-    // Rimuovi required da tutto per resettare
     ["specificProfession", "specificProfessionOther", "petName", "petSpecie", "petSpecieSpecific", "vetOrderNumber", "vetClinicAddress", "sponsorCompanyName", "sponsorVat"].forEach(id => setRequired(id, false));
 
-    // Mostra solo i campi del ruolo scelto
     if (roleName === "altro professionista" && professionalFields) {
         professionalFields.classList.remove("hidden");
         setRequired("specificProfession", true);
@@ -149,6 +203,7 @@ function handleRoleSelection(selectedCard, roleName) {
         setRequired("sponsorVat", true);
     }
 }
+
 // ==========================================
 // 4. SALVATAGGIO DATI E REDIRECT
 // ==========================================
@@ -158,6 +213,14 @@ form.addEventListener("submit", async function (event) {
 
     const { data: { user }, error: userError } = await supabase.auth.getUser();
     if (userError || !user) {
+        if (userError) {
+            await logError({
+                source: 'frontend_complete_profile',
+                action: 'submit_auth_check',
+                errorMessage: userError.message,
+                errorCode: userError.code || 'AUTH_CHECK_ERROR'
+            });
+        }
         showStatus("Sessione utente non trovata. Effettua il login.", "error");
         return;
     }
@@ -182,6 +245,13 @@ form.addEventListener("submit", async function (event) {
 
     const { error: profileError } = await supabase.from("profiles").upsert(profileData);
     if (profileError) {
+        await logError({
+            source: 'frontend_complete_profile',
+            action: 'upsert_profile',
+            errorMessage: profileError.message,
+            errorCode: profileError.code || 'DB_PROFILE_UPSERT_ERROR',
+            context: { user_id: user.id }
+        });
         showStatus("Errore anagrafica: " + profileError.message, "error");
         enableSubmit();
         return;
@@ -190,6 +260,13 @@ form.addEventListener("submit", async function (event) {
     // STEP 2: Assegnazione Ruolo
     const { error: roleError } = await supabase.from("user_roles").upsert({ user_id: user.id, role_id: selectedRoleId });
     if (roleError) {
+        await logError({
+            source: 'frontend_complete_profile',
+            action: 'upsert_user_role',
+            errorMessage: roleError.message,
+            errorCode: roleError.code || 'DB_USER_ROLE_UPSERT_ERROR',
+            context: { user_id: user.id, role_id: selectedRoleId }
+        });
         showStatus("Errore assegnazione ruolo: " + roleError.message, "error");
         enableSubmit();
         return;
@@ -206,7 +283,10 @@ form.addEventListener("submit", async function (event) {
             tipo_professione: finalTipoProfessione,
             tariffa_oraria: 0.00 
         });
-        if (profError) return handleSpecificError(profError.message);
+        if (profError) {
+            await logError({ source: 'frontend_complete_profile', action: 'upsert_professional', errorMessage: profError.message, errorCode: profError.code, context: { user_id: user.id }});
+            return handleSpecificError(profError.message);
+        }
 
     } else if (selectedRoleName === "proprietario") {
         const generatedQrHash = "QR-" + crypto.randomUUID().substring(0, 8).toUpperCase();
@@ -214,42 +294,90 @@ form.addEventListener("submit", async function (event) {
             ? document.getElementById("petSpecieSpecific").value.trim() 
             : document.getElementById("petSpecie").value;
 
-            const microchipValue = document.getElementById("petMicrochip").value.trim();
-            // Se l'utente ha scritto qualcosa (visto che è opzionale) controlliamo che sia di 15 numeri
+        const microchipValue = document.getElementById("petMicrochip").value.trim();
+        
         if (microchipValue !== "") {
             const regexMicrochip = /^\d{15}$/;
-                if (!regexMicrochip.test(microchipValue)) {
-                    showStatus("Errore: Il microchip deve contenere esattamente 15 numeri.", "error");
-                    enableSubmit();
-        return; // Blocca l'invio a Supabase
-    }
-}
+            if (!regexMicrochip.test(microchipValue)) {
+                showStatus("Errore: Il microchip deve contenere esattamente 15 numeri.", "error");
+                enableSubmit();
+                return;
+            }
+        }
+
+        // ==========================================
+        // FIX CRITICO: Trasforma la stringa vuota in NULL
+        // ==========================================
+        const finalMicrochip = microchipValue === "" ? null : microchipValue;
 
         const { error: petError } = await supabase.from("pets").insert({
             owner_id: user.id,
             nome: document.getElementById("petName").value.trim(),
             specie: finalSpecie,
             qr_code_hash: generatedQrHash,
-            microchip: microchipValue
+            microchip: finalMicrochip // <-- Inserisce null invece di ""
         });
-        if (petError) return handleSpecificError(petError.message);
+        
+        if (petError) {
+            await logError({ source: 'frontend_complete_profile', action: 'insert_pet', errorMessage: petError.message, errorCode: petError.code, context: { owner_id: user.id }});
+            return handleSpecificError(petError.message);
+        }
 
     } else if (selectedRoleName === "veterinario") {
+        // 1. Salva i dati burocratici nella tabella veterinarians
         const { error: vetError } = await supabase.from("veterinarians").upsert({
             user_id: user.id,
             numero_ordine: document.getElementById("vetOrderNumber").value.trim(),
-            indirizzo_clinica: document.getElementById("vetClinicAddress").value.trim(),
             is_available_now: false
         });
-        if (vetError) return handleSpecificError(vetError.message);
 
+        if (vetError) {
+            await logError({ 
+                source: 'frontend_complete_profile', 
+                action: 'upsert_veterinarian', 
+                errorMessage: vetError.message, 
+                errorCode: vetError.code, 
+                context: { user_id: user.id }
+            });
+            return handleSpecificError(vetError.message);
+        }
+
+        // 2. Prendi l'indirizzo inserito nel form
+        const clinicAddress = document.getElementById("vetClinicAddress").value.trim();
+        const userCity = document.getElementById("city").value.trim() || "Milano";
+
+        // 3. Salva SOLO il luogo fisico in provider_locations
+        const { error: locError } = await supabase.from("provider_locations").insert({
+            provider_id: user.id,
+            nome_struttura: "Studio Principale",
+            indirizzo: clinicAddress,
+            citta: userCity,
+            latitudine: 45.4642, // Coordinate base (saranno sovrascritte se usi Google Maps API)
+            longitudine: 9.1900,
+            is_principale: true
+            // NOTA: Non passiamo gli orari. Il DB inserirà il default '{}' in automatico.
+        });
+
+        if (locError) {
+            await logError({ 
+                source: 'frontend_complete_profile', 
+                action: 'insert_initial_vet_location', 
+                errorMessage: locError.message, 
+                errorCode: locError.code, 
+                context: { user_id: user.id, address: clinicAddress }
+            });
+            return handleSpecificError("Errore salvataggio sede clinica: " + locError.message); 
+        } 
     } else if (selectedRoleName === "sponsor") {
         const { error: sponsorError } = await supabase.from("sponsors").upsert({
             user_id: user.id,
             nome_azienda: document.getElementById("sponsorCompanyName").value.trim(),
             partita_iva: document.getElementById("sponsorVat").value.trim()
         });
-        if (sponsorError) return handleSpecificError(sponsorError.message);
+        if (sponsorError) {
+            await logError({ source: 'frontend_complete_profile', action: 'upsert_sponsor', errorMessage: sponsorError.message, errorCode: sponsorError.code, context: { user_id: user.id }});
+            return handleSpecificError(sponsorError.message);
+        }
     }
 
     // STEP 4: Redirect Dinamico

@@ -1,7 +1,10 @@
-import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
-import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./config.js";
+// ==========================================
+// 1. IMPORT CENTRALIZZATI
+// ==========================================
+// Assicurati che i percorsi puntino alla cartella corretta (es. ../utils/)
+import { supabase } from '../utils/supabaseClient.js';
+import { logError } from '../utils/logger.js';
 
-const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 let currentUser = null;
 let nomeVeterinario = "Dott. Sconosciuto";
 
@@ -19,8 +22,19 @@ const fileNameDisplay = document.getElementById("fileNameDisplay");
 const fileSubtext = document.getElementById("fileSubtext");
 
 async function initPage() {
-    // 1. Controllo Autenticazione
-    const { data: { user } } = await supabase.auth.getUser();
+    // 1. Controllo Autenticazione (Errore logico: nessun log DB)
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    
+    if (authError) {
+        await logError({
+            source: 'nuova_visita',
+            action: 'auth_check',
+            errorMessage: authError.message,
+            errorCode: authError.code || 'AUTH_SYS_ERROR',
+            context: {}
+        });
+    }
+
     if (!user) {
         window.location.href = "../../index.html";
         return;
@@ -29,22 +43,25 @@ async function initPage() {
 
     // 2. Recupera Nome del Veterinario
     try {
-        const { data: profile } = await supabase
+        const { data: profile, error: profileError } = await supabase
             .from('profiles')
             .select('nome')
             .eq('id', currentUser.id)
             .single();
         
+        if (profileError && profileError.code !== 'PGRST116') throw profileError; // Ignoriamo se semplicemente non ha ancora compilato il profilo
+
         if (profile && profile.nome) {
             nomeVeterinario = profile.nome;
         }
     } catch (err) {
-        console.warn("Profilo vet non trovato, uso default.");
+        console.warn("Impossibile recuperare il profilo vet, uso default.");
+        // Non logghiamo questo errore in modo critico, l'app può funzionare lo stesso
     }
     headerSubtitle.textContent = `Seleziona paziente · ${nomeVeterinario}`;
 
     // ==========================================
-    // NUOVO: GESTIONE URL E SICUREZZA (GUARD)
+    // GESTIONE URL E SICUREZZA (GUARD)
     // ==========================================
     const urlParams = new URLSearchParams(window.location.search);
     const urlPetId = urlParams.get('petId');
@@ -58,8 +75,22 @@ async function initPage() {
             .eq('veterinarian_id', currentUser.id)
             .single();
 
-        // Se l'animale è stato revocato, blocco e redirect
-        if (accessError || !accessData || accessData.status !== 'active') {
+        // ERRORE DI SISTEMA: Il DB è crashato durante il controllo
+        if (accessError) {
+            await logError({
+                source: 'nuova_visita',
+                action: 'security_guard_check',
+                errorMessage: accessError.message,
+                errorCode: accessError.code || 'DB_GUARD_ERROR',
+                context: { petId: urlPetId }
+            });
+            alert("Errore di sistema nella verifica delle autorizzazioni. Riprova più tardi.");
+            window.location.href = "/pages/veterinario/pazienti.html";
+            return;
+        }
+
+        // ERRORE LOGICO: L'animale è stato revocato. Blocco e redirect (Nessun log DB)
+        if (!accessData || accessData.status !== 'active') {
             alert("Accesso negato: non sei autorizzato a inserire visite per questo paziente (Accesso revocato).");
             window.location.href = "/pages/veterinario/pazienti.html";
             return;
@@ -72,14 +103,13 @@ async function initPage() {
 
 async function caricaPazienti(preselectedPetId) {
     try {
-        // AGGIUNTO 'owner_id' NELLA SELECT PER IL CONTROLLO CASSA!
         const { data, error } = await supabase
             .from('veterinarian_patients')
             .select(`pet_id, pets ( nome, owner_id )`) 
             .eq('veterinarian_id', currentUser.id)
             .eq('status', 'active'); 
 
-        if (error) throw error;
+        if (error) throw Object.assign(new Error(error.message), { code: error.code || 'DB_FETCH_PATIENTS_ERROR' });
 
         if (!data || data.length === 0) {
             petSelect.innerHTML = `<option value="" disabled selected>Nessun paziente in archivio.</option>`;
@@ -113,6 +143,15 @@ async function caricaPazienti(preselectedPetId) {
 
     } catch (error) {
         console.error("Errore caricamento pazienti:", error);
+        
+        await logError({
+            source: 'nuova_visita',
+            action: 'carica_pazienti',
+            errorMessage: error.message || "Impossibile popolare la select dei pazienti",
+            errorCode: error.code || 'UNKNOWN_DB_ERROR',
+            context: {}
+        });
+
         petSelect.innerHTML = `<option value="" disabled selected>Errore di caricamento</option>`;
     }
 }
@@ -133,7 +172,6 @@ if(documentUpload) {
     });
 }
 
-
 // ==========================================
 // SALVATAGGIO CARTELLA CLINICA + LOGICA CASSA
 // ==========================================
@@ -141,6 +179,8 @@ form.addEventListener("submit", async (e) => {
     e.preventDefault();
 
     const petId = petSelect.value;
+    
+    // ERRORE LOGICO: Nessun paziente selezionato. (Nessun log DB)
     if (!petId) {
         formMessage.textContent = "Seleziona un paziente prima di salvare.";
         formMessage.style.color = "#DC2626";
@@ -153,11 +193,9 @@ form.addEventListener("submit", async (e) => {
 
     try {
         let attachmentUrl = null;
-        
-        // Protezione se documentUpload non esiste in alcune view
         const file = documentUpload ? documentUpload.files[0] : null;
 
-        // 1. SE C'È UN FILE, FAI L'UPLOAD
+        // 1. SE C'È UN FILE, FAI L'UPLOAD (Storage)
         if (file) {
             submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Caricamento file...';
             
@@ -165,9 +203,11 @@ form.addEventListener("submit", async (e) => {
             const fileName = `${petId}_${safeName}`;
             const filePath = `referti/${fileName}`; 
 
-            const { data: existingFiles } = await supabase.storage
+            const { data: existingFiles, error: listError } = await supabase.storage
                 .from('storage_veterinari')
                 .list('referti', { search: fileName });
+
+            if (listError) throw Object.assign(new Error(listError.message), { code: listError.code || 'STORAGE_LIST_ERROR' });
 
             const isDuplicate = existingFiles && existingFiles.some(f => f.name === fileName);
 
@@ -181,7 +221,7 @@ form.addEventListener("submit", async (e) => {
                     .from('storage_veterinari')
                     .upload(filePath, file);
 
-                if (uploadError) throw uploadError;
+                if (uploadError) throw Object.assign(new Error(uploadError.message), { code: uploadError.code || 'STORAGE_UPLOAD_ERROR' });
 
                 const { data: { publicUrl } } = supabase.storage
                     .from('storage_veterinari')
@@ -198,44 +238,50 @@ form.addEventListener("submit", async (e) => {
             .from('medical_records')
             .insert({
                 pet_id: petId,
-                vet_id: currentUser.id, // Tu, veterinario
+                vet_id: currentUser.id,
                 motivo: document.getElementById("motivo") ? document.getElementById("motivo").value : "",
                 anamnesi: document.getElementById("anamnesi") ? document.getElementById("anamnesi").value : "",
                 diagnosi: document.getElementById("diagnosi") ? document.getElementById("diagnosi").value : "",
                 terapia: document.getElementById("terapia") ? document.getElementById("terapia").value : "",
                 attachment_url: attachmentUrl
             })
-            .select() // Importante: ci facciamo restituire l'ID della visita appena creata
+            .select() 
             .single();
 
-        if (insertError) throw insertError;
+        if (insertError) throw Object.assign(new Error(insertError.message), { code: insertError.code || 'DB_INSERT_RECORD_ERROR' });
 
         formMessage.textContent = "Referto salvato!";
         formMessage.style.color = "#059669";
 
         // ==========================================
-        // 3. LOGICA DI INDIRIZZAMENTO (IL MISTERO È RISOLTO!)
+        // 3. LOGICA DI INDIRIZZAMENTO 
         // ==========================================
-        
-        // Troviamo a chi appartiene il cane appena visitato
         const infoAnimaleVisato = pazientiMemoria.find(p => p.pet_id === petId);
         
         setTimeout(() => {
             if (infoAnimaleVisato && infoAnimaleVisato.pets.owner_id === currentUser.id) {
                 // EDGE CASE: Il cane è del veterinario stesso! 
-                // Niente cassa, torniamo alla dashboard.
                 alert("Visita personale registrata con successo (Costo 0€).");
                 window.location.href = "dashboard-veterinario.html";
             } else {
-                // FLUSSO NORMALE: Il cane è di un cliente.
-                // Lo mandiamo in cassa e gli passiamo via URL l'ID della visita (recordId) per generare la fattura!
+                // FLUSSO NORMALE: Cassa.
                 window.location.href = `cassa.html?recordId=${newRecord.id}&petId=${petId}`;
             }
         }, 1500);
 
     } catch (error) {
         console.error("Errore salvataggio:", error);
-        formMessage.textContent = "Errore durante il salvataggio: " + (error.message || "Errore sconosciuto");
+        
+        // ERRORE DI SISTEMA: Log nel DB
+        await logError({
+            source: 'nuova_visita',
+            action: 'salvataggio_cartella',
+            errorMessage: error.message || "Errore durante upload file o insert nel DB",
+            errorCode: error.code || 'UNKNOWN_SYS_ERROR',
+            context: { petId: petId }
+        });
+
+        formMessage.textContent = "Errore durante il salvataggio: " + (error.message || "Errore di sistema");
         formMessage.style.color = "#DC2626";
         
         submitBtn.disabled = false;

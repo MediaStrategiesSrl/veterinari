@@ -1,7 +1,9 @@
-import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
-import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./config.js";
+// 1. IMPORT CENTRALIZZATI
+// ==========================================
+// Assicurati che i percorsi puntino alla cartella corretta (es. ../utils/)
+import { supabase } from '../utils/supabaseClient.js';
+import { logError } from '../utils/logger.js';
 
-const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 let currentUser = null;
 
 // DOM Elements
@@ -97,6 +99,21 @@ async function caricaAppuntamentiPerData(dateObj) {
 
     } catch (error) {
         console.error("Errore recupero agenda professionista:", error);
+
+        await logError({
+            source: 'frontend_agenda',
+            action: 'fetch_appointments',
+            errorMessage: error.message || "Impossibile recuperare gli appuntamenti dal database",
+            errorCode: error.code || 'SUPABASE_QUERY_ERROR',
+            stackTrace: error.stack,
+            context: {
+                target_date: dateObj.toISOString(),
+                start_boundary: startOfDay.toISOString(),
+                end_boundary: endOfDay.toISOString(),
+                provider_id: currentUser.id
+            }
+        });
+
         appointmentsList.innerHTML = `<div style="color:red; text-align:center; padding: 20px;">Errore caricamento. Controlla la console.</div>`;
         appointmentsCount.textContent = "Errore";
     }

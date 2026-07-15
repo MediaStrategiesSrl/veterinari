@@ -1,7 +1,9 @@
-import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
-import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./config.js";
+// 1. IMPORT CENTRALIZZATI
+// ==========================================
+// Assicurati che i percorsi puntino alla cartella corretta (es. ../utils/)
+import { supabase } from '../utils/supabaseClient.js';
+import { logError } from '../utils/logger.js';
 
-const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 let currentUser = null;
 let isEditing = false; // Controlla lo stato Lettura/Scrittura
 
@@ -114,6 +116,20 @@ async function initPage() {
 
     } catch (error) {
         console.error("Errore caricamento dati iniziali:", error);
+        
+        // --- INIZIO AGGIUNTA LOG ---
+        await logError({
+            source: 'frontend_profilo_vet',
+            action: 'init_page_load',
+            errorMessage: error.message || "Fallimento durante il caricamento dei dati utente o profilo",
+            errorCode: error.code || 'INIT_LOAD_ERROR',
+            stackTrace: error.stack,
+            context: {
+                user_id: currentUser ? currentUser.id : 'sconosciuto',
+                attempted_fetch: ['profiles', 'veterinarians']
+            }
+        });
+        // --- FINE AGGIUNTA LOG ---
     }
 }
 
@@ -236,6 +252,24 @@ form.addEventListener("submit", async (e) => {
 
     } catch (error) {
         console.error("Errore di salvataggio:", error);
+        
+        // --- INIZIO AGGIUNTA LOG ---
+        await logError({
+            source: 'frontend_profilo_vet',
+            action: 'save_profile_data',
+            errorMessage: error.message || "Eccezione sollevata durante l'aggiornamento dei dati o l'upload storage",
+            errorCode: error.code || 'PROFILE_SAVE_ERROR',
+            stackTrace: error.stack,
+            context: {
+                user_id: currentUser ? currentUser.id : 'sconosciuto',
+                attempted_email_update: vetEmail.value !== (currentUser ? currentUser.email : ''),
+                uploaded_avatar: !!avatarUpload.files[0],
+                uploaded_ci: !!ciUpload.files[0],
+                uploaded_tessera: !!tesseraUpload.files[0]
+            }
+        });
+        // --- FINE AGGIUNTA LOG ---
+
         formMessage.textContent = "Errore durante il salvataggio dei dati.";
         formMessage.style.color = "#DC2626";
         disabilitaCampi(false); // Lascia sbloccato per permettere di riprovare

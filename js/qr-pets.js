@@ -1,7 +1,9 @@
-import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
-import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./config.js";
-
-const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+// ==========================================
+// 1. IMPORT CENTRALIZZATI E SETUP
+// ==========================================
+// Assicurati che i percorsi (../utils/) puntino alla tua struttura reale
+import { supabase } from '../utils/supabaseClient.js';
+import { logError } from '../utils/logger.js';
 
 const qrTitle = document.getElementById('qrTitle');
 const qrImage = document.getElementById('qrImage'); 
@@ -9,17 +11,23 @@ const petNameText = document.getElementById('petNameText');
 
 let qrChannel = null; 
 
+// ==========================================
+// 2. CARICAMENTO DEL QR CODE
+// ==========================================
 async function loadQRCode() {
     try {
         // 1. Controlla utente
-        const { data: { user } } = await supabase.auth.getUser();
+        const { data: { user }, error: authError } = await supabase.auth.getUser();
+        
+        if (authError) throw Object.assign(new Error(authError.message), { code: authError.code || 'AUTH_SYS_ERROR' });
+        
         if (!user) {
             window.location.href = '../../index.html';
             return;
         }
 
-        // 2. Prendi l'animale
-        const { data: pet, error } = await supabase
+        // 2. Prendi l'animale (l'ultimo inserito, fallback semplice)
+        const { data: pet, error: petError } = await supabase
             .from('pets')
             .select('id, nome, qr_code_hash') 
             .eq('owner_id', user.id)
@@ -27,9 +35,16 @@ async function loadQRCode() {
             .limit(1)
             .maybeSingle();
 
-        if (error) throw new Error("Errore DB: " + error.message);
-        if (!pet) throw new Error("Nessun animale registrato");
-        if (!pet.qr_code_hash) throw new Error("Nessun QR generato");
+        if (petError) throw Object.assign(new Error(petError.message), { code: petError.code || 'DB_FETCH_PET_ERROR' });
+        
+        if (!pet) {
+            if (qrTitle) qrTitle.textContent = "Nessun animale registrato";
+            return;
+        }
+        if (!pet.qr_code_hash) {
+            if (qrTitle) qrTitle.textContent = "Nessun QR generato per questo animale";
+            return;
+        }
 
         // 3. Aggiorna i testi a schermo
         if (qrTitle) qrTitle.textContent = `QR di ${pet.nome}`; 
@@ -48,7 +63,19 @@ async function loadQRCode() {
 
     } catch (err) {
         console.error("ERRORE QR:", err);
-        if (qrTitle) qrTitle.textContent = err.message; 
+        
+        // ==========================================
+        // TRIGGER LOG ERROR
+        // ==========================================
+        await logError({
+            source: 'condivisione_qr',
+            action: 'load_qr_code',
+            errorMessage: err.message || "Impossibile caricare il QR Code dal database",
+            errorCode: err.code || 'UNKNOWN_SYS_ERROR',
+            context: {}
+        });
+
+        if (qrTitle) qrTitle.textContent = "Errore di caricamento. Riprova più tardi."; 
     }
 }
 
@@ -62,7 +89,7 @@ if (btnSimulate) {
 }
 
 // ========================================================
-// REATIME: ASCOLTO RICHIESTE DI ACCESSO QR IN TEMPO REALE
+// 3. REALTIME: ASCOLTO RICHIESTE DI ACCESSO QR
 // ========================================================
 function attivaAscoltoNotificheQR(activePetId) {
     if (!activePetId) return;
@@ -87,64 +114,108 @@ function attivaAscoltoNotificheQR(activePetId) {
                 console.log("🔥 [REALTIME QR-PAGE] MESSAGGIO RICEVUTO DAL VETERINARIO!", payload);
                 const richiestaInArrivo = payload.new;
 
-              if (richiestaInArrivo.status === 'pending') {
-                    const idVet = richiestaInArrivo.veterinarian_id; 
+                if (richiestaInArrivo.status === 'pending') {
+                    try {
+                        const idVet = richiestaInArrivo.veterinarian_id; 
 
-                    const { data: vet, error: vetError } = await supabase
-                        .from('profiles')
-                        .select(`
-                            nome,
-                            cognome,
-                            veterinarians (
-                                numero_ordine,
-                                indirizzo_clinica
-                            )
-                        `)
-                        .eq('id', idVet) 
-                        .single();
-                    
-                    if (vetError) console.error("❌ ERRORE LETTURA DATI VET:", vetError.message);
-                    
-                    // 1. Estraiamo i dati del veterinario in modo sicuro
-                    // (Supabase potrebbe restituire un array o un oggetto singolo, li gestiamo entrambi)
-                    let vDati = null;
-                    if (vet && vet.veterinarians) {
-                        vDati = Array.isArray(vet.veterinarians) ? vet.veterinarians[0] : vet.veterinarians;
-                    }
-
-                    // 2. Creiamo i testi dinamici
-                    const nomeCompleto = vet ? `Dott. ${vet.nome} ${vet.cognome || ''}` : "Veterinario";
-                    
-                    // Sostituiamo "Medico veterinario verificato" con il numero dell'ordine
-                    const dettagliOrdine = vDati && vDati.numero_ordine
-                        ? `Ordine n. ${vDati.numero_ordine}` 
-                        : "Ordine in aggiornamento";
+                        const { data: vet, error: vetError } = await supabase
+                            .from('profiles')
+                            .select(`
+                                nome,
+                                cognome,
+                                veterinarians (
+                                    numero_ordine,
+                                    indirizzo_clinica
+                                )
+                            `)
+                            .eq('id', idVet) 
+                            .single();
                         
-                    // Inseriamo l'indirizzo vero
-                    const indirizzo = vDati && vDati.indirizzo_clinica
-                        ? vDati.indirizzo_clinica 
-                        : "Indirizzo non specificato";
+                        if (vetError) throw Object.assign(new Error(vetError.message), { code: vetError.code || 'DB_FETCH_VET_DETAILS_ERROR' });
+                        
+                        // Estraiamo i dati del veterinario in modo sicuro
+                        let vDati = null;
+                        if (vet && vet.veterinarians) {
+                            vDati = Array.isArray(vet.veterinarians) ? vet.veterinarians[0] : vet.veterinarians;
+                        }
 
-                    // 3. Lanciamo la modale
-                    mostraPopupApprovazione(nomeCompleto, dettagliOrdine, indirizzo, richiestaInArrivo.id);
+                        // Creiamo i testi dinamici
+                        const nomeCompleto = vet ? `Dott. ${vet.nome} ${vet.cognome || ''}` : "Veterinario";
+                        const dettagliOrdine = vDati && vDati.numero_ordine
+                            ? `Ordine n. ${vDati.numero_ordine}` 
+                            : "Ordine in aggiornamento";
+                        const indirizzo = vDati && vDati.indirizzo_clinica
+                            ? vDati.indirizzo_clinica 
+                            : "Indirizzo non specificato";
+
+                        // Lanciamo la modale UI
+                        mostraPopupApprovazione(nomeCompleto, dettagliOrdine, indirizzo, richiestaInArrivo.id);
+
+                    } catch (err) {
+                        console.error("❌ ERRORE LETTURA DATI VET IN REALTIME:", err);
+                        
+                        // Registriamo l'errore tecnico senza bloccare l'esperienza utente
+                        await logError({
+                            source: 'condivisione_qr',
+                            action: 'realtime_fetch_vet',
+                            errorMessage: err.message || "Fallita lettura dati veterinario dopo ricezione payload Realtime",
+                            errorCode: err.code || 'UNKNOWN_DB_ERROR',
+                            context: { activePetId, payload: payload.new }
+                        });
+                        
+                        // Fallback UI: permettiamo comunque all'utente di approvare/rifiutare anche se mancano i dettagli del medico
+                        mostraPopupApprovazione("Veterinario", "Dettagli non disponibili", "Indirizzo non specificato", richiestaInArrivo.id);
+                    }
                 }
             }
         )
         .subscribe((status) => {
              console.log("📡 [REALTIME QR-PAGE] Stato connessione server:", status);
+             
+             // Se cade la connessione Realtime, logghiamo l'evento
+             if (status === 'CHANNEL_ERROR') {
+                 logError({
+                     source: 'condivisione_qr',
+                     action: 'realtime_subscription',
+                     errorMessage: "Errore iscrizione canale realtime o disconnessione",
+                     errorCode: 'REALTIME_CHANNEL_ERROR',
+                     context: { activePetId }
+                 });
+             }
         });
 }
 
+// ========================================================
+// 4. RISPOSTA ALLA RICHIESTA (APPROVA/RIFIUTA)
+// ========================================================
 window.rispondiAllaRichiesta = async function(idRichiesta, sceltaUtente) {
-    const { error } = await supabase
-        .from('pet_access_requests')
-        .update({ status: sceltaUtente })
-        .eq('id', idRichiesta);
+    try {
+        const { error } = await supabase
+            .from('pet_access_requests')
+            .update({ status: sceltaUtente })
+            .eq('id', idRichiesta);
 
-    if (!error) {
+        if (error) throw Object.assign(new Error(error.message), { code: error.code || 'DB_UPDATE_REQUEST_ERROR' });
+
         nascondiPopupApprovazione();
-    } else {
-        alert("Errore di connessione. Riprova.");
+        
+        if (sceltaUtente === 'approved') {
+            // Opzionale: un piccolo feedback di conferma per l'utente
+            console.log("Accesso consentito con successo.");
+        }
+
+    } catch (err) {
+        console.error("Errore aggiornamento richiesta:", err);
+        
+        await logError({
+            source: 'condivisione_qr',
+            action: 'rispondi_richiesta',
+            errorMessage: err.message || "Errore durante l'aggiornamento dello status della richiesta",
+            errorCode: err.code || 'UNKNOWN_DB_ERROR',
+            context: { idRichiesta, sceltaUtente }
+        });
+
+        alert("Errore di connessione durante la conferma. Riprova.");
     }
 };
 

@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Luoghi di Appuntamento — Veterinari.it</title>
+    <link rel="stylesheet" href="../../css/global.css">
+    <link rel="stylesheet" href="../../css/luoghi.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body style="background-color: #F8F7F4;">
+
+    <main class="app-container" style="max-width: 480px; margin: 0 auto; min-height: 100vh; padding: 20px; box-sizing: border-box; position: relative;">
+        
+        <!-- Header -->
+        <header style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 25px;">
+            <a href="profilo-veterinario.html" style="color: #1E293B; font-size: 1.2rem; text-decoration: none;"><i class="fas fa-chevron-left"></i></a>
+            <div style="text-align: center;">
+                <h2 style="margin: 0; color: #1E293B; font-size: 1.2rem; font-weight: 700;">Luoghi di appuntamento</h2>
+                <p style="margin: 2px 0 0 0; color: #64748B; font-size: 0.85rem;" id="placesCount">Caricamento in corso...</p>
+            </div>
+            <div style="width: 20px;"></div> <!-- Spacer -->
+        </header>
+
+        <!-- Contenitore Lista Luoghi Dinamica -->
+        <div id="locationsList" style="margin-bottom: 90px;">
+            <div style="text-align: center; padding: 40px; color: #94A3B8;">
+                <i class="fa-solid fa-spinner fa-spin" style="font-size: 2rem;"></i>
+            </div>
+        </div>
+
+        <!-- Bottone Fisso Aggiungi -->
+        <div style="position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); width: 100%; max-width: 440px; padding: 0 20px; box-sizing: border-box; z-index: 99;">
+            <button id="btnOpenModal" style="width: 100%; background: #F58220; color: #fff; border: none; padding: 16px; border-radius: 16px; font-weight: 700; font-size: 1rem; cursor: pointer; box-shadow: 0 4px 12px rgba(245, 130, 32, 0.3);">
+                <i class="fa-solid fa-plus" style="margin-right: 8px;"></i> Aggiungi un luogo
+            </button>
+        </div>
+
+        <!-- Modale Inserimento Luogo e Turni -->
+        <div id="addLocationModal" class="modal-overlay">
+            <div class="modal-content">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <h3 style="margin: 0; color: #1E293B; font-size: 1.25rem;">Nuova sede e turni</h3>
+                    <span id="btnCloseModal" style="font-size: 1.5rem; color: #94A3B8; cursor: pointer;">&times;</span>
+                </div>
+
+                <form id="locationForm">
+                    <div style="margin-bottom: 16px;">
+                        <label style="display: block; font-size: 0.85rem; font-weight: 600; color: #475569; margin-bottom: 6px;">Nome Struttura</label>
+                        <input type="text" id="locName" placeholder="Es. Clinica San Marco" required style="width: 100%; padding: 12px; border: 1px solid #E2E8F0; border-radius: 12px; box-sizing: border-box;">
+                    </div>
+
+                    <div style="margin-bottom: 16px;">
+                        <label style="display: block; font-size: 0.85rem; font-weight: 600; color: #475569; margin-bottom: 6px;">Indirizzo Completo</label>
+                        <input type="text" id="locAddress" placeholder="Via Dante 18, Milano" required style="width: 100%; padding: 12px; border: 1px solid #E2E8F0; border-radius: 12px; box-sizing: border-box;">
+                    </div>
+
+                    <!-- Sezione Turni / Orari -->
+                    <div style="margin-bottom: 20px; border-top: 1px solid #E2E8F0; padding-top: 20px;">
+                        <label style="display: block; font-size: 0.9rem; font-weight: 700; color: #1E293B; margin-bottom: 12px;">Disponibilità settimanale</label>
+                        
+                        <div id="weeklyScheduler">
+                            <!-- Generato via JS per tenere il codice HTML pulito -->
+                        </div>
+                    </div>
+
+                    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 20px;">
+                        <input type="checkbox" id="locMain" style="width: 18px; height: 18px; accent-color: #F58220;">
+                        <label for="locMain" style="font-size: 0.9rem; color: #475569; font-weight: 500;">Imposta come sede principale</label>
+                    </div>
+
+                    <div id="modalStatusMsg" style="color: #EF4444; font-size: 0.85rem; margin-bottom: 12px; text-align: center;" hidden></div>
+
+                    <button type="submit" id="btnSaveLocation" style="width: 100%; background: #F58220; color: #fff; border: none; padding: 14px; border-radius: 12px; font-weight: 700; font-size: 1rem; cursor: pointer;">
+                        Salva sede
+                    </button>
+                </form>
+            </div>
+        </div>
+
+    </main>
+
+    <script type="module" src="../../js/luoghi.js"></script>
+</body>
+</html>

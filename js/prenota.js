@@ -1,7 +1,9 @@
-import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
-import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./config.js";
-
-const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+// ==========================================
+// 1. IMPORT CENTRALIZZATI
+// ==========================================
+// ASSICURATI che i percorsi puntino alla cartella 'utils' corretta!
+import { supabase } from '../utils/supabaseClient.js';
+import { logError } from '../utils/logger.js';
 
 // ID presi dall'URL (Puliti da eventuali slash o spazi!)
 const urlParams = new URLSearchParams(window.location.search);
@@ -32,71 +34,114 @@ const summaryPrice = document.getElementById("summaryPrice");
 const statusMessage = document.getElementById("statusMessage");
 
 async function initPrenota() {
+    // ERRORE LOGICO: Nessun alert al DB, gestito solo lato UI
     if (!vetId) {
         alert("Nessun professionista selezionato!");
         window.location.href = "dashboard-proprietario.html";
         return;
     }
 
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-        window.location.href = "../../index.html";
-        return;
-    }
-    currentUser = user;
-    
-    // CONTROLLO BLINDATO AUTOPRENOTAZIONE
-    isPersonalVisit = (String(currentUser.id).trim() === String(vetId).trim());
-    
-    // Debug in console per tua sicurezza
-    console.log("ID Mio:", currentUser.id);
-    console.log("ID Vet:", vetId);
-    console.log("È una visita personale?", isPersonalVisit);
+    try {
+        const { data: { user }, error: authError } = await supabase.auth.getUser();
+        
+        if (authError) throw Object.assign(new Error(authError.message), { code: authError.code || 'AUTH_SYS_ERROR' });
+        
+        if (!user) {
+            window.location.href = "../../index.html";
+            return;
+        }
+        currentUser = user;
+        
+        // CONTROLLO BLINDATO AUTOPRENOTAZIONE
+        isPersonalVisit = (String(currentUser.id).trim() === String(vetId).trim());
+        
+        // Debug in console per tua sicurezza
+        console.log("ID Mio:", currentUser.id);
+        console.log("ID Vet:", vetId);
+        console.log("È una visita personale?", isPersonalVisit);
 
-    await loadVetInfo();
-    await loadPets();
+        await loadVetInfo();
+        await loadPets();
 
-    const hasServices = await loadServices();
-    if (hasServices) {
-        generateDatePills();
+        const hasServices = await loadServices();
+        if (hasServices) {
+            generateDatePills();
+        }
+    } catch (error) {
+        console.error("Errore inizializzazione prenota:", error);
+        await logError({
+            source: 'prenotazione',
+            action: 'init_page',
+            errorMessage: error.message || "Errore imprevisto durante l'inizializzazione della prenotazione",
+            errorCode: error.code || 'UNKNOWN_SYS_ERROR',
+            context: { vetId }
+        });
     }
 }
 
 // 1. Carica info veterinario
 async function loadVetInfo() {
-    const { data: vet, error } = await supabase
-        .from('veterinarians')
-        .select(`
-            indirizzo_clinica,
-            profiles (nome, cognome)
-        `)
-        .eq('user_id', vetId)
-        .single();
+    try {
+        const { data: vet, error } = await supabase
+            .from('veterinarians')
+            .select(`
+                indirizzo_clinica,
+                profiles (nome, cognome)
+            `)
+            .eq('user_id', vetId)
+            .single();
 
-    if (!error && vet) {
-        const nomeCompleto = `${vet.profiles?.nome || ''} ${vet.profiles?.cognome || ''}`.trim();
-        vetNameSubtitle.textContent = `Dott. ${nomeCompleto}`;
-        vetAddress.textContent = vet.indirizzo_clinica || "Indirizzo non specificato";
+        if (error) throw Object.assign(new Error(error.message), { code: error.code || 'DB_FETCH_VET_ERROR' });
+
+        if (vet) {
+            const nomeCompleto = `${vet.profiles?.nome || ''} ${vet.profiles?.cognome || ''}`.trim();
+            vetNameSubtitle.textContent = `Dott. ${nomeCompleto}`;
+            vetAddress.textContent = vet.indirizzo_clinica || "Indirizzo non specificato";
+        }
+    } catch (error) {
+        console.error("Errore caricamento info vet:", error);
+        await logError({
+            source: 'prenotazione',
+            action: 'load_vet_info',
+            errorMessage: error.message || "Impossibile caricare i dati del veterinario",
+            errorCode: error.code || 'UNKNOWN_DB_ERROR',
+            context: { vetId }
+        });
+        vetNameSubtitle.textContent = `Professionista non trovato`;
     }
 }
 
 // 2. Carica gli animali dell'utente
 async function loadPets() {
-    const { data: pets } = await supabase
-        .from('pets')
-        .select('id, nome, specie')
-        .eq('owner_id', currentUser.id);
+    try {
+        const { data: pets, error } = await supabase
+            .from('pets')
+            .select('id, nome, specie')
+            .eq('owner_id', currentUser.id);
 
-    petSelect.innerHTML = "";
-    if (pets && pets.length > 0) {
-        pets.forEach(pet => {
-            const option = document.createElement('option');
-            option.value = pet.id;
-            option.textContent = `${pet.nome} · ${pet.specie}`;
-            petSelect.appendChild(option);
+        if (error) throw Object.assign(new Error(error.message), { code: error.code || 'DB_FETCH_PETS_ERROR' });
+
+        petSelect.innerHTML = "";
+        if (pets && pets.length > 0) {
+            pets.forEach(pet => {
+                const option = document.createElement('option');
+                option.value = pet.id;
+                option.textContent = `${pet.nome} · ${pet.specie}`;
+                petSelect.appendChild(option);
+            });
+        } else {
+            petSelect.innerHTML = `<option value="" disabled selected>Nessun animale registrato</option>`;
+        }
+    } catch (error) {
+        console.error("Errore caricamento pets:", error);
+        await logError({
+            source: 'prenotazione',
+            action: 'load_pets',
+            errorMessage: error.message || "Impossibile caricare la lista animali",
+            errorCode: error.code || 'UNKNOWN_DB_ERROR',
+            context: { ownerId: currentUser.id }
         });
-    } else {
-        petSelect.innerHTML = `<option value="" disabled selected>Nessun animale registrato</option>`;
+        petSelect.innerHTML = `<option value="" disabled selected>Errore di caricamento</option>`;
     }
 }
 
@@ -134,39 +179,53 @@ function generateDatePills() {
 
 // Nuova funzione per caricare i servizi
 async function loadServices() {
-    const { data: services, error } = await supabase
-        .from('provider_services')
-        .select('*')
-        .eq('provider_id', vetId);
+    try {
+        const { data: services, error } = await supabase
+            .from('provider_services')
+            .select('*')
+            .eq('provider_id', vetId);
 
-    const noServicesMsg = document.getElementById("noServicesMsg");
-    serviceSelect.innerHTML = "";
+        if (error) throw Object.assign(new Error(error.message), { code: error.code || 'DB_FETCH_SERVICES_ERROR' });
 
-    if (error || !services || services.length === 0) {
-        serviceSelect.style.display = 'none'; 
-        noServicesMsg.style.display = 'block'; 
-        
-        totalPrice.textContent = "-- €";
-        summaryPrice.textContent = "--";
-        return false; 
-    }
+        const noServicesMsg = document.getElementById("noServicesMsg");
+        serviceSelect.innerHTML = "";
 
-    services.forEach(srv => {
-        const option = document.createElement('option');
-        option.value = srv.id;
-        option.dataset.prezzo = srv.prezzo;
-        option.dataset.durata = srv.durata_minuti;
-        option.textContent = `${srv.nome_servizio} · ${srv.durata_minuti} min · €${srv.prezzo}`;
-        
-        if (urlServiceId && urlServiceId === srv.id) {
-            option.selected = true;
+        if (!services || services.length === 0) {
+            serviceSelect.style.display = 'none'; 
+            noServicesMsg.style.display = 'block'; 
+            
+            totalPrice.textContent = "-- €";
+            summaryPrice.textContent = "--";
+            return false; 
         }
 
-        serviceSelect.appendChild(option);
-    });
+        services.forEach(srv => {
+            const option = document.createElement('option');
+            option.value = srv.id;
+            option.dataset.prezzo = srv.prezzo;
+            option.dataset.durata = srv.durata_minuti;
+            option.textContent = `${srv.nome_servizio} · ${srv.durata_minuti} min · €${srv.prezzo}`;
+            
+            if (urlServiceId && urlServiceId === srv.id) {
+                option.selected = true;
+            }
 
-    serviceSelect.dispatchEvent(new Event("change"));
-    return true; 
+            serviceSelect.appendChild(option);
+        });
+
+        serviceSelect.dispatchEvent(new Event("change"));
+        return true; 
+    } catch (error) {
+        console.error("Errore caricamento servizi:", error);
+        await logError({
+            source: 'prenotazione',
+            action: 'load_services',
+            errorMessage: error.message || "Impossibile caricare i servizi del professionista",
+            errorCode: error.code || 'UNKNOWN_DB_ERROR',
+            context: { vetId }
+        });
+        return false;
+    }
 }
 
 // 4. Carica orari liberi incrociando con il Database!
@@ -183,7 +242,7 @@ async function loadAvailableTimes(dateStr) {
             .gte('data_inizio', `${dateStr}T00:00:00Z`)
             .lte('data_inizio', `${dateStr}T23:59:59Z`);
 
-        if (error) throw error;
+        if (error) throw Object.assign(new Error(error.message), { code: error.code || 'DB_FETCH_APPOINTMENTS_ERROR' });
 
         const bookedTimes = bookedAppointments.map(app => {
             const d = new Date(app.data_inizio);
@@ -219,6 +278,14 @@ async function loadAvailableTimes(dateStr) {
     } catch (err) {
         console.error("Errore lettura appuntamenti:", err);
         timeContainer.innerHTML = `<p style="color: red;">Errore di caricamento orari.</p>`;
+        
+        await logError({
+            source: 'prenotazione',
+            action: 'load_available_times',
+            errorMessage: err.message || "Errore nel calcolo degli slot disponibili",
+            errorCode: err.code || 'UNKNOWN_DB_ERROR',
+            context: { dateStr, vetId }
+        });
     }
 }
 
@@ -272,7 +339,7 @@ confirmBtn.addEventListener("click", async () => {
                 costo: costoFinale
             });
 
-        if (error) throw error;
+        if (error) throw Object.assign(new Error(error.message), { code: error.code || 'DB_INSERT_APPOINTMENT_ERROR' });
 
         // ==========================================
         // B. INVIO EMAIL TRAMITE EDGE FUNCTION
@@ -302,6 +369,14 @@ confirmBtn.addEventListener("click", async () => {
 
             if (funcError) {
                 console.warn("Appuntamento salvato, ma errore nell'invio della mail:", funcError);
+                // Logghiamo l'errore email senza bloccare il frontend per l'utente
+                await logError({
+                    source: 'prenotazione',
+                    action: 'send_email',
+                    errorMessage: funcError.message || "Errore chiamata Edge Function",
+                    errorCode: 'EDGE_FUNCTION_ERROR',
+                    context: { vetId, petId: petSelect.value }
+                });
             } else {
                 console.log("Email inviate con successo alla clinica e al cliente!");
             }
@@ -322,7 +397,17 @@ confirmBtn.addEventListener("click", async () => {
         }, 2500);
 
     } catch (err) {
-        statusMessage.textContent = "Errore Supabase: " + (err.message || JSON.stringify(err));
+        console.error("Errore salvataggio appuntamento:", err);
+        
+        await logError({
+            source: 'prenotazione',
+            action: 'confirm_booking',
+            errorMessage: err.message || "Errore fatale inserimento appuntamento",
+            errorCode: err.code || 'UNKNOWN_DB_ERROR',
+            context: { petId: petSelect.value, vetId, dataInizio: dataInizio.toISOString() }
+        });
+
+        statusMessage.textContent = "Errore di sistema durante la prenotazione. Riprova.";
         statusMessage.className = "status-message error";
         statusMessage.hidden = false;
         confirmBtn.disabled = false;
