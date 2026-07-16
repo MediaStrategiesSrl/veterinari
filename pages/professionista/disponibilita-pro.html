@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Disponibilità e Turni — Professionista</title>
+    
+    <!-- Usa lo stesso CSS creato prima, è perfetto e universale -->
+    <link rel="stylesheet" href="../../css/global.css">
+    <link rel="stylesheet" href="../../css/disponibilita.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="app-container">
+
+    <!-- Header -->
+    <header class="top-nav">
+        <a href="javascript:history.back()" class="back-btn"><i class="fas fa-chevron-left"></i></a>
+        <div class="page-title">
+            <h1>Disponibilità</h1>
+            <span>Orari e luoghi di appuntamento</span>
+        </div>
+        <div style="width: 24px;"></div>
+    </header>
+
+    <!-- Corpo principale -->
+    <main class="main-content">
+        
+        <!-- Hero Card (Azzurra) -->
+        <div class="blue-header-card">
+            <h2>Gestione Turni</h2>
+            <p>Imposta i tuoi orari di lavoro per consentire ai clienti di prenotare i tuoi servizi nei momenti giusti.</p>
+        </div>
+
+        <!-- Selettore Struttura/Zona (Filtro per Professionista) -->
+        <div class="location-selector">
+            <label for="locationSelect">Seleziona la sede / zona operativa</label>
+            <div class="select-wrapper">
+                <i class="fa-solid fa-location-dot select-icon"></i>
+                <select id="locationSelect" class="form-control">
+                    <option value="" disabled selected>Caricamento sedi...</option>
+                </select>
+                <i class="fa-solid fa-chevron-down dropdown-icon"></i>
+            </div>
+        </div>
+
+        <!-- Area dei turni (nascosta finché non si sceglie la sede) -->
+        <div id="turniContainer" style="display: none;">
+            <!-- Renderizzato via JS -->
+        </div>
+
+    </main>
+
+    <!-- Bottom Bar con Bottone Salva -->
+    <div class="floating-bottom-bar">
+        <button id="btnSaveSchedule" class="btn-primary" disabled>
+            <i class="fa-solid fa-floppy-disk"></i> Salva disponibilità
+        </button>
+    </div>
+
+    <!-- Punta al JS specifico del professionista -->
+    <script type="module" src="../../js/disponibilita-pro.js"></script>
+</body>
+</html>

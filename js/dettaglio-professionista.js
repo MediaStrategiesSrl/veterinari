@@ -1,11 +1,11 @@
 // ==========================================
 // 1. IMPORT CENTRALIZZATI
 // ==========================================
-// IMPORTANTE: Assicurati che i percorsi (../ o ./) puntino ai file corretti in base alle tue cartelle!
+// ASSICURATI che i percorsi (../ o ./) puntino ai file corretti in base alle tue cartelle!
 import { supabase } from '../utils/supabaseClient.js'; 
 import { logError } from '../utils/logger.js';
 
-// Elementi DOM
+// Elementi DOM Base
 const vetName = document.getElementById("vetName");
 const vetAvatar = document.getElementById("vetAvatar");
 const vetDistance = document.getElementById("vetDistance");
@@ -13,7 +13,11 @@ const vetPrice = document.getElementById("vetPrice");
 const vetRole = document.getElementById("vetRole"); 
 const servicesList = document.getElementById("servicesList"); 
 
-// Estrazione sicura dei dati profilo (PostgREST a volte restituisce array in JOIN complessi)
+// Elementi DOM Nuovi per la disponibilità
+const availabilityTitle = document.getElementById("availabilityTitle");
+const availabilitySubtitle = document.getElementById("availabilitySubtitle");
+
+// Estrazione sicura dei dati profilo
 function getProfileData(profileObj, field) {
     if (!profileObj) return null;
     if (Array.isArray(profileObj)) return profileObj[0]?.[field] || null;
@@ -23,9 +27,8 @@ function getProfileData(profileObj, field) {
 async function initPage() {
     // 1. Legge l'ID dalla URL
     const urlParams = new URLSearchParams(window.location.search);
-    const targetId = urlParams.get('id'); // Chiamiamolo targetId perché potrebbe essere Vet o Pro
+    const targetId = urlParams.get('id'); 
 
-    // ERRORE LOGICO: Manca l'ID. Non logghiamo nel DB, blocchiamo solo la UI.
     if (!targetId) {
         if (vetName) vetName.textContent = "Errore: ID professionista mancante";
         return;
@@ -41,15 +44,17 @@ async function initPage() {
         let isVet = true;
 
         // ==========================================
-        // 2. RICERCA INTELLIGENTE: PRIMA I VETERINARI
+        // 2. RICERCA INTELLIGENTE: VETERINARI (CON ORARI!)
         // ==========================================
-        // Usiamo maybeSingle() così se non lo trova NON crasha
         const { data: vetData, error: vetError } = await supabase
             .from('veterinarians')
             .select(`
                 user_id,
                 numero_ordine,
-                profiles (nome, cognome, avatar_url)
+                profiles (
+                    nome, cognome, avatar_url,
+                    provider_locations (orari_disponibilita, is_principale)
+                )
             `)
             .eq('user_id', targetId)
             .maybeSingle();
@@ -60,7 +65,7 @@ async function initPage() {
             profileData = vetData;
         } else {
             // ==========================================
-            // 3. FALLBACK: CERCA TRA I PROFESSIONISTI
+            // 3. FALLBACK: PROFESSIONISTI (CON ORARI!)
             // ==========================================
             isVet = false;
             const { data: proData, error: proError } = await supabase
@@ -69,7 +74,10 @@ async function initPage() {
                     user_id,
                     tipo_professione,
                     tariffa_oraria,
-                    profiles (nome, cognome, avatar_url)
+                    profiles (
+                        nome, cognome, avatar_url,
+                        provider_locations (orari_disponibilita, is_principale)
+                    )
                 `)
                 .eq('user_id', targetId)
                 .maybeSingle();
@@ -77,7 +85,6 @@ async function initPage() {
             if (proError) throw Object.assign(new Error(proError.message), { code: 'DB_PRO_PROFILE_ERROR' });
             
             if (!proData) {
-                // Se non c'è in nessuna delle due tabelle, lanciamo un errore gestito
                 throw Object.assign(new Error("Profilo non trovato nel database"), { code: 'PROFILE_NOT_FOUND' });
             }
             
@@ -122,13 +129,49 @@ async function initPage() {
         }
 
         // ==========================================
-        // 7. SCARICA E MOSTRA I SERVIZI
+        // 7. MAGIA: CONTROLLO DISPONIBILITÀ OGGI
+        // ==========================================
+        if (availabilityTitle && availabilitySubtitle) {
+            const locations = getProfileData(profileData.profiles, 'provider_locations') || [];
+            const primaryLocation = locations.find(l => l.is_principale) || locations[0];
+
+            let isAvailableToday = false;
+
+            if (primaryLocation && primaryLocation.orari_disponibilita) {
+                const orari = primaryLocation.orari_disponibilita;
+                
+                // Mappa dei giorni in italiano per incrociarli col JSON
+                const giorniSettimana = ["domenica", "lunedi", "martedi", "mercoledi", "giovedi", "venerdi", "sabato"];
+                const oggi = new Date();
+                const nomeOggi = giorniSettimana[oggi.getDay()];
+
+                // Se l'array degli orari per "oggi" esiste e ha almeno una fascia (es. non è vuoto)
+                if (orari[nomeOggi] && orari[nomeOggi].length > 0) {
+                    isAvailableToday = true;
+                }
+            }
+
+            if (isAvailableToday) {
+                availabilityTitle.textContent = "Oggi";
+                availabilityTitle.style.color = "#1E293B"; // Nero standard
+                availabilitySubtitle.textContent = "Disponibile";
+                availabilitySubtitle.style.color = "#64748B"; // Grigietto standard
+            } else {
+                availabilityTitle.textContent = "Oggi";
+                availabilityTitle.style.color = "#94A3B8"; // Grigio spento
+                availabilitySubtitle.textContent = "Non disponibile";
+                availabilitySubtitle.style.color = "#DC2626"; // Rosso per allertare l'utente
+            }
+        }
+
+        // ==========================================
+        // 8. SCARICA E MOSTRA I SERVIZI
         // ==========================================
         const { data: services, error: servicesError } = await supabase
             .from('provider_services')
             .select('id, nome_servizio, durata_minuti, prezzo') 
             .eq('provider_id', targetId)
-            .order('prezzo', { ascending: true }); // Ordinati per prezzo crescente
+            .order('prezzo', { ascending: true }); 
 
         if (servicesError) throw Object.assign(new Error(servicesError.message), { code: 'DB_SERVICES_FETCH_ERROR' });
 
@@ -141,7 +184,6 @@ async function initPage() {
                 const serviceCard = document.createElement("a");
                 serviceCard.href = `prenota.html?user_id=${targetId}&service_id=${servizio.id}`;
                 
-                // Manteniamo i tuoi stili CSS per le card
                 serviceCard.style.cssText = `
                     display: flex; 
                     align-items: center; 
@@ -154,7 +196,6 @@ async function initPage() {
                     box-shadow: 0 2px 8px rgba(0,0,0,0.02);
                 `;
                 
-                // Adattiamo l'icona in base al fatto che sia Medico o meno
                 const iconHTML = isVet 
                     ? `<div style="width: 45px; height: 45px; background: #FEF3C7; color: #F58220; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; flex-shrink: 0; margin-right: 15px;"><i class="fa-solid fa-notes-medical"></i></div>`
                     : `<div style="width: 45px; height: 45px; background: #E0F2FE; color: #0284C7; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; flex-shrink: 0; margin-right: 15px;"><i class="fa-solid fa-paw"></i></div>`;
@@ -171,7 +212,6 @@ async function initPage() {
                 if (servicesList) servicesList.appendChild(serviceCard);
             });
 
-            // Aggiorniamo il box "Da --"
             if (vetPrice && minPrice !== undefined) {
                 vetPrice.textContent = `€ ${minPrice}`;
             }
@@ -189,9 +229,6 @@ async function initPage() {
     } catch (error) {
         console.error("Eccezione di sistema rilevata:", error);
         
-        // ==========================================
-        // TRIGGER LOG ERROR
-        // ==========================================
         if (error.code !== 'PROFILE_NOT_FOUND') {
             await logError({
                 source: 'dettaglio_professionista',
@@ -202,7 +239,6 @@ async function initPage() {
             });
         }
 
-        // Avviso per l'utente finale sulla UI
         if (vetName) vetName.textContent = error.code === 'PROFILE_NOT_FOUND' ? "Profilo non trovato" : "Servizio non disponibile";
         if (vetRole) vetRole.textContent = "Errore di caricamento";
         if (servicesList) {

@@ -9,35 +9,80 @@ serve(async (req) => {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
   }
+  
   if (req.method === 'OPTIONS') return new Response('ok', { headers })
 
   try {
     // 1. Riceviamo i dati dal tuo JavaScript (Frontend)
-    const { emailProprietario, emailProfessionista, nomeAnimale, nomeProfessionista, dataVisita, noteAggiuntive } = await req.json()
+    // ABBIAMO AGGIUNTO: luogoAppuntamento e messaggioPersonalizzato
+    const { 
+        emailProprietario, 
+        emailProfessionista, 
+        nomeAnimale, 
+        nomeProfessionista, 
+        dataVisita, 
+        luogoAppuntamento, 
+        noteAggiuntive, 
+        messaggioPersonalizzato 
+    } = await req.json()
 
-    // 2. Prepariamo la MAIL PER IL PROPRIETARIO (Calda e accogliente)
+    // 2. Prepariamo la MAIL PER IL PROPRIETARIO (Calda, accogliente e in linea col design dell'app)
     const htmlProprietario = `
-      <div style="font-family: sans-serif; color: #1E293B; max-width: 600px; margin: 0 auto;">
-        <h2 style="color: #F58220;">Prenotazione Confermata! 🎉</h2>
-        <p>Ciao! La tua visita per <strong>${nomeAnimale}</strong> è stata confermata.</p>
-        <div style="background: #F8FAFC; padding: 15px; border-radius: 10px; margin: 20px 0;">
-          <p><strong>Dottore/Professionista:</strong> ${nomeProfessionista}</p>
-          <p><strong>Data e Ora:</strong> ${dataVisita}</p>
-          ${noteAggiuntive ? `<p><strong>Note del medico:</strong> <em>"${noteAggiuntive}"</em></p>` : ''}
+      <div style="font-family: 'Inter', Helvetica, sans-serif; color: #1E293B; max-width: 600px; margin: 0 auto; border: 1px solid #E2E8F0; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
+        
+        <div style="background-color: #F58220; padding: 25px; text-align: center;">
+            <h2 style="color: #ffffff; margin: 0; font-size: 24px;">Prenotazione Confermata! 🎉</h2>
         </div>
-        <p>A presto!</p>
+        
+        <div style="padding: 30px;">
+            <p style="font-size: 16px; line-height: 1.5;">Ciao! La tua visita per <strong>${nomeAnimale}</strong> è stata confermata con successo sulla piattaforma Veterinari.it.</p>
+            
+            <div style="background: #F8FAFC; padding: 20px; border-radius: 12px; margin: 25px 0; border-left: 5px solid #0284C7;">
+              <p style="margin: 8px 0; font-size: 15px;"><strong>👨‍⚕️ Professionista:</strong> ${nomeProfessionista}</p>
+              <p style="margin: 8px 0; font-size: 15px;"><strong>📅 Data e Ora:</strong> ${dataVisita}</p>
+              <p style="margin: 8px 0; font-size: 15px;"><strong>📍 Luogo:</strong> ${luogoAppuntamento || 'Studio Principale'}</p>
+            </div>
+
+            <!-- SEZIONE OPZIONALE: Messaggio personalizzato del Veterinario -->
+            ${messaggioPersonalizzato ? `
+            <div style="background: #FEF3C7; padding: 20px; border-radius: 12px; margin: 25px 0; border: 1px solid #FDE68A;">
+              <p style="margin: 0 0 8px 0; color: #D97706; font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px;"><strong>Messaggio dal professionista:</strong></p>
+              <p style="margin: 0; font-style: italic; color: #92400E; font-size: 15px;">"${messaggioPersonalizzato}"</p>
+            </div>
+            ` : ''}
+
+            ${noteAggiuntive ? `<p style="font-size: 14px; color: #64748B; background: #F1F5F9; padding: 15px; border-radius: 8px;"><strong>Le tue note in fase di prenotazione:</strong> <em>"${noteAggiuntive}"</em></p>` : ''}
+            
+            <hr style="border: none; border-top: 1px solid #E2E8F0; margin: 30px 0;">
+            <p style="font-size: 14px; color: #94A3B8; text-align: center; margin: 0;">A presto,<br>Il team di <strong>Veterinari.it</strong></p>
+        </div>
       </div>
     `;
 
-    // 3. Prepariamo la MAIL PER IL PROFESSIONISTA (Professionale e schematica)
+    // 3. Prepariamo la MAIL PER IL PROFESSIONISTA (Professionale, chiara e schematica)
     const htmlProfessionista = `
-      <div style="font-family: sans-serif; color: #1E293B; max-width: 600px; margin: 0 auto;">
-        <h2 style="color: #3B82F6;">Nuovo Appuntamento in Agenda 📅</h2>
-        <p>Gentile ${nomeProfessionista}, hai ricevuto una nuova prenotazione.</p>
-        <div style="background: #F1F5F9; padding: 15px; border-radius: 10px; margin: 20px 0;">
-          <p><strong>Paziente:</strong> ${nomeAnimale}</p>
-          <p><strong>Data e Ora:</strong> ${dataVisita}</p>
-          <p><strong>Email Cliente:</strong> ${emailProprietario}</p>
+      <div style="font-family: 'Inter', Helvetica, sans-serif; color: #1E293B; max-width: 600px; margin: 0 auto; border: 1px solid #E2E8F0; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
+        
+        <div style="background-color: #0284C7; padding: 25px; text-align: center;">
+            <h2 style="color: #ffffff; margin: 0; font-size: 24px;">Nuovo Appuntamento in Agenda 📅</h2>
+        </div>
+        
+        <div style="padding: 30px;">
+            <p style="font-size: 16px; line-height: 1.5;">Gentile ${nomeProfessionista}, un utente ha appena prenotato un nuovo appuntamento nella tua agenda.</p>
+            
+            <div style="background: #F1F5F9; padding: 20px; border-radius: 12px; margin: 25px 0; border-left: 5px solid #F58220;">
+              <p style="margin: 8px 0; font-size: 15px;"><strong>🐾 Paziente:</strong> ${nomeAnimale}</p>
+              <p style="margin: 8px 0; font-size: 15px;"><strong>📅 Data e Ora:</strong> ${dataVisita}</p>
+              <p style="margin: 8px 0; font-size: 15px;"><strong>📍 Sede:</strong> ${luogoAppuntamento || 'Studio Principale'}</p>
+              <p style="margin: 8px 0; font-size: 15px;"><strong>✉️ Contatto Cliente:</strong> <a href="mailto:${emailProprietario}" style="color: #0284C7;">${emailProprietario}</a></p>
+            </div>
+
+            ${noteAggiuntive ? `
+            <div style="background: #FEE2E2; padding: 15px; border-radius: 8px; border-left: 4px solid #EF4444;">
+                <p style="margin: 0; font-size: 14px; color: #991B1B;"><strong>Note/Richieste del cliente:</strong> <em>"${noteAggiuntive}"</em></p>
+            </div>` : ''}
+            
+            <p style="font-size: 14px; color: #64748B; text-align: center; margin-top: 30px;">Puoi gestire questo appuntamento dalla tua Dashboard su Veterinari.it</p>
         </div>
       </div>
     `;
@@ -47,9 +92,9 @@ serve(async (req) => {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${resendApiKey}` },
       body: JSON.stringify({
-        from: 'VeterinariApp <onboarding@resend.dev>', // Usa questo indirizzo di test per ora
+        from: 'VeterinariApp <onboarding@resend.dev>', // Sostituisci con il tuo dominio verificato su Resend in futuro
         to: emailProprietario,
-        subject: `Conferma Visita per ${nomeAnimale}`,
+        subject: `Conferma Visita per ${nomeAnimale} 🐾`,
         html: htmlProprietario,
       }),
     })
@@ -61,7 +106,7 @@ serve(async (req) => {
       body: JSON.stringify({
         from: 'VeterinariApp <onboarding@resend.dev>',
         to: emailProfessionista,
-        subject: `Nuovo appuntamento: ${nomeAnimale}`,
+        subject: `Nuova prenotazione per ${nomeAnimale}`,
         html: htmlProfessionista,
       }),
     })

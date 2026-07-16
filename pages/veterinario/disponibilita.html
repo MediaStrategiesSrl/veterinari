@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Disponibilità e Turni — Veterinari.it</title>
+    <link rel="stylesheet" href="../../css/global.css">
+    <link rel="stylesheet" href="../../css/disponibilita.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="app-container">
+
+    <!-- HEADER: Rigorosamente separato -->
+    <header class="top-nav">
+        <a href="javascript:history.back()" class="back-btn"><i class="fas fa-chevron-left"></i></a>
+        <div class="page-title">
+            <h1>Disponibilità</h1>
+            <span>Orari e luoghi di appuntamento</span>
+        </div>
+        <div style="width: 24px;"></div> <!-- Spacer invisibile per centrare il titolo -->
+    </header>
+
+    <!-- MAIN: Contenitore a blocchi verticali -->
+    <main class="main-content">
+        
+        <!-- Blue Info Card a tutta larghezza -->
+        <div class="blue-header-card">
+            <h2>Gestione Turni</h2>
+            <p>Imposta i tuoi orari di lavoro per consentire ai clienti di prenotare visite e consulti nei momenti giusti.</p>
+        </div>
+
+        <!-- Selettore Struttura -->
+        <div class="form-group location-selector">
+            <label for="locationSelect">Seleziona la struttura / sede</label>
+            <div class="select-wrapper">
+                <i class="fa-solid fa-location-dot select-icon"></i>
+                <select id="locationSelect" class="form-control">
+                    <option value="" disabled selected>Caricamento sedi in corso...</option>
+                </select>
+                <i class="fa-solid fa-chevron-down dropdown-icon"></i>
+            </div>
+        </div>
+
+        <!-- Schedulatore Settimanale -->
+        <div id="weeklySchedulerContainer" style="display: none;">
+            <h3 class="section-title">Turni</h3>
+            <div id="daysContainer" class="days-container">
+                <!-- Generato via JS -->
+            </div>
+        </div>
+
+        <!-- Feedback Visivo -->
+        <div id="statusMessage" class="status-msg" hidden></div>
+
+    </main>
+
+    <!-- Bottone Fisso Salva -->
+    <div class="floating-bottom-bar">
+        <button id="btnSaveSchedule" class="btn-primary" disabled>
+            <i class="fa-solid fa-floppy-disk"></i> Salva disponibilità
+        </button>
+    </div>
+
+    <script type="module" src="../../js/disponibilita.js"></script>
+</body>
+</html>

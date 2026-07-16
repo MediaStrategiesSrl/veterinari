@@ -177,7 +177,7 @@ async function loadSearchData() {
         // C. Unisce le due liste di SEDI
         allLocations = [...normalizedVets, ...normalizedPros];
 
-        // Resto della funzione per generare le categorie... (invariato)
+        // Resto della funzione per generare le categorie...
         if (categoriesContainer) {
             categoriesContainer.innerHTML = '';
             
@@ -241,7 +241,7 @@ async function loadSearchData() {
 function applicaFiltriIncrociati() {
     let risultati = allLocations; // Lavoriamo sulla lista delle sedi fisiche
 
-    // A. Filtro Testo
+    // A. Filtro Testo (IL TUO ESATTO CODICE)
     if (searchInput) {
         const termine = searchInput.value.toLowerCase().trim();
         if (termine !== '') {
@@ -309,13 +309,16 @@ if (applyFiltri) {
 }
 
 // ==========================================
-// 6. RENDER (Gestione Molti-a-Molti Sedi)
+// 6. RENDER (MAPPA COMPLETA, LISTA SENZA DUPLICATI)
 // ==========================================
 function renderProfessionals(listaDaMostrare) {
     if (!professionalsList) return;
     professionalsList.innerHTML = '';
     
     if (markersLayer) markersLayer.clearLayers(); 
+
+    // NUOVO: Questo Set ci ricorda quali professionisti abbiamo già stampato nella lista HTML
+    const utentiStampati = new Set();
 
     if (listaDaMostrare.length > 0) {
         listaDaMostrare.forEach(pro => {
@@ -324,32 +327,44 @@ function renderProfessionals(listaDaMostrare) {
 
             let distanzaTesto = "Distanza n.d.";
             const km = calcolaDistanza(userLat, userLng, pro.latitudine, pro.longitudine);
+            
             if (!isNaN(km)) {
                 distanzaTesto = `${km} km`;
-                // Salviamo la distanza nel LocalStorage per la pagina del dettaglio
-                localStorage.setItem(`dist_${pro.user_id}`, km);
 
+                // IL PIN NELLA MAPPA VIENE AGGIUNTO SEMPRE (Così vedi tutte le cliniche)
                 if (markersLayer) {
                     L.marker([pro.latitudine, pro.longitudine])
                         .addTo(markersLayer)
-                        .bindPopup(`<strong>${pro.nome}</strong><br>${pro.tipo_professione}<br><p style="font-size:0.7rem; color:#64748B;">${pro.address}</p>`);
+                        .bindPopup(`<strong>${pro.nome} ${pro.cognome}</strong><br>${pro.tipo_professione}<br><p style="font-size:0.7rem; color:#64748B;">${pro.address}</p>`);
                 }
             }
 
-            const proHTML = `
-                <a href="dettaglio-professionista.html?id=${pro.user_id}" class="pro-card" style="display: flex; align-items: center; background: #fff; padding: 15px; border-radius: 16px; margin-bottom: 12px; text-decoration: none; border: 1px solid #E2E8F0;">
-                    <img src="${avatarUrl}" alt="${pro.nome}" style="width: 50px; height: 50px; border-radius: 50%; object-fit: cover; margin-right: 15px;">
-                    <div style="flex-grow: 1;">
-                        <div style="font-weight: bold; color: #1E293B; font-size: 1.1rem; margin-bottom: 2px;">${pro.nome}</div>
-                        <div style="font-size: 0.8rem; color: #64748B;">${distanzaTesto} &middot; ${prezzo}</div>
-                        <div style="font-size: 0.75rem; color: #F58220; margin-top: 4px; font-weight: 600;">
-                            ${pro.tipo_professione}
+            // NELLA LISTA HTML: Stampiamo solo la prima volta che incontriamo questo user_id
+            if (!utentiStampati.has(pro.user_id)) {
+                utentiStampati.add(pro.user_id); // Lo segniamo come stampato
+                
+                // Salviamo la distanza nel LocalStorage (se non c'è mettiamo 'n.d.')
+                if (!isNaN(km)) {
+                    localStorage.setItem(`dist_${pro.user_id}`, km);
+                } else {
+                    localStorage.setItem(`dist_${pro.user_id}`, 'n.d.');
+                }
+
+                const proHTML = `
+                    <a href="dettaglio-professionista.html?id=${pro.user_id}" class="pro-card" style="display: flex; align-items: center; background: #fff; padding: 15px; border-radius: 16px; margin-bottom: 12px; text-decoration: none; border: 1px solid #E2E8F0;">
+                        <img src="${avatarUrl}" alt="${pro.nome} ${pro.cognome}" style="width: 50px; height: 50px; border-radius: 50%; object-fit: cover; margin-right: 15px;">
+                        <div style="flex-grow: 1;">
+                            <div style="font-weight: bold; color: #1E293B; font-size: 1.1rem; margin-bottom: 2px;">${pro.nome} ${pro.cognome}</div>
+                            <div style="font-size: 0.8rem; color: #64748B;">${distanzaTesto} &middot; ${prezzo}</div>
+                            <div style="font-size: 0.75rem; color: #F58220; margin-top: 4px; font-weight: 600;">
+                                ${pro.tipo_professione}
+                            </div>
                         </div>
-                    </div>
-                    <i class="fa-solid fa-chevron-right" style="color: #CBD5E1;"></i>
-                </a>
-            `;
-            professionalsList.insertAdjacentHTML('beforeend', proHTML);
+                        <i class="fa-solid fa-chevron-right" style="color: #CBD5E1;"></i>
+                    </a>
+                `;
+                professionalsList.insertAdjacentHTML('beforeend', proHTML);
+            }
         });
     } else {
         professionalsList.innerHTML = `

@@ -1,0 +1,118 @@
+/* ==========================================
+   CSS: DISPONIBILITÀ E TURNI (BUGFIX SFONDI)
+   ========================================== */
+
+/* Forza l'allineamento a colonna per l'intera app */
+.app-container {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    background-color: #F8F7F4;
+    font-family: 'Inter', sans-serif;
+}
+
+/* Header bloccato in alto - FIX SFONDO BIANCO RIMOSSO */
+.top-nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px;
+    background-color: transparent !important; /* Rende lo sfondo invisibile */
+    width: 100%;
+    box-sizing: border-box;
+    flex-shrink: 0;
+}
+.back-btn { color: #1E293B; font-size: 1.2rem; text-decoration: none; }
+.page-title { text-align: center; flex-grow: 1; }
+.page-title h1 { margin: 0; font-size: 1.2rem; color: #1E293B; font-weight: 700; }
+.page-title span { font-size: 0.85rem; color: #64748B; }
+
+/* Corpo Centrale: Forza l'incolonnamento */
+.main-content {
+    display: block; 
+    width: 100%;
+    box-sizing: border-box;
+    padding: 10px 20px 120px 20px; /* Spazio abbondante in basso per il bottone */
+}
+
+/* Card Blu: A tutta larghezza */
+.blue-header-card {
+    display: block;
+    width: 100%;
+    box-sizing: border-box;
+    background: linear-gradient(135deg, #38BDF8 0%, #0284C7 100%);
+    border-radius: 20px;
+    padding: 25px 20px;
+    color: #fff;
+    box-shadow: 0 10px 25px rgba(2, 132, 199, 0.2);
+    margin-bottom: 25px;
+}
+.blue-header-card h2 { margin: 0 0 10px 0; font-size: 1.4rem; }
+.blue-header-card p { margin: 0; font-size: 0.95rem; opacity: 0.9; line-height: 1.4; }
+
+/* Selettore */
+.location-selector { margin-bottom: 30px; display: block; width: 100%; }
+.location-selector label { display: block; font-weight: 700; color: #1E293B; margin-bottom: 10px; font-size: 0.95rem; }
+.select-wrapper { position: relative; display: block; width: 100%; }
+.select-icon { position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: #0284C7; }
+.dropdown-icon { position: absolute; right: 15px; top: 50%; transform: translateY(-50%); color: #94A3B8; pointer-events: none; }
+.form-control {
+    width: 100%; padding: 16px 40px 16px 45px; border: 1px solid #CBD5E1; border-radius: 16px;
+    background: #fff; font-size: 1rem; color: #1E293B; appearance: none; box-sizing: border-box; font-weight: 600;
+}
+.form-control:focus { outline: none; border-color: #0284C7; box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.1); }
+
+/* Calendario */
+.section-title { font-size: 1.1rem; color: #1E293B; margin-bottom: 15px; font-weight: 700; }
+.days-container { display: flex; flex-direction: column; gap: 12px; }
+
+.day-card {
+    background: #fff; border: 1px solid #E2E8F0; border-radius: 16px; padding: 15px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.02); transition: opacity 0.2s;
+}
+.day-card.disabled { opacity: 0.5; background: #F8FAFC; border-color: #E2E8F0; }
+
+.day-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+.day-name { font-weight: 700; color: #1E293B; font-size: 1.05rem; text-transform: capitalize; }
+
+/* Switch iOS */
+.switch { position: relative; display: inline-block; width: 48px; height: 28px; flex-shrink: 0; }
+.switch input { opacity: 0; width: 0; height: 0; }
+.slider {
+    position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0;
+    background-color: #CBD5E1; transition: .3s; border-radius: 34px;
+}
+.slider:before {
+    position: absolute; content: ""; height: 22px; width: 22px; left: 3px; bottom: 3px;
+    background-color: white; transition: .3s; border-radius: 50%;
+}
+input:checked + .slider { background-color: #10B981; }
+input:checked + .slider:before { transform: translateX(20px); }
+
+/* Input Time */
+.time-slots { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.time-input {
+    padding: 10px 12px; border: 1px solid #CBD5E1; border-radius: 12px; background: #fff;
+    font-family: inherit; font-size: 1rem; color: #1E293B; flex-grow: 1; text-align: center; font-weight: 600; width: 100px;
+}
+.time-input:disabled { background: #E2E8F0; color: #94A3B8; cursor: not-allowed; }
+.time-separator { color: #64748B; font-weight: 600; font-size: 0.9rem; }
+
+/* Barra in basso - FIX SFONDO BIANCO RIMOSSO */
+.floating-bottom-bar {
+    position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 480px; 
+    background-color: transparent !important; /* Rimuove lo sfondo bianco */
+    box-shadow: none !important; /* Rimuove l'ombra del blocco bianco */
+    padding: 15px 20px 30px 20px; /* Spazio per non far toccare i bordi dello schermo */
+    box-sizing: border-box; z-index: 100;
+    pointer-events: none; /* Permette di cliccare gli elementi dietro il contenitore trasparente */
+}
+
+/* Pulsante principale */
+.btn-primary {
+    pointer-events: auto; /* Riattiva il click solo sul bottone */
+    width: 100%; background: #F58220; color: #fff; border: none; padding: 16px; border-radius: 16px;
+    font-weight: 700; font-size: 1.05rem; cursor: pointer; transition: 0.2s; display: block;
+}
+.btn-primary:not(:disabled) { box-shadow: 0 4px 12px rgba(245, 130, 32, 0.3); }
+.btn-primary:disabled { background: #CBD5E1; cursor: not-allowed; color: #F8FAFC; box-shadow: none; }
