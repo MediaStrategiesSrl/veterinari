@@ -14,6 +14,7 @@ const userNameDisplay = document.getElementById("userNameDisplay");
 const userDetailsDisplay = document.getElementById("userDetailsDisplay");
 const btnLogout = document.getElementById("btnLogout");
 const deleteRoleBtn = document.getElementById('deleteRoleBtn'); 
+const locationsCountProfile = document.getElementById('locationsCountProfile'); // Elemento del nuovo menu
 
 // Funzione utile: Estrae le iniziali da Nome e Cognome
 function getInitials(firstName, lastName) {
@@ -32,7 +33,7 @@ function getInitials(firstName, lastName) {
 }
 
 // ==========================================
-// 1. CARICA IL PROFILO
+// 2. CARICA IL PROFILO E IL CONTEGGIO LUOGHI
 // ==========================================
 async function loadUserProfile() {
     try {
@@ -80,6 +81,9 @@ async function loadUserProfile() {
             `;
         }
 
+        // CARICA CONTEGGIO LUOGHI / ZONE
+        await loadLocationsCount();
+
     } catch (err) {
         console.error("Errore nel caricamento del profilo:", err);
         
@@ -97,8 +101,32 @@ async function loadUserProfile() {
     }
 }
 
+// Funzione che conta quante zone/sedi ha configurato il professionista
+async function loadLocationsCount() {
+    if (!locationsCountProfile) return;
+
+    try {
+        const { count, error } = await supabase
+            .from('provider_locations')
+            .select('*', { count: 'exact', head: true })
+            .eq('provider_id', currentUser.id)
+            .eq('ruolo_associato', 'professionista'); // Isola i dati del professionista
+
+        if (error) throw error;
+
+        if (count === 0) {
+            locationsCountProfile.textContent = "Nessuna zona/sede configurata";
+        } else {
+            locationsCountProfile.textContent = `${count} ${count === 1 ? 'zona/sede configurata' : 'zone/sedi configurate'}`;
+        }
+    } catch (e) {
+        console.error("Errore recupero conteggio luoghi", e);
+        locationsCountProfile.textContent = "Gestisci sedi e domicilio";
+    }
+}
+
 // ==========================================
-// 2. TASTO LOGOUT / ESCI
+// 3. TASTO LOGOUT / ESCI
 // ==========================================
 if (btnLogout) {
     btnLogout.addEventListener("click", async () => {
@@ -124,7 +152,7 @@ if (btnLogout) {
 }
 
 // ==========================================
-// 3. TASTO ELIMINA RUOLO
+// 4. TASTO ELIMINA RUOLO
 // ==========================================
 if (deleteRoleBtn) {
     deleteRoleBtn.addEventListener('click', async () => {

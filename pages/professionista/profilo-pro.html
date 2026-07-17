@@ -31,9 +31,10 @@
 
         <div class="section-container">
             
+            <!-- DATI PERSONALI -->
             <a href="datipersonali-pro.html" class="menu-action-card" style="text-decoration: none;">
                 <div class="info-icon icon-blue">
-                    <i class="fa-solid fa-puzzle-piece"></i>
+                    <i class="fa-solid fa-user-pen"></i>
                 </div>
                 <div class="menu-action-text">
                     <div class="menu-action-title">Dati personali</div>
@@ -42,6 +43,19 @@
                 <i class="fa-solid fa-chevron-right" style="color: #ccc;"></i>
             </a>
 
+            <!-- NUOVA BOX: LUOGHI E ZONE OPERATIVE -->
+            <a href="luoghi-pro.html" class="menu-action-card" style="text-decoration: none;">
+                <div class="info-icon" style="background-color: #FFF7ED; color: #F58220;">
+                    <i class="fa-solid fa-map-location-dot"></i>
+                </div>
+                <div class="menu-action-text">
+                    <div class="menu-action-title">Luoghi di appuntamento</div>
+                    <div class="menu-action-desc" id="locationsCountProfile">Calcolo disponibilità...</div>
+                </div>
+                <i class="fa-solid fa-chevron-right" style="color: #ccc;"></i>
+            </a>
+
+            <!-- RUOLI DELL'ACCOUNT -->
             <a href="../../ruoli.html" class="menu-action-card" style="text-decoration: none;">
                 <div class="info-icon icon-blue">
                     <i class="fa-solid fa-puzzle-piece"></i>
@@ -53,9 +67,10 @@
                 <i class="fa-solid fa-chevron-right" style="color: #ccc;"></i>
             </a>
 
+            <!-- PRIVACY -->
             <a href="#" class="menu-action-card" style="text-decoration: none;">
                 <div class="info-icon icon-orange">
-                    <i class="fa-solid fa-diamond"></i>
+                    <i class="fa-solid fa-shield-halved"></i>
                 </div>
                 <div class="menu-action-text">
                     <div class="menu-action-title">Privacy e autorizzazioni</div>
@@ -64,6 +79,7 @@
                 <i class="fa-solid fa-chevron-right" style="color: #ccc;"></i>
             </a>
 
+            <!-- NOTIFICHE -->
             <a href="#" class="menu-action-card" style="text-decoration: none;">
                 <div class="info-icon" style="background-color: #E6F4FA; color: #00BFA5;">
                     <i class="fa-solid fa-bell"></i>
@@ -81,34 +97,34 @@
             <button id="btnLogout" class="btn-demo">Esci dall'account</button>
         </div>
 
-        <div id="deleteRoleBtn" style="background-color: #FEF2F2; border-radius: 16px; padding: 16px; margin-top: 15px; text-align: center; color: #EF4444; font-weight: 700; cursor: pointer; border: 1px solid #FEE2E2; transition: all 0.2s;">
+        <div id="deleteRoleBtn" style="background-color: #FEF2F2; border-radius: 16px; padding: 16px; margin-top: 15px; margin-bottom: 40px; text-align: center; color: #EF4444; font-weight: 700; cursor: pointer; border: 1px solid #FEE2E2; transition: all 0.2s;">
             Elimina Ruolo
         </div>
 
-        <nav class="bottom-nav">
-            <a href="dashboard-professionista.html" class="nav-item">
-                <i class="fa-solid fa-house"></i>
-                <span>Home</span>
-            </a>
-            <a href="agenda-pro.html" class="nav-item">
-                <i class="fa-solid fa-table-cells"></i>
-                <span>Agenda</span>
-            </a>
-            <a href="clienti-pro.html" class="nav-item">
-                <i class="fa-solid fa-clover"></i>
-                <span>Clienti</span>
-            </a>
-            <a href="servizi-pro.html" class="nav-item">
-                <i class="fa-solid fa-bars"></i>
-                <span>Servizi</span>
-            </a>
-            <a href="profilo-pro.html" class="nav-item active">
-                <i class="fa-solid fa-user"></i>
-                <span>Profilo</span>
-            </a>
-        </nav>
-
     </main>
+
+    <nav class="bottom-nav">
+        <a href="dashboard-professionista.html" class="nav-item">
+            <i class="fa-solid fa-house"></i>
+            <span>Home</span>
+        </a>
+        <a href="agenda-pro.html" class="nav-item">
+            <i class="fa-solid fa-table-cells"></i>
+            <span>Agenda</span>
+        </a>
+        <a href="clienti-pro.html" class="nav-item">
+            <i class="fa-solid fa-clover"></i>
+            <span>Clienti</span>
+        </a>
+        <a href="servizi-pro.html" class="nav-item">
+            <i class="fa-solid fa-bars"></i>
+            <span>Servizi</span>
+        </a>
+        <a href="profilo-pro.html" class="nav-item active">
+            <i class="fa-solid fa-user"></i>
+            <span>Profilo</span>
+        </a>
+    </nav>
 
     <script type="module" src="../../js/profilo-pro.js"></script>
 </body>

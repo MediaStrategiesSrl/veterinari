@@ -5,6 +5,7 @@ import { supabase } from '../utils/supabaseClient.js';
 import { logError } from '../utils/logger.js';
 
 let currentUser = null;
+const ruoloAssociato = "veterinario";
 const giorniSettimana = ["lunedi", "martedi", "mercoledi", "giovedi", "venerdi", "sabato", "domenica"];
 const labelGiorni = ["Lunedì", "Martedì", "Mercoledì", "Giovedì", "Venerdì", "Sabato", "Domenica"];
 
@@ -73,10 +74,11 @@ function generaSchedulerUI() {
 async function fetchLocations() {
     try {
         const { data: locations, error } = await supabase
-            .from('provider_locations')
-            .select('*')
-            .eq('provider_id', currentUser.id)
-            .order('is_principale', { ascending: false });
+    .from('provider_locations')
+    .select('*')
+    .eq('provider_id', currentUser.id)
+    .eq('ruolo_associato', ruoloAssociato)
+    .order('is_principale', { ascending: false });
 
         if (error) throw error;
 
@@ -188,19 +190,24 @@ locationForm.addEventListener("submit", async (e) => {
 
     try {
         if (isMain) {
-            await supabase.from('provider_locations').update({ is_principale: false }).eq('provider_id', currentUser.id);
+            await supabase
+    .from('provider_locations')
+    .update({ is_principale: false })
+    .eq('provider_id', currentUser.id)
+    .eq('ruolo_associato', ruoloAssociato);
         }
 
         const { error } = await supabase.from('provider_locations').insert({
-            provider_id: currentUser.id,
-            nome_struttura: nome,
-            indirizzo: indirizzo,
-            citta: indirizzo.split(',').pop().trim() || "Città non specificata",
-            latitudine: 45.4642, // Valore temporaneo
-            longitudine: 9.1900, // Valore temporaneo
-            is_principale: isMain,
-            orari_disponibilita: orariStrutturati
-        });
+        provider_id: currentUser.id,
+        nome_struttura: nome,
+        indirizzo: indirizzo,
+        citta: indirizzo.split(',').pop().trim() || "Città non specificata",
+        latitudine: 45.4642,
+        longitudine: 9.1900,
+        is_principale: isMain,
+        orari_disponibilita: orariStrutturati,
+        ruolo_associato: ruoloAssociato
+    });
 
         if (error) throw error;
 
@@ -222,7 +229,12 @@ locationForm.addEventListener("submit", async (e) => {
 // ==========================================
 async function deleteLocation(id) {
     try {
-        const { error } = await supabase.from('provider_locations').delete().eq('id', id).eq('provider_id', currentUser.id);
+       const { error } = await supabase
+    .from('provider_locations')
+    .delete()
+    .eq('id', id)
+    .eq('provider_id', currentUser.id)
+    .eq('ruolo_associato', ruoloAssociato);
         if (error) throw error;
         await fetchLocations();
     } catch (error) {

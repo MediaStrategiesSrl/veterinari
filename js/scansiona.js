@@ -7,6 +7,7 @@ import { logError } from '../utils/logger.js';
 
 let currentUser = null;
 let html5QrCode = null;
+let isProcessingScan = false; // FLAG AGGIUNTA: Previene letture doppie e conflitti DB
 
 const scanStatus = document.getElementById("scanStatus");
 
@@ -63,8 +64,16 @@ async function initScanner() {
 // 3. GESTIONE SCANSIONE AVVENUTA
 // ==========================================
 async function onScanSuccess(decodedText) {
-    // 1. Ferma subito lo scanner per evitare doppie letture
-    html5QrCode.stop().catch(err => console.error("Errore stop scanner", err));
+    // 1. BLOCCO ANTI-RIMBALZO: Se stiamo già processando un QR, ignoriamo le letture successive (Fix per letture multiple)
+    if (isProcessingScan) return;
+    isProcessingScan = true;
+    
+    // Ferma subito lo scanner in modo asincrono attendendone il completamento
+    try {
+        await html5QrCode.stop();
+    } catch (err) {
+        console.error("Errore stop scanner", err);
+    }
     
     // Mostra caricamento UI
     scanStatus.classList.remove("hidden");
@@ -132,6 +141,7 @@ async function onScanSuccess(decodedText) {
                                 .insert({
                                     veterinarian_id: currentUser.id,
                                     pet_id: petData.id,
+                                    access_request_id: richiesta.id, // FIX: Campo fondamentale per RLS/Coerenza dati
                                     status: 'active'
                                 });
 
@@ -159,6 +169,13 @@ async function onScanSuccess(decodedText) {
                             
                             scanStatus.innerHTML = `<i class="fa-solid fa-xmark"></i> Errore di salvataggio interno.`;
                             scanStatus.style.backgroundColor = "#DC2626";
+
+                            // FIX: Ripristina lo scanner anche se l'inserimento finale fallisce
+                            setTimeout(() => {
+                                scanStatus.classList.add("hidden");
+                                isProcessingScan = false;
+                                initScanner();
+                            }, 3000);
                         }
 
                     } else if (nuovoStato === 'rejected') {
@@ -202,9 +219,10 @@ async function onScanSuccess(decodedText) {
             });
         }
         
-        // Riavvia lo scanner dopo un errore
+        // Riavvia lo scanner dopo un errore e sblocca il flag
         setTimeout(() => {
             scanStatus.classList.add("hidden");
+            isProcessingScan = false; // FIX: Permette una nuova scansione
             initScanner();
         }, 3000);
     }

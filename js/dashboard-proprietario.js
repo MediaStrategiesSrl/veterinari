@@ -49,8 +49,15 @@ supabase.auth.onAuthStateChange((event, session) => {
 async function loadDashboardData(user) {
     try {
         // --- 1. CARICA PROFILO UTENTE ---
-        const { data: profile } = await supabase.from("profiles").select("nome").eq("id", user.id).single();
+        const { data: profile } = await supabase.from("profiles").select("nome, avatar_url").eq("id", user.id).single();
         if (profile?.nome) userNameDisplay.textContent = profile.nome;
+        
+        // --- FIX STORAGE PROFILO UTENTE (se esiste l'elemento profAvatar nel DOM) ---
+        const profAvatar = document.getElementById('profAvatar');
+        if (profile?.avatar_url && profAvatar) {
+            const { data } = supabase.storage.from('storage_veterinari').getPublicUrl(profile.avatar_url);
+            profAvatar.src = data.publicUrl;
+        }
         
         // --- 2. CARICA TUTTI GLI ANIMALI ---
         const { data: pets, error: petsError } = await supabase
@@ -121,7 +128,6 @@ async function loadDashboardData(user) {
 
         if (appError) {
             console.error("ERRORE DATABASE:", appError);
-            // --- AGGIUNTA LOG ---
             await logError({
                 source: 'frontend_dashboard_proprietario',
                 action: 'load_agenda',
@@ -129,7 +135,6 @@ async function loadDashboardData(user) {
                 errorCode: appError.code || 'DB_AGENDA_FETCH_ERROR',
                 context: { user_id: user.id }
             });
-            // --------------------
             if (agendaContainer) agendaContainer.innerHTML = `<p style="color:red; text-align:center; padding:10px;">Errore DB: ${appError.message}</p>`;
             return;
         }
@@ -199,7 +204,6 @@ async function loadDashboardData(user) {
 
     } catch (error) {
         console.error("Errore in loadDashboardData:", error);
-        // --- AGGIUNTA LOG ---
         await logError({
             source: 'frontend_dashboard_proprietario',
             action: 'load_dashboard_data',
@@ -208,7 +212,6 @@ async function loadDashboardData(user) {
             stackTrace: error.stack,
             context: { user_id: user?.id }
         });
-        // --------------------
         if (agendaContainer) agendaContainer.innerHTML = '<p style="text-align:center; color:red; padding: 1rem;">Errore nel caricamento dei dati.</p>';
     }
 }
@@ -229,9 +232,10 @@ async function updateHeroCard(pet, index) {
     if (btnOpenProfile) btnOpenProfile.innerHTML = `Apri la scheda <i class="fa-solid fa-paw"></i>`;
     if (qrPetName) qrPetName.textContent = pet.nome;
 
+    // --- FIX STORAGE ANIMALE ---
     if (petImage) {
         if (pet.avatar_url) {
-            const { data } = supabase.storage.from('avatars').getPublicUrl(pet.avatar_url);
+            const { data } = supabase.storage.from('storage_veterinari').getPublicUrl(pet.avatar_url);
             petImage.src = data.publicUrl;
         } else {
             petImage.src = "assets/default-pet.png"; 
@@ -260,7 +264,6 @@ async function updateHeroCard(pet, index) {
 
         if (recordError) {
             console.error("❌ ERRORE SUPABASE:", recordError.message);
-            // --- AGGIUNTA LOG ---
             await logError({
                 source: 'frontend_dashboard_proprietario',
                 action: 'load_last_visit',
@@ -268,11 +271,9 @@ async function updateHeroCard(pet, index) {
                 errorCode: recordError.code || 'DB_RECORD_FETCH_ERROR',
                 context: { pet_id: pet.id }
             });
-            // --------------------
         }
 
         if (ultimaVisita) {
-            
             // 3. Prendiamo il motivo (o la diagnosi se il motivo è vuoto) e lo tagliamo a 30 caratteri
             let motivoTesto = ultimaVisita.motivo || ultimaVisita.diagnosi || "Controllo generale";
             if (motivoTesto.length > 30) motivoTesto = motivoTesto.substring(0, 30) + '...';
@@ -305,9 +306,12 @@ if (dashAvatarWrapper && dashboardAvatarUpload) {
             const fileExt = file.name.split('.').pop();
             const fileName = `${currentActivePetId}-${Date.now()}.${fileExt}`;
             
+            // --- FIX STORAGE UPLOAD (Aggiunta cartella pets_avatar/) ---
+            const filePath = `pets_avatar/${fileName}`;
+            
             const { data: uploadData, error: uploadError } = await supabase.storage
-                .from('avatars')
-                .upload(fileName, file);
+                .from('storage_veterinari')
+                .upload(filePath, file);
 
             if (uploadError) throw Object.assign(new Error(uploadError.message), { code: uploadError.code || 'STORAGE_UPLOAD_ERROR' });
 
@@ -318,12 +322,11 @@ if (dashAvatarWrapper && dashboardAvatarUpload) {
 
             if (dbError) throw Object.assign(new Error(dbError.message), { code: dbError.code || 'DB_PET_UPDATE_ERROR' });
 
-            const { data } = supabase.storage.from('avatars').getPublicUrl(uploadData.path);
+            const { data } = supabase.storage.from('storage_veterinari').getPublicUrl(uploadData.path);
             petImage.src = data.publicUrl;
 
         } catch (error) {
             console.error("Errore durante l'upload:", error);
-            // --- AGGIUNTA LOG ---
             await logError({
                 source: 'frontend_dashboard_proprietario',
                 action: 'upload_avatar',
@@ -332,7 +335,6 @@ if (dashAvatarWrapper && dashboardAvatarUpload) {
                 stackTrace: error.stack,
                 context: { pet_id: currentActivePetId }
             });
-            // --------------------
             alert("Impossibile caricare la foto. Riprova.");
         } finally {
             if (avatarOverlay) avatarOverlay.innerHTML = '<i class="fa-solid fa-camera"></i>';
@@ -449,7 +451,6 @@ function attivaAscoltoNotificheQR(activePetId) {
                     
                     if (vetError) {
                         console.error("❌ ERRORE LETTURA DATI VET:", vetError.message);
-                        // --- AGGIUNTA LOG ---
                         await logError({
                             source: 'frontend_dashboard_proprietario',
                             action: 'read_vet_qr_request',
@@ -457,7 +458,6 @@ function attivaAscoltoNotificheQR(activePetId) {
                             errorCode: vetError.code || 'DB_VET_FETCH_ERROR',
                             context: { vet_id: idVet }
                         });
-                        // --------------------
                     }
                     
                     // 1. Estraiamo i dati del veterinario in modo sicuro
@@ -498,7 +498,6 @@ window.rispondiAllaRichiesta = async function(idRichiesta, sceltaUtente) {
         nascondiPopupApprovazione();
     } else {
         console.error(error);
-        // --- AGGIUNTA LOG ---
         await logError({
             source: 'frontend_dashboard_proprietario',
             action: 'answer_qr_request',
@@ -506,7 +505,6 @@ window.rispondiAllaRichiesta = async function(idRichiesta, sceltaUtente) {
             errorCode: error.code || 'DB_QR_UPDATE_ERROR',
             context: { request_id: idRichiesta, status: sceltaUtente }
         });
-        // --------------------
         alert("Errore di connessione. Riprova.");
     }
 };

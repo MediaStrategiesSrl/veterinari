@@ -1,9 +1,7 @@
 // 1. IMPORT CENTRALIZZATI
 // ==========================================
-// Assicurati che i percorsi puntino alla cartella corretta (es. ../utils/)
 import { supabase } from '../utils/supabaseClient.js';
 import { logError } from '../utils/logger.js';
-
 
 // Elementi DOM
 const profGreeting = document.getElementById('profGreeting');
@@ -13,12 +11,11 @@ const todayAppointmentsContainer = document.getElementById('todayAppointmentsCon
 const btnApriAgenda = document.getElementById('btnApriAgenda');
 
 if (btnApriAgenda) {
-    btnApriAgenda.addEventListener('click', () => window.location.href = 'agenda-pro.html'); // Aggiornato al nuovo file
+    btnApriAgenda.addEventListener('click', () => window.location.href = 'agenda-pro.html');
 }
 
 // Funzione principale
 async function loadProfessionalDashboard() {
-    // Salviamo l'ID utente fuori per averlo a disposizione nel blocco catch
     let currentUserId = null;
 
     try {
@@ -26,7 +23,6 @@ async function loadProfessionalDashboard() {
         const { data: { user }, error: authError } = await supabase.auth.getUser();
         
         if (authError || !user) {
-            // --- INIZIO AGGIUNTA LOG ---
             if (authError) {
                 await logError({
                     source: 'frontend_dashboard_pro',
@@ -36,8 +32,6 @@ async function loadProfessionalDashboard() {
                     context: { userAgent: navigator.userAgent }
                 });
             }
-            // --- FINE AGGIUNTA LOG ---
-            
             window.location.href = "../../index.html";
             return;
         }
@@ -49,9 +43,25 @@ async function loadProfessionalDashboard() {
             .from('profiles')
             .select('nome, cognome, avatar_url') 
             .eq('id', user.id)
-            .single();
+            .maybeSingle();
 
         if (profError) throw Object.assign(new Error(profError.message), { code: profError.code || 'DB_PROFILE_FETCH_ERROR' });
+
+        // --- FIX APPLICATO QUI: Controllo se il profilo esiste ---
+        if (!profile) {
+            console.warn("⚠️ Nessun profilo trovato nel DB per questo utente.");
+            profGreeting.innerHTML = `Buongiorno,<br>Professionista!`;
+            // Opzionale: decommenta la riga sotto se vuoi forzare l'utente a compilare il profilo
+            // window.location.href = 'completa-profilo.html';
+        } else {
+            // Aggiorna Hero Card con i dati reali
+            profGreeting.innerHTML = `Buongiorno,<br>${profile.nome}!`;
+            if (profile.avatar_url) {
+                const { data } = supabase.storage.from('avatars').getPublicUrl(profile.avatar_url);
+                profAvatar.src = data.publicUrl;
+            }
+        }
+        // ---------------------------------------------------------
 
         // 3. Carica Qualifica (Da professionals)
         const { data: proData, error: proError } = await supabase
@@ -62,13 +72,6 @@ async function loadProfessionalDashboard() {
             
         if (proError) console.warn("Dati professionista non trovati", proError);
 
-        // Aggiorna Hero Card
-        profGreeting.innerHTML = `Buongiorno,<br>${profile.nome}!`;
-        if (profile.avatar_url) {
-            const { data } = supabase.storage.from('avatars').getPublicUrl(profile.avatar_url);
-            profAvatar.src = data.publicUrl;
-        }
-
         // 4. Recupera Appuntamenti di OGGI
         const startOfToday = new Date();
         startOfToday.setHours(0, 0, 0, 0);
@@ -76,8 +79,6 @@ async function loadProfessionalDashboard() {
         const endOfToday = new Date();
         endOfToday.setHours(23, 59, 59, 999);
 
-        // ATTENZIONE: Assicurati che 'costo' sia il nome giusto e che 'luogo' esista nel DB. 
-        // Se non esistono, toglili da questo .select()!
         const { data: appuntamenti, error: aptError } = await supabase
             .from('appointments')
             .select(`
@@ -85,17 +86,37 @@ async function loadProfessionalDashboard() {
                 pets ( nome )
             `)
             .eq('provider_id', user.id)
+            .eq('ruolo_provider', 'professionista') // <-- FIX: questa dashboard è quella del ruolo "professionista",
+                                                      //     senza questo filtro comparivano anche gli appuntamenti
+                                                      //     presi sullo stesso account nel ruolo "veterinario".
             .gte('data_inizio', startOfToday.toISOString())
             .lte('data_inizio', endOfToday.toISOString())
             .order('data_inizio', { ascending: true });
 
         if (aptError) throw Object.assign(new Error(aptError.message), { code: aptError.code || 'DB_APPOINTMENTS_FETCH_ERROR' });
 
-        // 5. Aggiorna Sottotitolo
+        // ==========================================
+        // 5. AGGIORNA SOTTOTITOLO CON LAVORO EFFETTIVO
+        // ==========================================
         const numAppuntamenti = appuntamenti ? appuntamenti.length : 0;
-        // Se proData.tipo_professione esiste lo usa, altrimenti default "professionista"
-        const qualifica = proData?.tipo_professione ? proData.tipo_professione.toLowerCase() : 'professionista';
-        profSubtitle.textContent = `Hai ${numAppuntamenti} servizi prenotati oggi come ${qualifica}.`;
+        
+        // Testo fedele al mockup: "servizi prenotati oggi"
+        const parolaServizio = numAppuntamenti === 1 ? 'servizio prenotato' : 'servizi prenotati';
+        
+        let qualifica = "professionista"; // Fallback di base
+        
+        if (proData && proData.tipo_professione) {
+            const tipoPulito = proData.tipo_professione.trim().toLowerCase();
+            
+            // Se il DB restituisce un valore valido e diverso da "altro", lo usiamo
+            if (tipoPulito !== "" && tipoPulito !== "altro") {
+                qualifica = tipoPulito;
+            }
+        }
+        
+        // Output finale esatto
+        profSubtitle.textContent = `Hai ${numAppuntamenti} ${parolaServizio} oggi come ${qualifica}.`;
+        // ==========================================
 
         // 6. Renderizza la lista degli appuntamenti
         renderAppointments(appuntamenti);
@@ -103,7 +124,6 @@ async function loadProfessionalDashboard() {
     } catch (error) {
         console.error("Errore caricamento dashboard:", error);
         
-        // --- INIZIO AGGIUNTA LOG ---
         await logError({
             source: 'frontend_dashboard_pro',
             action: 'load_dashboard_data',
@@ -115,7 +135,6 @@ async function loadProfessionalDashboard() {
                 target_date: new Date().toISOString()
             }
         });
-        // --- FINE AGGIUNTA LOG ---
 
         todayAppointmentsContainer.innerHTML = `<p style="color:#EF4444; padding: 20px;">Errore nel caricamento dei dati.</p>`;
     }

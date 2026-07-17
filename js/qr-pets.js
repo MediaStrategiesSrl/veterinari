@@ -118,14 +118,15 @@ function attivaAscoltoNotificheQR(activePetId) {
                     try {
                         const idVet = richiestaInArrivo.veterinarian_id; 
 
+                        // CORREZIONE: 'indirizzo' selezionato da profiles invece di 'indirizzo_clinica' da veterinarians
                         const { data: vet, error: vetError } = await supabase
                             .from('profiles')
                             .select(`
                                 nome,
                                 cognome,
+                                indirizzo,
                                 veterinarians (
-                                    numero_ordine,
-                                    indirizzo_clinica
+                                    numero_ordine
                                 )
                             `)
                             .eq('id', idVet) 
@@ -144,8 +145,10 @@ function attivaAscoltoNotificheQR(activePetId) {
                         const dettagliOrdine = vDati && vDati.numero_ordine
                             ? `Ordine n. ${vDati.numero_ordine}` 
                             : "Ordine in aggiornamento";
-                        const indirizzo = vDati && vDati.indirizzo_clinica
-                            ? vDati.indirizzo_clinica 
+                        
+                        // CORREZIONE: Lettura di 'indirizzo' direttamente dall'oggetto principale 'vet'
+                        const indirizzo = vet && vet.indirizzo
+                            ? vet.indirizzo 
                             : "Indirizzo non specificato";
 
                         // Lanciamo la modale UI
