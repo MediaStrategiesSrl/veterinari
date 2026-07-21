@@ -1,7 +1,6 @@
 // ==========================================
 // 1. IMPORT CENTRALIZZATI
 // ==========================================
-// Assicurati che i percorsi (../) puntino correttamente ai tuoi file
 import { supabase } from '../utils/supabaseClient.js';
 import { logError } from '../utils/logger.js';
 
@@ -23,7 +22,6 @@ async function initMercatino() {
     try {
         const { data: { user }, error: authError } = await supabase.auth.getUser();
         
-        // Errore di connessione o sistema in fase di auth
         if (authError) throw Object.assign(new Error(authError.message), { code: authError.code || 'AUTH_CHECK_ERROR' });
 
         if (!user) {
@@ -31,7 +29,7 @@ async function initMercatino() {
             return;
         }
 
-        // 1. Chiediamo la posizione dell'utente (NESSUN LOG DI ERRORE QUI)
+        // 1. Chiediamo la posizione dell'utente
         userLocation = await getUserLocation();
 
         // 2. Recuperiamo categorie e oggetti
@@ -59,7 +57,7 @@ async function fetchCategories() {
         const { data, error } = await supabase
             .from('marketplace_categories')
             .select('id, name')
-            .order('name'); // Ordine alfabetico
+            .order('name'); 
 
         if (error) throw Object.assign(new Error(error.message), { code: error.code || 'DB_CATEGORIES_FETCH_ERROR' });
         
@@ -83,15 +81,16 @@ async function fetchMarketItems() {
     try {
         marketGrid.innerHTML = '<div style="grid-column: span 2; text-align: center; color: #888;">Caricamento oggetti...</div>';
 
-        // Recuperiamo gli oggetti e facciamo una JOIN per ottenere il nome della categoria
+        // Recuperiamo dalla tabella corretta: marketplace_listings con JOIN su foto e categoria
         const { data, error } = await supabase
-            .from('marketplace_items')
+            .from('marketplace_listings')
             .select(`
                 *,
-                category:marketplace_categories(name)
+                category:marketplace_categories(name),
+                photos:marketplace_listing_photos(photo_url, position)
             `)
-            .eq('status', 'active')
-            .order('created_at', { ascending: false });
+            .eq('status', 'AVAILABLE') // Stato corretto del DB
+            .order('published_at', { ascending: false });
 
         if (error) throw Object.assign(new Error(error.message), { code: error.code || 'DB_ITEMS_FETCH_ERROR' });
 
@@ -117,16 +116,16 @@ async function fetchMarketItems() {
 // RENDERIZZAZIONE UI
 // ==========================================
 function renderCategories(categories) {
-    categoryFiltersContainer.innerHTML = ""; // Svuota il contenitore
+    categoryFiltersContainer.innerHTML = ""; 
 
-    // 1. Crea e aggiungi sempre il bottone "Tutto" (di default attivo)
+    // 1. Bottone "Tutto" 
     const btnTutto = document.createElement("button");
     btnTutto.className = "cat-pill active";
     btnTutto.setAttribute("data-cat", "Tutto");
     btnTutto.textContent = "Tutto";
     categoryFiltersContainer.appendChild(btnTutto);
 
-    // 2. Crea un bottone per ogni categoria reale presente nel DB
+    // 2. Bottoni categorie reali
     categories.forEach(cat => {
         const btn = document.createElement("button");
         btn.className = "cat-pill";
@@ -135,7 +134,7 @@ function renderCategories(categories) {
         categoryFiltersContainer.appendChild(btn);
     });
 
-    setupFilters(); // Riapplica gli event listener ai nuovi bottoni
+    setupFilters(); 
 }
 
 function renderItems(items) {
@@ -144,28 +143,28 @@ function renderItems(items) {
     if (items.length === 0) {
         marketGrid.innerHTML = `
             <div style="grid-column: span 2; text-align: center; color: #64748b; padding: 2rem;">
-                Nessun oggetto trovato per questa ricerca.
+                Nessun oggetto trovato.
             </div>
         `;
         return;
     }
 
     items.forEach(item => {
-        // Gestione immagine (fallback se non c'è)
-        let imgUrl = "assets/default-item.png";
-        if (item.image_url) {
-            if (item.image_url.startsWith('http')) {
-                imgUrl = item.image_url;
-            } else {
-                const { data } = supabase.storage.from('storage_veterinari').getPublicUrl(item.image_url);
-                imgUrl = data.publicUrl;
-            }
+        // Estrazione prima foto disponibile dalla tabella relazionata
+        let imgUrl = "../../assets/default-item.png";
+        
+        if (item.photos && item.photos.length > 0) {
+            // Ordina le foto per posizione
+            const fotoOrdinate = [...item.photos].sort((a, b) => (a.position || 0) - (b.position || 0));
+            imgUrl = fotoOrdinate[0].photo_url;
+        } else if (item.image_url) {
+            imgUrl = item.image_url;
         }
 
         const cittaDisplay = item.city ? item.city : "Città ignota";
         let distanceDisplay = "";
 
-        // CALCOLO REALE DELLA DISTANZA
+        // Calcolo distanza (se coordinate presenti)
         if (userLocation && item.latitude && item.longitude) {
             const distance = getDistanceFromLatLonInKm(
                 userLocation.lat, 
@@ -176,22 +175,23 @@ function renderItems(items) {
             distanceDisplay = ` · ${distance.toFixed(1)} km`;
         }
 
-        const card = document.createElement("div");
+        // Creazione Card
+        const card = document.createElement("a");
         card.className = "market-item-card";
+        card.href = `dettaglio-annuncio.html?id=${item.id}`;
+        
+        card.style.textDecoration = "none";
+        card.style.color = "inherit";
+        card.style.display = "block";
+
         card.innerHTML = `
             <img src="${imgUrl}" alt="${item.title}" class="market-item-img" onerror="this.onerror=null; this.src='https://via.placeholder.com/300x200/E2E8F0/94A3B8?text=No+Immagine';">
             <div class="market-item-content">
                 <div class="market-item-title">${item.title}</div>
                 <div class="market-item-location">${cittaDisplay} ${distanceDisplay}</div>
-                <div class="market-item-price">GRATIS</div>
+                <div class="market-item-price" style="color: #059669; font-weight: 800;">GRATIS</div>
             </div>
         `;
-
-        // Click sulla card per vedere i dettagli
-        card.addEventListener("click", () => {
-            // window.location.href = `dettaglio-oggetto.html?id=${item.id}`;
-            console.log(`Apertura dettagli di: ${item.title}`);
-        });
 
         marketGrid.appendChild(card);
     });
@@ -210,12 +210,15 @@ function setupFilters() {
         });
     });
 
-    searchInput.addEventListener("input", applyFilters);
+    if (searchInput) {
+        searchInput.addEventListener("input", applyFilters);
+    }
 }
 
 function applyFilters() {
-    const activeCategory = document.querySelector(".cat-pill.active").getAttribute("data-cat");
-    const searchText = searchInput.value.toLowerCase().trim();
+    const activePill = document.querySelector(".cat-pill.active");
+    const activeCategory = activePill ? activePill.getAttribute("data-cat") : "Tutto";
+    const searchText = searchInput ? searchInput.value.toLowerCase().trim() : "";
 
     const filteredItems = allItems.filter(item => {
         const itemCategoryName = item.category ? item.category.name : "";
@@ -232,7 +235,7 @@ function applyFilters() {
 }
 
 // ==========================================
-// SCORRIMENTO CATEGORIE (FRECCE)
+// SCORRIMENTO CATEGORIE
 // ==========================================
 function setupCategoryScroll() {
     const scrollLeftBtn = document.getElementById('scrollLeftBtn');
@@ -251,8 +254,7 @@ function setupCategoryScroll() {
 }
 
 // ==========================================
-// GEOLOCALIZZAZIONE E CALCOLO DISTANZA
-// (Gestione errori puramente frontend, nessun log nel DB)
+// GEOLOCALIZZAZIONE
 // ==========================================
 async function getUserLocation() {
     return new Promise((resolve) => {
@@ -265,13 +267,12 @@ async function getUserLocation() {
                     });
                 },
                 (error) => {
-                    console.warn("Geolocalizzazione negata o non disponibile:", error);
+                    console.warn("Geolocalizzazione non disponibile:", error);
                     resolve(null); 
                 },
                 { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
             );
         } else {
-            console.warn("Geolocalizzazione non supportata dal browser.");
             resolve(null);
         }
     });

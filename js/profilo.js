@@ -14,22 +14,6 @@ const userDetailsDisplay = document.getElementById("userDetailsDisplay");
 const btnLogout = document.getElementById("btnLogout");
 const deleteRoleBtn = document.getElementById("deleteRoleBtn"); // Il bottone rosso!
 
-// Funzione utile: Estrae le iniziali da Nome e Cognome
-function getInitials(firstName, lastName) {
-    const firstInitial = firstName?.trim()?.[0] || "";
-    const lastInitial = lastName?.trim()?.[0] || "";
-    if (firstInitial && lastInitial) {
-        return (firstInitial + lastInitial).toUpperCase();
-    }
-    if (firstInitial) {
-        return firstInitial.toUpperCase();
-    }
-    if (lastInitial) {
-        return lastInitial.toUpperCase();
-    }
-    return "UT"; // Utente generico se non ci sono iniziali
-}
-
 // ==========================================
 // 1. CARICAMENTO DEL PROFILO
 // ==========================================
@@ -49,7 +33,7 @@ async function loadUserProfile() {
         // Prendi i dati dalla tabella profiles
         const { data: profileData, error: profileError } = await supabase
             .from('profiles')
-            .select('*')
+            .select('nome, cognome, citta') // Rimosso intenzionalmente avatar_url
             .eq('id', user.id)
             .single();
 
@@ -59,17 +43,15 @@ async function loadUserProfile() {
         let nomeUtente = profileData.nome?.trim() || "";
         let cognomeUtente = profileData.cognome?.trim() || "";
         const nomeCompletoUtente = [nomeUtente, cognomeUtente].filter(Boolean).join(" ").trim() || "Utente Senza Nome";
-        let citta = profileData.citta?.trim() || "Roma";
+        let citta = profileData.citta?.trim() || "Milano";
 
-        // Gestione dinamica Avatar
-        let avatarHTML = '';
-        if (profileData.avatar_url) {
-            const { data } = supabase.storage.from('storage_veterinari').getPublicUrl(profileData.avatar_url);
-            avatarHTML = `<img src="${data.publicUrl}" alt="Avatar" class="user-image-avatar">`;
-        } else {
-            const initials = getInitials(nomeUtente, cognomeUtente);
-            avatarHTML = `<div class="user-initials-avatar">${initials}</div>`;
-        }
+        // ==========================================
+        // GESTIONE AVATAR: FORZATURA INIZIALI ARANCIONI
+        // ==========================================
+        // Ignoriamo la foto profilo. Generiamo sempre le iniziali arancioni.
+        const encodedName = encodeURIComponent(nomeCompletoUtente);
+        const fallbackUrl = `https://ui-avatars.com/api/?name=${encodedName}&background=F58220&color=FFFFFF`;
+        const avatarHTML = `<img src="${fallbackUrl}" alt="Avatar" class="user-image-avatar" style="width: 80px; height: 80px; border-radius: 20px; object-fit: cover;">`;
 
         // STAMPA FINALE
         if (profileHeaderContainer) {
@@ -93,8 +75,13 @@ async function loadUserProfile() {
             context: { userId: currentUser?.id }
         });
 
-        if (userNameDisplay) userNameDisplay.textContent = "Errore";
-        if (userDetailsDisplay) userDetailsDisplay.textContent = "Impossibile caricare i dati";
+        if (profileHeaderContainer) {
+            profileHeaderContainer.innerHTML = `
+                <div class="user-initials-avatar" style="background-color: #DC2626; color: white; width: 80px; height: 80px; border-radius: 20px; display: flex; align-items: center; justify-content: center; font-size: 2rem;">!</div>
+                <h1 id="userNameDisplay">Errore</h1>
+                <p id="userDetailsDisplay">Impossibile caricare i dati</p>
+            `;
+        }
     }
 }
 
@@ -123,82 +110,6 @@ if (btnLogout) {
             });
             
             alert("Errore durante il logout. Riprova.");
-        }
-    });
-}
-
-// ==========================================
-// 3. TASTO ELIMINA RUOLO PROPRIETARIO
-// ==========================================
-if (deleteRoleBtn) {
-    deleteRoleBtn.addEventListener('click', async () => {
-        const confermato = confirm("Attenzione: Sei sicuro di voler eliminare il tuo ruolo di Proprietario? Perderai TUTTI i dati dei tuoi animali e i relativi appuntamenti. Il tuo account principale rimarrà intatto.");
-        
-        if (confermato) {
-            deleteRoleBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Pulizia dati in corso...';
-            deleteRoleBtn.style.pointerEvents = 'none';
-
-            try {
-                // A. Trova l'ID del ruolo "Proprietario"
-                const { data: roleData, error: roleError } = await supabase
-                    .from('roles')
-                    .select('id')
-                    .ilike('nome', '%proprietario%')
-                    .single();
-                    
-                if (roleError) throw Object.assign(new Error(roleError.message), { code: roleError.code || 'DB_FETCH_ROLE_ERROR' });
-
-                // B. Pulisci Appuntamenti
-                const { error: apptError } = await supabase
-                    .from('appointments')
-                    .delete()
-                    .eq('owner_id', currentUser.id);
-                if (apptError) throw Object.assign(new Error(apptError.message), { code: apptError.code || 'DB_DELETE_APPT_ERROR' });
-
-                // C. Pulisci Consulti urgenti
-                const { error: urgentError } = await supabase
-                    .from('urgent_consultations')
-                    .delete()
-                    .eq('owner_id', currentUser.id);
-                if (urgentError) throw Object.assign(new Error(urgentError.message), { code: urgentError.code || 'DB_DELETE_URGENT_ERROR' });
-
-                // D. Elimina gli animali (Questo attiverà il CASCADE interno del DB per distruggere in automatico anche i 'medical_records')
-                const { error: petsError } = await supabase
-                    .from('pets')
-                    .delete()
-                    .eq('owner_id', currentUser.id);
-                if (petsError) throw Object.assign(new Error(petsError.message), { code: petsError.code || 'DB_DELETE_PETS_ERROR' });
-
-                // E. Infine, sgancia chirurgicamente il ruolo dalla tabella user_roles (Usiamo doppio .eq per sicurezza)
-                const { error: unlinkError } = await supabase
-                    .from('user_roles')
-                    .delete()
-                    .eq('user_id', currentUser.id)
-                    .eq('role_id', roleData.id);
-                if (unlinkError) throw Object.assign(new Error(unlinkError.message), { code: unlinkError.code || 'DB_DELETE_USER_ROLE_ERROR' });
-
-                alert("Ruolo Proprietario e relativi animali rimossi con successo!");
-                window.location.href = "../../ruoli.html";
-
-            } catch (error) {
-                console.error("Errore durante l'eliminazione del ruolo proprietario:", error);
-                
-                // ==========================================
-                // TRIGGER LOG ERROR
-                // ==========================================
-                await logError({
-                    source: 'profilo_proprietario',
-                    action: 'delete_owner_role',
-                    errorMessage: error.message || "Fallimento durante l'eliminazione a cascata del ruolo proprietario",
-                    errorCode: error.code || 'UNKNOWN_DB_ERROR',
-                    context: { userId: currentUser?.id }
-                });
-
-                alert("Si è verificato un errore di sistema critico. L'operazione è stata interrotta e i tecnici sono stati avvisati.");
-                
-                deleteRoleBtn.innerHTML = 'Elimina Ruolo Proprietario';
-                deleteRoleBtn.style.pointerEvents = 'auto';
-            }
         }
     });
 }

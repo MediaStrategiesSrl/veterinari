@@ -22,7 +22,7 @@ const fileNameDisplay = document.getElementById("fileNameDisplay");
 const fileSubtext = document.getElementById("fileSubtext");
 
 async function initPage() {
-    // 1. Controllo Autenticazione (Errore logico: nessun log DB)
+    // 1. Controllo Autenticazione
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     
     if (authError) {
@@ -49,14 +49,13 @@ async function initPage() {
             .eq('id', currentUser.id)
             .single();
         
-        if (profileError && profileError.code !== 'PGRST116') throw profileError; // Ignoriamo se semplicemente non ha ancora compilato il profilo
+        if (profileError && profileError.code !== 'PGRST116') throw profileError; 
 
         if (profile && profile.nome) {
             nomeVeterinario = profile.nome;
         }
     } catch (err) {
         console.warn("Impossibile recuperare il profilo vet, uso default.");
-        // Non logghiamo questo errore in modo critico, l'app può funzionare lo stesso
     }
     headerSubtitle.textContent = `Seleziona paziente · ${nomeVeterinario}`;
 
@@ -66,7 +65,6 @@ async function initPage() {
     const urlParams = new URLSearchParams(window.location.search);
     const urlPetId = urlParams.get('petId');
 
-    // Facciamo il controllo di sicurezza SOLO se si arriva tramite un link specifico di un animale
     if (urlPetId) {
         const { data: accessData, error: accessError } = await supabase
             .from('veterinarian_patients')
@@ -75,7 +73,6 @@ async function initPage() {
             .eq('veterinarian_id', currentUser.id)
             .single();
 
-        // ERRORE DI SISTEMA: Il DB è crashato durante il controllo
         if (accessError) {
             await logError({
                 source: 'nuova_visita',
@@ -89,7 +86,6 @@ async function initPage() {
             return;
         }
 
-        // ERRORE LOGICO: L'animale è stato revocato. Blocco e redirect (Nessun log DB)
         if (!accessData || accessData.status !== 'active') {
             alert("Accesso negato: non sei autorizzato a inserire visite per questo paziente (Accesso revocato).");
             window.location.href = "/pages/veterinario/pazienti.html";
@@ -97,7 +93,7 @@ async function initPage() {
         }
     }
 
-    // 3. Scarica i pazienti per la select (solo quelli attivi!)
+    // 3. Scarica i pazienti per la select
     await caricaPazienti(urlPetId);
 }
 
@@ -116,7 +112,6 @@ async function caricaPazienti(preselectedPetId) {
             return;
         }
 
-        // Salviamo in memoria così dopo possiamo controllare facilmente
         pazientiMemoria = data;
 
         petSelect.innerHTML = `<option value="" disabled ${!preselectedPetId ? 'selected' : ''}>Seleziona il paziente...</option>`;
@@ -180,7 +175,6 @@ form.addEventListener("submit", async (e) => {
 
     const petId = petSelect.value;
     
-    // ERRORE LOGICO: Nessun paziente selezionato. (Nessun log DB)
     if (!petId) {
         formMessage.textContent = "Seleziona un paziente prima di salvare.";
         formMessage.style.color = "#DC2626";
@@ -195,40 +189,29 @@ form.addEventListener("submit", async (e) => {
         let attachmentUrl = null;
         const file = documentUpload ? documentUpload.files[0] : null;
 
-        // 1. SE C'È UN FILE, FAI L'UPLOAD (Storage)
+        // 1. SE C'È UN FILE, FAI L'UPLOAD (Nelle sottocartelle per Paziente)
         if (file) {
             submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Caricamento file...';
             
             const safeName = file.name.replace(/[^a-zA-Z0-9.\-_]/g, '_');
-            const fileName = `${petId}_${safeName}`;
-            const filePath = `referti/${fileName}`; 
+            // Aggiungiamo il timestamp per evitare che file con lo stesso nome vengano sovrascritti
+            const fileName = `${Date.now()}_${safeName}`;
+            
+            // LA TUA RICHIESTA: La cartella è 'referti / id_paziente'
+            const folderPath = `referti/${petId}`;
+            const filePath = `${folderPath}/${fileName}`;
 
-            const { data: existingFiles, error: listError } = await supabase.storage
+            const { error: uploadError } = await supabase.storage
                 .from('storage_veterinari')
-                .list('referti', { search: fileName });
+                .upload(filePath, file, { upsert: true });
 
-            if (listError) throw Object.assign(new Error(listError.message), { code: listError.code || 'STORAGE_LIST_ERROR' });
+            if (uploadError) throw Object.assign(new Error(uploadError.message), { code: uploadError.code || 'STORAGE_UPLOAD_ERROR' });
 
-            const isDuplicate = existingFiles && existingFiles.some(f => f.name === fileName);
+            const { data: { publicUrl } } = supabase.storage
+                .from('storage_veterinari')
+                .getPublicUrl(filePath);
 
-            if (isDuplicate) {
-                const { data: { publicUrl } } = supabase.storage
-                    .from('storage_veterinari')
-                    .getPublicUrl(filePath);
-                attachmentUrl = publicUrl;
-            } else {
-                const { error: uploadError } = await supabase.storage
-                    .from('storage_veterinari')
-                    .upload(filePath, file);
-
-                if (uploadError) throw Object.assign(new Error(uploadError.message), { code: uploadError.code || 'STORAGE_UPLOAD_ERROR' });
-
-                const { data: { publicUrl } } = supabase.storage
-                    .from('storage_veterinari')
-                    .getPublicUrl(filePath);
-
-                attachmentUrl = publicUrl;
-            }
+            attachmentUrl = publicUrl;
         }
 
         submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Salvataggio referto...';
@@ -243,7 +226,7 @@ form.addEventListener("submit", async (e) => {
                 anamnesi: document.getElementById("anamnesi") ? document.getElementById("anamnesi").value : "",
                 diagnosi: document.getElementById("diagnosi") ? document.getElementById("diagnosi").value : "",
                 terapia: document.getElementById("terapia") ? document.getElementById("terapia").value : "",
-                attachment_url: attachmentUrl
+                attachment_url: attachmentUrl // Salviamo il Public URL diretto (o il path relativo a seconda della tua logica di lettura)
             })
             .select() 
             .single();
@@ -272,7 +255,6 @@ form.addEventListener("submit", async (e) => {
     } catch (error) {
         console.error("Errore salvataggio:", error);
         
-        // ERRORE DI SISTEMA: Log nel DB
         await logError({
             source: 'nuova_visita',
             action: 'salvataggio_cartella',

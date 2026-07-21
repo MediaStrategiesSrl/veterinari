@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Dettaglio annuncio — Mercatino Veterinari.it</title>
+    <link rel="stylesheet" href="../../css/global.css">
+    <link rel="stylesheet" href="../../css/mercatino.css">
+    <link rel="stylesheet" href="../../css/dettaglio-annuncio.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+
+    <main class="app-container mercatino-detail-container">
+
+        <header class="mercatino-header">
+            <a href="mercatino.html" class="back-btn"><i class="fas fa-chevron-left"></i></a>
+            <div class="title-wrapper">
+                <h2>Dettaglio annuncio</h2>
+            </div>
+            <div class="spacer"></div>
+        </header>
+
+        <div id="loadingState">
+            <i class="fa-solid fa-spinner fa-spin"></i>
+        </div>
+
+        <div id="contentWrapper" hidden>
+
+            <!-- GALLERIA FOTO -->
+            <div id="galleria"></div>
+
+            <!-- TITOLO E TAG -->
+            <h1 id="listingTitle"></h1>
+            <div id="listingTags"></div>
+
+            <!-- LOCALITÀ -->
+            <div class="listing-location">
+                <i class="fa-solid fa-location-dot"></i>
+                <span id="listingLocation"></span>
+            </div>
+
+            <!-- DESCRIZIONE -->
+            <div class="content-box">
+                <h3>Descrizione</h3>
+                <p id="listingDescription"></p>
+            </div>
+
+            <!-- NOTE RITIRO -->
+            <div id="pickupNotesBox" class="content-box" hidden>
+                <h3>Note per il ritiro</h3>
+                <p id="pickupNotesText"></p>
+            </div>
+
+            <!-- DONATORE -->
+            <div class="owner-box">
+                <div id="ownerAvatar"></div>
+                <div class="owner-info">
+                    <div id="ownerName"></div>
+                    <div id="ownerReputation"></div>
+                </div>
+            </div>
+
+            <!-- STATO RICHIESTA / AZIONE -->
+            <div id="actionBox"></div>
+
+        </div>
+    </main>
+
+    <script type="module" src="../../js/dettaglio-annuncio.js"></script>
+</body>
+</html>

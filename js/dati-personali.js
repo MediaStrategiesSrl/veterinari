@@ -1,9 +1,9 @@
+// ==========================================
 // 1. IMPORT CENTRALIZZATI
 // ==========================================
 // Assicurati che i percorsi puntino alla cartella corretta (es. ../utils/)
 import { supabase } from '../utils/supabaseClient.js';
 import { logError } from '../utils/logger.js';
-
 
 // Elementi DOM
 const form = document.getElementById("profileForm");
@@ -15,9 +15,10 @@ const fileLabelText = document.getElementById("fileLabelText");
 const docStatus = document.getElementById("docStatus");
 const submitBtn = document.getElementById("submitBtn");
 const formMessage = document.getElementById("formMessage");
+const deleteRoleBtn = document.getElementById("deleteRoleBtn"); // Nuovo elemento
 
 let currentUser = null;
-let isEditing = false; // <-- Variabile magica per controllare lo stato Modifica/Salva
+let isEditing = false; 
 
 // Gestione visiva del file selezionato
 documentoFile.addEventListener("change", (e) => {
@@ -71,7 +72,6 @@ async function loadUserData() {
     } catch (error) {
         console.error("Errore recupero dati:", error);
         
-        // --- INIZIO AGGIUNTA LOG ---
         await logError({
             source: 'frontend_dati_personali',
             action: 'load_user_profile',
@@ -80,7 +80,6 @@ async function loadUserData() {
             stackTrace: error.stack,
             context: { user_id: currentUser ? currentUser.id : 'sconosciuto' }
         });
-        // --- FINE AGGIUNTA LOG ---
 
         showMessage("Impossibile caricare i dati del profilo.", "#DC2626");
     }
@@ -147,7 +146,6 @@ form.addEventListener("submit", async (e) => {
         submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Aggiornamento profilo...';
 
         // 2. DIVIDI NOME E COGNOME
-        // Separa il campo unico alla prima riga di spazio (es. "Marco Riva" -> nome:"Marco", cognome:"Riva")
         const [nuovoNome, ...restoCognome] = nomeCognomeInput.value.trim().split(' ');
         const nuovoCognome = restoCognome.join(' '); 
 
@@ -193,7 +191,6 @@ form.addEventListener("submit", async (e) => {
     } catch (error) {
         console.error("Errore salvataggio:", error);
         
-        // --- INIZIO AGGIUNTA LOG ---
         await logError({
             source: 'frontend_dati_personali',
             action: 'update_user_data',
@@ -206,10 +203,8 @@ form.addEventListener("submit", async (e) => {
                 uploaded_document: !!documentoFile.files[0]
             }
         });
-        // --- FINE AGGIUNTA LOG ---
 
         showMessage("Si è verificato un errore durante il salvataggio.", "#DC2626");
-        // In caso di errore restiamo in modalità modifica per far riprovare l'utente
         disabilitaCampi(false);
     } finally {
         submitBtn.disabled = false;
@@ -220,6 +215,79 @@ function showMessage(text, color) {
     formMessage.textContent = text;
     formMessage.style.color = color;
     setTimeout(() => { formMessage.textContent = ""; }, 6000);
+}
+
+// ==========================================
+// 3. ELIMINAZIONE RUOLO (PROPRIETARIO)
+// ==========================================
+if (deleteRoleBtn) {
+    deleteRoleBtn.addEventListener('click', async () => {
+        const confermato = confirm("Attenzione: Sei sicuro di voler eliminare il tuo ruolo di Proprietario? Perderai TUTTI i dati dei tuoi animali e i relativi appuntamenti. Il tuo account principale rimarrà intatto.");
+        
+        if (confermato) {
+            deleteRoleBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Pulizia dati in corso...';
+            deleteRoleBtn.style.pointerEvents = 'none';
+
+            try {
+                // A. Trova l'ID del ruolo "Proprietario"
+                const { data: roleData, error: roleError } = await supabase
+                    .from('roles')
+                    .select('id')
+                    .ilike('nome', '%proprietario%')
+                    .single();
+                    
+                if (roleError) throw Object.assign(new Error(roleError.message), { code: roleError.code || 'DB_FETCH_ROLE_ERROR' });
+
+                // B. Pulisci Appuntamenti
+                const { error: apptError } = await supabase
+                    .from('appointments')
+                    .delete()
+                    .eq('owner_id', currentUser.id);
+                if (apptError) throw Object.assign(new Error(apptError.message), { code: apptError.code || 'DB_DELETE_APPT_ERROR' });
+
+                // C. Pulisci Consulti urgenti
+                const { error: urgentError } = await supabase
+                    .from('urgent_consultations')
+                    .delete()
+                    .eq('owner_id', currentUser.id);
+                if (urgentError) throw Object.assign(new Error(urgentError.message), { code: urgentError.code || 'DB_DELETE_URGENT_ERROR' });
+
+                // D. Elimina gli animali (Questo attiverà il CASCADE per i medical_records)
+                const { error: petsError } = await supabase
+                    .from('pets')
+                    .delete()
+                    .eq('owner_id', currentUser.id);
+                if (petsError) throw Object.assign(new Error(petsError.message), { code: petsError.code || 'DB_DELETE_PETS_ERROR' });
+
+                // E. Sgancia il ruolo dalla tabella user_roles
+                const { error: unlinkError } = await supabase
+                    .from('user_roles')
+                    .delete()
+                    .eq('user_id', currentUser.id)
+                    .eq('role_id', roleData.id);
+                if (unlinkError) throw Object.assign(new Error(unlinkError.message), { code: unlinkError.code || 'DB_DELETE_USER_ROLE_ERROR' });
+
+                alert("Ruolo Proprietario e relativi animali rimossi con successo!");
+                window.location.href = "../../ruoli.html";
+
+            } catch (error) {
+                console.error("Errore durante l'eliminazione del ruolo proprietario:", error);
+                
+                await logError({
+                    source: 'dati_personali',
+                    action: 'delete_owner_role',
+                    errorMessage: error.message || "Fallimento durante l'eliminazione a cascata del ruolo proprietario",
+                    errorCode: error.code || 'UNKNOWN_DB_ERROR',
+                    context: { userId: currentUser?.id }
+                });
+
+                alert("Si è verificato un errore di sistema critico. L'operazione è stata interrotta e i tecnici sono stati avvisati.");
+                
+                deleteRoleBtn.innerHTML = 'Elimina Ruolo Proprietario';
+                deleteRoleBtn.style.pointerEvents = 'auto';
+            }
+        }
+    });
 }
 
 loadUserData();

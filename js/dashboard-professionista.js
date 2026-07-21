@@ -47,18 +47,42 @@ async function loadProfessionalDashboard() {
 
         if (profError) throw Object.assign(new Error(profError.message), { code: profError.code || 'DB_PROFILE_FETCH_ERROR' });
 
-        // --- FIX APPLICATO QUI: Controllo se il profilo esiste ---
+        // --- GESTIONE PROFILO E AVATAR ---
         if (!profile) {
             console.warn("⚠️ Nessun profilo trovato nel DB per questo utente.");
             profGreeting.innerHTML = `Buongiorno,<br>Professionista!`;
-            // Opzionale: decommenta la riga sotto se vuoi forzare l'utente a compilare il profilo
-            // window.location.href = 'completa-profilo.html';
         } else {
-            // Aggiorna Hero Card con i dati reali
-            profGreeting.innerHTML = `Buongiorno,<br>${profile.nome}!`;
+            const nomeUtente = profile.nome || "Professionista";
+            profGreeting.innerHTML = `Buongiorno,<br>${nomeUtente}!`;
+
+            // Logica Avatar (con fallback dinamico e anti-cache)
+            let finalAvatarUrl = "";
+            const fallbackUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(nomeUtente)}&background=E0F2FE&color=0284C7`;
+
             if (profile.avatar_url) {
-                const { data } = supabase.storage.from('avatars').getPublicUrl(profile.avatar_url);
-                profAvatar.src = data.publicUrl;
+                if (profile.avatar_url.startsWith('http://') || profile.avatar_url.startsWith('https://')) {
+                    finalAvatarUrl = profile.avatar_url;
+                } else {
+                    // FIX: Il bucket è 'storage_veterinari', non 'avatars'
+                    const { data } = supabase.storage.from('storage_veterinari').getPublicUrl(profile.avatar_url);
+                    // Aggiungiamo il timestamp per forzare il refresh visivo ed evitare la cache
+                    finalAvatarUrl = `${data.publicUrl}?t=${new Date().getTime()}`;
+                }
+            } else {
+                finalAvatarUrl = fallbackUrl;
+            }
+
+            // Iniezione sicura
+            if (profAvatar) {
+                profAvatar.onerror = null;
+                profAvatar.src = finalAvatarUrl;
+                
+                // Fallback in caso di immagine rotta
+                profAvatar.onerror = () => {
+                    console.warn("Impossibile caricare l'avatar. Uso il fallback.");
+                    profAvatar.onerror = null;
+                    profAvatar.src = fallbackUrl;
+                };
             }
         }
         // ---------------------------------------------------------
@@ -86,9 +110,7 @@ async function loadProfessionalDashboard() {
                 pets ( nome )
             `)
             .eq('provider_id', user.id)
-            .eq('ruolo_provider', 'professionista') // <-- FIX: questa dashboard è quella del ruolo "professionista",
-                                                      //     senza questo filtro comparivano anche gli appuntamenti
-                                                      //     presi sullo stesso account nel ruolo "veterinario".
+            .eq('ruolo_provider', 'professionista') 
             .gte('data_inizio', startOfToday.toISOString())
             .lte('data_inizio', endOfToday.toISOString())
             .order('data_inizio', { ascending: true });
@@ -100,21 +122,16 @@ async function loadProfessionalDashboard() {
         // ==========================================
         const numAppuntamenti = appuntamenti ? appuntamenti.length : 0;
         
-        // Testo fedele al mockup: "servizi prenotati oggi"
         const parolaServizio = numAppuntamenti === 1 ? 'servizio prenotato' : 'servizi prenotati';
-        
-        let qualifica = "professionista"; // Fallback di base
+        let qualifica = "professionista"; 
         
         if (proData && proData.tipo_professione) {
             const tipoPulito = proData.tipo_professione.trim().toLowerCase();
-            
-            // Se il DB restituisce un valore valido e diverso da "altro", lo usiamo
             if (tipoPulito !== "" && tipoPulito !== "altro") {
                 qualifica = tipoPulito;
             }
         }
         
-        // Output finale esatto
         profSubtitle.textContent = `Hai ${numAppuntamenti} ${parolaServizio} oggi come ${qualifica}.`;
         // ==========================================
 
@@ -154,23 +171,17 @@ function renderAppointments(appuntamenti) {
     let html = '';
     
     appuntamenti.forEach((apt, index) => {
-        // Formattazione Orari (es. 10:00 - 11:00)
         const dateInizio = new Date(apt.data_inizio);
         const dateFine = new Date(apt.data_fine);
         const timeString = `${formatTime(dateInizio)} - ${formatTime(dateFine)}`;
         
-        // Estrai nome animale
         const petName = apt.pets?.nome || 'Animale Sconosciuto';
-        
-        // Imposta valori predefiniti per i campi non presenti nella query base
         const servizioNome = "Servizio";
         const luogo = "In sede/Domicilio";
         const costo = apt.costo || 0;
         
-        // Alterniamo colore bordo (dispari arancio, pari blu)
         const borderClass = index % 2 === 0 ? 'border-orange' : 'border-blue';
 
-        // Creazione HTML Card
         html += `
             <div class="apt-card ${borderClass}">
                 <div class="apt-time">${timeString}</div>

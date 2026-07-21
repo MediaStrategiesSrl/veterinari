@@ -1,9 +1,9 @@
 // ==========================================
 // 1. IMPORT CENTRALIZZATI
 // ==========================================
-// Assicurati che i percorsi puntino alla cartella corretta (es. ../utils/)
 import { supabase } from '../utils/supabaseClient.js';
-import { logError } from '../utils/logger.js';
+// Assicurati che logError esista, altrimenti commentalo se non lo usi
+// import { logError } from '../utils/logger.js'; 
 
 const categoriesContainer = document.getElementById("categoriesContainer");
 const professionalsList = document.getElementById("professionalsList");
@@ -17,15 +17,19 @@ const closeFiltri = document.getElementById('closeFiltri');
 const distanceRange = document.getElementById('distanceRange');
 const distanceValue = document.getElementById('distanceValue');
 const applyFiltri = document.getElementById('applyFiltri');
+const resetFiltri = document.getElementById('resetFiltri'); // ORA ESISTE NELL'HTML!
 
 // Variabili globali
 let leafletMap = null;
 let userLat = 45.4642; 
 let userLng = 9.1900;
-let allLocations = []; // <-- NUOVO: La lista centralizzata di tutte le SEDI fisiche
+let allLocations = []; 
 let markersLayer = null; 
 
-// Estrazione sicura dei dati profilo (PostgREST a volte restituisce array)
+// STATO FILTRO DISTANZA: All'avvio è DISATTIVATO (false)
+let isDistanceFilterActive = false;
+
+// Estrazione sicura dei dati profilo
 function getProfileData(profileObj, field) {
     if (!profileObj) return null;
     if (Array.isArray(profileObj)) return profileObj[0]?.[field] || null;
@@ -88,7 +92,7 @@ if (navigator.geolocation) {
 }
 
 // ==========================================
-// 3. RECUPERO DATI E NORMALIZZAZIONE 
+// 3. RECUPERO DATI DAL DATABASE
 // ==========================================
 async function loadSearchData() {
     try {
@@ -105,34 +109,23 @@ async function loadSearchData() {
                 )
             `); 
 
-        if (vetsError) throw Object.assign(new Error(vetsError.message), { code: 'DB_FETCH_VETS_ERROR' });
+        if (vetsError) throw new Error(vetsError.message);
 
         const normalizedVets = (vetsData || []).flatMap(v => {
             const basicInfo = {
                 user_id: v.user_id,
-                nome: getProfileData(v.profiles, 'nome') || 'Veterinario Anonimo',
+                nome: getProfileData(v.profiles, 'nome') || 'Veterinario',
                 cognome: getProfileData(v.profiles, 'cognome') || '',
                 avatar_url: getProfileData(v.profiles, 'avatar_url'),
                 tipo_professione: 'Veterinario',
                 tariffa_oraria: null
             };
-
             const sedi = getProfileData(v.profiles, 'provider_locations') || [];
-            
-            if (sedi.length === 0) {
-                return [{ ...basicInfo, latitudine: null, longitudine: null, address: 'n.d.' }];
-            }
-
-            return sedi.map(s => ({
-                ...basicInfo,
-                id_sede: s.id,
-                latitudine: s.latitudine,
-                longitudine: s.longitudine,
-                address: s.indirizzo
-            }));
+            if (sedi.length === 0) return [{ ...basicInfo, latitudine: null, longitudine: null, address: 'n.d.' }];
+            return sedi.map(s => ({ ...basicInfo, id_sede: s.id, latitudine: s.latitudine, longitudine: s.longitudine, address: s.indirizzo }));
         });
 
-        // B. Scarica i Professionisti (Sitter, Educatori) e le loro sedi fisiche
+        // B. Scarica i Professionisti (Sitter, Educatori)
         const { data: prosData, error: prosError } = await supabase
             .from('professionals') 
             .select(`
@@ -147,37 +140,26 @@ async function loadSearchData() {
                 )
             `);
 
-        if (prosError) throw Object.assign(new Error(prosError.message), { code: 'DB_FETCH_PROS_ERROR' });
+        if (prosError) throw new Error(prosError.message);
 
         const normalizedPros = (prosData || []).flatMap(p => {
             const basicInfo = {
                 user_id: p.user_id,
-                nome: getProfileData(p.profiles, 'nome') || 'Professionista Anonimo',
+                nome: getProfileData(p.profiles, 'nome') || 'Professionista',
                 cognome: getProfileData(p.profiles, 'cognome') || '',
                 avatar_url: getProfileData(p.profiles, 'avatar_url'),
                 tipo_professione: p.tipo_professione || 'Altro',
                 tariffa_oraria: p.tariffa_oraria
             };
-
             const sedi = getProfileData(p.profiles, 'provider_locations') || [];
-            
-            if (sedi.length === 0) {
-                return [{ ...basicInfo, latitudine: null, longitudine: null, address: 'n.d.' }];
-            }
-
-            return sedi.map(s => ({
-                ...basicInfo,
-                id_sede: s.id,
-                latitudine: s.latitudine,
-                longitudine: s.longitudine,
-                address: s.indirizzo
-            }));
+            if (sedi.length === 0) return [{ ...basicInfo, latitudine: null, longitudine: null, address: 'n.d.' }];
+            return sedi.map(s => ({ ...basicInfo, id_sede: s.id, latitudine: s.latitudine, longitudine: s.longitudine, address: s.indirizzo }));
         });
 
         // C. Unisce le due liste di SEDI
         allLocations = [...normalizedVets, ...normalizedPros];
 
-        // Resto della funzione per generare le categorie...
+        // Creazione Pille/Categorie
         if (categoriesContainer) {
             categoriesContainer.innerHTML = '';
             
@@ -219,9 +201,6 @@ async function loadSearchData() {
                 categoriesContainer.appendChild(leftArrow);
                 categoriesContainer.appendChild(track);
                 categoriesContainer.appendChild(rightArrow);
-                
-            } else {
-                categoriesContainer.innerHTML = '<div class="category-pill">Nessun dato nel database</div>';
             }
         }
 
@@ -236,24 +215,23 @@ async function loadSearchData() {
 }
 
 // ==========================================
-// 4. MOTORE DI RICERCA CENTRALIZZATO (ANTI-NAN)
+// 4. MOTORE DI RICERCA CENTRALIZZATO
 // ==========================================
 function applicaFiltriIncrociati() {
-    let risultati = allLocations; // Lavoriamo sulla lista delle sedi fisiche
+    let risultati = [...allLocations];
 
-    // A. Filtro Testo (IL TUO ESATTO CODICE)
-    if (searchInput) {
-        const termine = searchInput.value.toLowerCase().trim();
-        if (termine !== '') {
-            risultati = risultati.filter(pro => {
-                const nome = (pro.nome || '').toLowerCase();
-                const tipo = (pro.tipo_professione || '').toLowerCase();
-                return nome.includes(termine) || tipo.includes(termine);
-            });
-        }
+    // 1. FILTRO DI TESTO (L'INPUT DELL'UTENTE VIENE SEMPRE RISPETTATO)
+    const termine = searchInput ? searchInput.value.toLowerCase().trim() : '';
+    if (termine !== '') {
+        risultati = risultati.filter(pro => {
+            const nome = (pro.nome || '').toLowerCase();
+            const cognome = (pro.cognome || '').toLowerCase();
+            const tipo = (pro.tipo_professione || '').toLowerCase();
+            return nome.includes(termine) || cognome.includes(termine) || tipo.includes(termine);
+        });
     }
 
-    // B. Filtro Categoria
+    // 2. FILTRO CATEGORIA (PILLOLE)
     const activePill = document.querySelector('.category-pill.active');
     const categoriaSelezionata = activePill ? activePill.textContent.trim() : 'Tutti';
     
@@ -261,24 +239,22 @@ function applicaFiltriIncrociati() {
         risultati = risultati.filter(p => (p.tipo_professione || '').toLowerCase() === categoriaSelezionata.toLowerCase());
     }
 
-    // C. Filtro Distanza (Blindato contro i NaN)
-    let kmScelti = 1000; 
-    if (distanceRange && distanceRange.value) {
-        const p = parseFloat(distanceRange.value);
-        if (!isNaN(p)) kmScelti = p;
+    // 3. FILTRO DISTANZA (SOLO SE L'UTENTE HA CLICCATO "APPLICA FILTRO")
+    if (isDistanceFilterActive) {
+        let kmScelti = Infinity;
+        if (distanceRange && distanceRange.value) {
+            kmScelti = parseFloat(distanceRange.value);
+        }
+
+        risultati = risultati.filter(pro => {
+            const distanzaVera = calcolaDistanza(userLat, userLng, pro.latitudine, pro.longitudine);
+            // CORREZIONE: Se non ha coordinate, lo escludiamo! Prima bypassava il filtro
+            if (isNaN(distanzaVera)) return false; 
+            return distanzaVera <= kmScelti;
+        });
     }
 
-    risultati = risultati.filter(pro => {
-        // CORREZIONE CRITICA: Se manca il GPS nel DB, NON nasconderlo, tienilo visibile in lista
-        if (!pro.latitudine || !pro.longitudine) return true; 
-        
-        const distanzaVera = calcolaDistanza(userLat, userLng, pro.latitudine, pro.longitudine);
-        if (isNaN(distanzaVera)) return true; // Fail-safe
-        
-        return distanzaVera <= kmScelti;
-    });
-
-    // D. Ordina (Chi non ha coordinate va in fondo)
+    // 4. ORDINAMENTO PER DISTANZA
     risultati.sort((a, b) => {
         const distA = calcolaDistanza(userLat, userLng, a.latitudine, a.longitudine);
         const distB = calcolaDistanza(userLat, userLng, b.latitudine, b.longitudine);
@@ -291,25 +267,47 @@ function applicaFiltriIncrociati() {
     renderProfessionals(risultati);
 }
 
-if (searchInput) searchInput.addEventListener('input', applicaFiltriIncrociati);
+// Ascolta i tasti digitati nell'input
+if (searchInput) {
+    searchInput.addEventListener('input', applicaFiltriIncrociati);
+}
 
 // ==========================================
-// 5. MODALE FILTRI
+// 5. GESTIONE MODALE E BOTTONI
 // ==========================================
 if (btnApriFiltri) btnApriFiltri.addEventListener('click', (e) => { e.preventDefault(); modalFiltri.classList.add('show'); });
 if (closeFiltri) closeFiltri.addEventListener('click', () => modalFiltri.classList.remove('show'));
 window.addEventListener('click', (e) => { if (e.target === modalFiltri) modalFiltri.classList.remove('show'); });
-if (distanceRange) distanceRange.addEventListener('input', (e) => { if (distanceValue) distanceValue.textContent = e.target.value; });
 
+if (distanceRange) distanceRange.addEventListener('input', (e) => { 
+    if (distanceValue) distanceValue.textContent = e.target.value; 
+});
+
+// APPLICA IL FILTRO DISTANZA
 if (applyFiltri) {
     applyFiltri.addEventListener('click', () => {
+        isDistanceFilterActive = true; 
+        modalFiltri.classList.remove('show');
+        applicaFiltriIncrociati();
+    });
+}
+
+// RIMUOVE IL FILTRO DISTANZA E RIPORTA TUTTO ALLA NORMALITÀ
+if (resetFiltri) {
+    resetFiltri.addEventListener('click', () => {
+        isDistanceFilterActive = false; 
+        
+        // Opzionale: resetta visivamente la barra a 50km
+        if(distanceRange) distanceRange.value = 50;
+        if(distanceValue) distanceValue.textContent = 50;
+        
         modalFiltri.classList.remove('show');
         applicaFiltriIncrociati();
     });
 }
 
 // ==========================================
-// 6. RENDER (MAPPA COMPLETA, LISTA SENZA DUPLICATI)
+// 6. RENDER DEI RISULTATI
 // ==========================================
 function renderProfessionals(listaDaMostrare) {
     if (!professionalsList) return;
@@ -317,7 +315,6 @@ function renderProfessionals(listaDaMostrare) {
     
     if (markersLayer) markersLayer.clearLayers(); 
 
-    // NUOVO: Questo Set ci ricorda quali professionisti abbiamo già stampato nella lista HTML
     const utentiStampati = new Set();
 
     if (listaDaMostrare.length > 0) {
@@ -331,7 +328,7 @@ function renderProfessionals(listaDaMostrare) {
             if (!isNaN(km)) {
                 distanzaTesto = `${km} km`;
 
-                // IL PIN NELLA MAPPA VIENE AGGIUNTO SEMPRE (Così vedi tutte le cliniche)
+                // Aggiunge marker sulla mappa
                 if (markersLayer) {
                     L.marker([pro.latitudine, pro.longitudine])
                         .addTo(markersLayer)
@@ -339,17 +336,10 @@ function renderProfessionals(listaDaMostrare) {
                 }
             }
 
-            // NELLA LISTA HTML: Stampiamo solo la prima volta che incontriamo questo user_id
+            // Evita duplicati se lo stesso utente ha più sedi vicine
             if (!utentiStampati.has(pro.user_id)) {
-                utentiStampati.add(pro.user_id); // Lo segniamo come stampato
+                utentiStampati.add(pro.user_id);
                 
-                // Salviamo la distanza nel LocalStorage (se non c'è mettiamo 'n.d.')
-                if (!isNaN(km)) {
-                    localStorage.setItem(`dist_${pro.user_id}`, km);
-                } else {
-                    localStorage.setItem(`dist_${pro.user_id}`, 'n.d.');
-                }
-
                 const proHTML = `
                     <a href="dettaglio-professionista.html?id=${pro.user_id}" class="pro-card" style="display: flex; align-items: center; background: #fff; padding: 15px; border-radius: 16px; margin-bottom: 12px; text-decoration: none; border: 1px solid #E2E8F0;">
                         <img src="${avatarUrl}" alt="${pro.nome} ${pro.cognome}" style="width: 50px; height: 50px; border-radius: 50%; object-fit: cover; margin-right: 15px;">
@@ -369,10 +359,7 @@ function renderProfessionals(listaDaMostrare) {
     } else {
         professionalsList.innerHTML = `
             <div style="text-align: center; padding: 2rem; color: #64748b;">
-                <p>Nessun risultato corrisponde alla tua ricerca.</p>
-                <p style="font-size: 0.7rem; color: #cbd5e1; margin-top: 10px;">
-                    Debug: Cercato '${searchInput?.value}', Tot Sedi DB: ${allLocations.length}
-                </p>
+                <p>Nessun risultato corrisponde ai tuoi filtri.</p>
             </div>
         `;
     }

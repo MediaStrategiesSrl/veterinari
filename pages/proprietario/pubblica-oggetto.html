@@ -3,73 +3,160 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Pubblica Annuncio — Veterinari.it</title>
+    <title>Nuovo annuncio — Mercatino Veterinari.it</title>
     <link rel="stylesheet" href="../../css/global.css">
-    <link rel="stylesheet" href="../../css/pubblica.css">
+    <link rel="stylesheet" href="../../css/mercatino.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body style="background-color: #F8F7F4;">
 
-    <main class="app-container">
-        <header class="header-nav" style="background: transparent; padding-bottom: 0;">
-            <a href="mercatino.html" class="back-btn"><i class="fas fa-chevron-left"></i></a>
-            <div class="header-title">
-                <h2>Regala un oggetto</h2>
-                <p>Inserisci i dettagli</p>
+    <main class="app-container" style="max-width: 480px; margin: 0 auto; min-height: 100vh; padding: 20px; box-sizing: border-box; position: relative;">
+
+        <header style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px;">
+            <a href="mercatino.html" style="color: #1E293B; font-size: 1.2rem; text-decoration: none;"><i class="fas fa-chevron-left"></i></a>
+            <div style="text-align: center;">
+                <h2 style="margin: 0; color: #1E293B; font-size: 1.2rem; font-weight: 700;">Nuovo annuncio</h2>
+                <p style="margin: 2px 0 0 0; color: #64748B; font-size: 0.85rem;">Regala un oggetto che non usi più</p>
             </div>
-            <div class="header-icon"><i class="fa-solid fa-diamond"></i></div>
+            <div style="width: 20px;"></div>
         </header>
 
-        <form id="pubblicaForm" class="publish-form">
-            
-            <div class="form-group image-upload-group">
-                <label for="itemImage" class="image-upload-box" id="imagePreviewBox">
-                    <i class="fa-solid fa-camera fa-2x"></i>
-                    <span>Aggiungi foto</span>
-                    <img id="imagePreview" src="" alt="Anteprima" style="display: none;">
-                </label>
-                <input type="file" id="itemImage" accept="image/*" style="display: none;">
+        <div id="pageStatusMsg" style="color:#EF4444; background:#FEE2E2; padding:12px 14px; border-radius:12px; font-size:0.85rem; margin-bottom:16px;" hidden></div>
+
+        <form id="annuncioForm">
+
+            <!-- FOTO -->
+            <div style="margin-bottom:18px;">
+                <label style="display:block; font-size:0.85rem; font-weight:600; color:#475569; margin-bottom:6px;">Fotografie (almeno 1)</label>
+                <input type="file" id="fotoInput" accept="image/*" multiple style="width:100%; padding:10px; border:1px solid #E2E8F0; border-radius:12px; box-sizing:border-box; background:#fff;">
+                <div id="fotoPreview" style="display:flex; gap:8px; flex-wrap:wrap; margin-top:10px;"></div>
             </div>
 
-            <div class="form-group">
-                <label for="itemTitle">Cosa stai regalando?</label>
-                <input type="text" id="itemTitle" placeholder="Es. Cuccia taglia media" required>
+            <!-- TITOLO -->
+            <div style="margin-bottom:16px;">
+                <label style="display:block; font-size:0.85rem; font-weight:600; color:#475569; margin-bottom:6px;">Titolo</label>
+                <input type="text" id="titolo" placeholder="Es. Trasportino per gatto" required maxlength="80" style="width:100%; padding:12px; border:1px solid #E2E8F0; border-radius:12px; box-sizing:border-box;">
             </div>
 
-            <div class="form-group">
-                <label for="itemCategory">Categoria</label>
-                <div class="select-wrapper">
-                    <select id="itemCategory" required>
-                        <option value="" disabled selected>Caricamento categorie...</option>
-                        </select>
-                    <i class="fa-solid fa-chevron-down select-icon"></i>
+            <!-- CATEGORIA -->
+            <div style="margin-bottom:16px;">
+                <label style="display:block; font-size:0.85rem; font-weight:600; color:#475569; margin-bottom:6px;">Categoria</label>
+                <select id="categoria" required style="width:100%; padding:12px; border:1px solid #E2E8F0; border-radius:12px; box-sizing:border-box; background:#fff;">
+                    <option value="" disabled selected>Caricamento categorie...</option>
+                </select>
+            </div>
+
+            <!-- SPECIE E TAGLIA -->
+            <div style="display:flex; gap:12px; margin-bottom:16px;">
+                <div style="flex:1;">
+                    <label style="display:block; font-size:0.85rem; font-weight:600; color:#475569; margin-bottom:6px;">Specie di riferimento</label>
+                    <select id="specie" style="width:100%; padding:12px; border:1px solid #E2E8F0; border-radius:12px; box-sizing:border-box; background:#fff;">
+                        <option value="Tutti">Tutti / non specifico</option>
+                        <option value="Cane">Cane</option>
+                        <option value="Gatto">Gatto</option>
+                        <option value="Uccello">Uccello</option>
+                        <option value="Roditore">Roditore</option>
+                        <option value="Rettile">Rettile</option>
+                        <option value="Pesce">Pesce</option>
+                        <option value="Altro">Altro</option>
+                    </select>
+                </div>
+                <div style="flex:1;">
+                    <label style="display:block; font-size:0.85rem; font-weight:600; color:#475569; margin-bottom:6px;">Taglia (se pertinente)</label>
+                    <input type="text" id="taglia" placeholder="Es. Media" style="width:100%; padding:12px; border:1px solid #E2E8F0; border-radius:12px; box-sizing:border-box;">
                 </div>
             </div>
 
-            <div class="form-group">
-                <label for="itemDescription">Descrizione</label>
-                <textarea id="itemDescription" rows="4" placeholder="Dettagli sulle condizioni, dimensioni, ecc." required></textarea>
+            <!-- CONDIZIONI -->
+            <div style="margin-bottom:16px;">
+                <label style="display:block; font-size:0.85rem; font-weight:600; color:#475569; margin-bottom:6px;">Condizioni dell'oggetto</label>
+                <select id="condizioni" required style="width:100%; padding:12px; border:1px solid #E2E8F0; border-radius:12px; box-sizing:border-box; background:#fff;">
+                    <option value="" disabled selected>Seleziona...</option>
+                    <option value="Nuovo">Nuovo</option>
+                    <option value="Come nuovo">Come nuovo</option>
+                    <option value="Buono">Buono</option>
+                    <option value="Usurato">Usurato</option>
+                </select>
             </div>
 
-           <div class="form-group">
-                <label for="itemCity">Città di ritiro</label>
-                <input type="text" id="itemCity" placeholder="Milano" required>
+            <!-- DESCRIZIONE -->
+            <div style="margin-bottom:16px;">
+                <label style="display:block; font-size:0.85rem; font-weight:600; color:#475569; margin-bottom:6px;">Descrizione</label>
+                <textarea id="descrizione" required rows="4" placeholder="Descrivi l'oggetto, lo stato, il motivo della cessione..." style="width:100%; padding:12px; border:1px solid #E2E8F0; border-radius:12px; box-sizing:border-box; resize:vertical; font-family:inherit;"></textarea>
             </div>
 
-            <div class="form-group">
-                <label for="itemAddress">Indirizzo di ritiro (non sarà visibile)</label>
-                <input type="text" id="itemAddress" placeholder="Via Roma, 123" required>
+            <!-- LOCALITÀ -->
+            <div style="border-top:1px solid #E2E8F0; padding-top:16px; margin-bottom:16px;">
+                <label style="display:block; font-size:0.9rem; font-weight:700; color:#1E293B; margin-bottom:12px;">Dove si trova l'oggetto</label>
+                <div style="display:flex; gap:12px; margin-bottom:12px;">
+                    <div style="flex:1;">
+                        <label style="display:block; font-size:0.8rem; color:#64748B; margin-bottom:6px;">CAP</label>
+                        <input type="text" id="cap" placeholder="20100" required pattern="\d{5}" maxlength="5" style="width:100%; padding:12px; border:1px solid #E2E8F0; border-radius:12px; box-sizing:border-box;">
+                    </div>
+                    <div style="flex:2;">
+                        <label style="display:block; font-size:0.8rem; color:#64748B; margin-bottom:6px;">Comune</label>
+                        <input type="text" id="comune" placeholder="Milano" required style="width:100%; padding:12px; border:1px solid #E2E8F0; border-radius:12px; box-sizing:border-box;">
+                    </div>
+                </div>
+                <div style="display:flex; gap:12px;">
+                    <div style="flex:1;">
+                        <label style="display:block; font-size:0.8rem; color:#64748B; margin-bottom:6px;">Provincia</label>
+                        <input type="text" id="provincia" placeholder="MI" required maxlength="2" style="width:100%; padding:12px; border:1px solid #E2E8F0; border-radius:12px; box-sizing:border-box; text-transform:uppercase;">
+                    </div>
+                    <div style="flex:2;">
+                        <label style="display:block; font-size:0.8rem; color:#64748B; margin-bottom:6px;">Regione (facoltativa)</label>
+                        <input type="text" id="regione" placeholder="Lombardia" style="width:100%; padding:12px; border:1px solid #E2E8F0; border-radius:12px; box-sizing:border-box;">
+                    </div>
+                </div>
             </div>
 
-            <div class="price-banner">
-                <i class="fa-solid fa-hand-holding-heart"></i>
-                <span>Questo oggetto sarà pubblicato come <strong>GRATIS</strong>.</span>
+            <!-- NOTE RITIRO E SCADENZA -->
+            <div style="margin-bottom:16px;">
+                <label style="display:block; font-size:0.85rem; font-weight:600; color:#475569; margin-bottom:6px;">Note per il ritiro (facoltative)</label>
+                <textarea id="noteRitiro" rows="2" placeholder="Es. Disponibile nei weekend, citofonare a..." style="width:100%; padding:12px; border:1px solid #E2E8F0; border-radius:12px; box-sizing:border-box; resize:vertical; font-family:inherit;"></textarea>
             </div>
 
-            <button type="submit" class="btn-primary full-width" id="submitBtn">Pubblica annuncio</button>
+            <div style="margin-bottom:20px;">
+                <label style="display:block; font-size:0.85rem; font-weight:600; color:#475569; margin-bottom:6px;">L'annuncio scade il (facoltativo)</label>
+                <input type="date" id="scadenza" style="width:100%; padding:12px; border:1px solid #E2E8F0; border-radius:12px; box-sizing:border-box;">
+            </div>
+
+            <!-- DICHIARAZIONI OBBLIGATORIE -->
+            <div style="background:#F8FAFC; border:1px solid #E2E8F0; border-radius:14px; padding:16px; margin-bottom:20px;">
+                <p style="margin:0 0 12px 0; font-size:0.85rem; font-weight:700; color:#1E293B;">Prima di pubblicare, dichiaro che:</p>
+                <label class="dichiarazione-item"><input type="checkbox" class="dichiarazione-check" id="dichPossesso"> di essere legittimamente in possesso dell'oggetto</label>
+                <label class="dichiarazione-item"><input type="checkbox" class="dichiarazione-check" id="dichCedibile"> che l'oggetto può essere ceduto</label>
+                <label class="dichiarazione-item"><input type="checkbox" class="dichiarazione-check" id="dichVeritiera"> che la descrizione è veritiera</label>
+                <label class="dichiarazione-item"><input type="checkbox" class="dichiarazione-check" id="dichNoDenaro"> che non richiederò denaro</label>
+                <label class="dichiarazione-item"><input type="checkbox" class="dichiarazione-check" id="dichNoScambio"> che non richiederò altri oggetti o prestazioni in cambio</label>
+                <label class="dichiarazione-item"><input type="checkbox" class="dichiarazione-check" id="dichNoVietati"> che l'oggetto non rientra tra quelli vietati</label>
+            </div>
+
+            <button type="submit" id="btnPubblica" style="width:100%; background:#F58220; color:#fff; border:none; padding:16px; border-radius:16px; font-weight:700; font-size:1rem; cursor:pointer;">
+                Pubblica annuncio
+            </button>
         </form>
-
     </main>
+
+    <style>
+        .dichiarazione-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            font-size: 0.85rem;
+            color: #475569;
+            margin-bottom: 10px;
+            cursor: pointer;
+        }
+        .dichiarazione-item:last-child { margin-bottom: 0; }
+        .dichiarazione-item input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            accent-color: #F58220;
+            flex-shrink: 0;
+            margin-top: 1px;
+        }
+    </style>
 
     <script type="module" src="../../js/pubblica-oggetto.js"></script>
 </body>

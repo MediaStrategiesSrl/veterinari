@@ -14,23 +14,7 @@ const userNameDisplay = document.getElementById("userNameDisplay");
 const userDetailsDisplay = document.getElementById("userDetailsDisplay");
 const btnLogout = document.getElementById("btnLogout");
 const deleteRoleBtn = document.getElementById('deleteRoleBtn'); 
-const locationsCountProfile = document.getElementById('locationsCountProfile'); // Elemento del nuovo menu
-
-// Funzione utile: Estrae le iniziali da Nome e Cognome
-function getInitials(firstName, lastName) {
-    const firstInitial = firstName?.trim()?.[0] || "";
-    const lastInitial = lastName?.trim()?.[0] || "";
-    if (firstInitial && lastInitial) {
-        return (firstInitial + lastInitial).toUpperCase();
-    }
-    if (firstInitial) {
-        return firstInitial.toUpperCase();
-    }
-    if (lastInitial) {
-        return lastInitial.toUpperCase();
-    }
-    return "UT"; 
-}
+const locationsCountProfile = document.getElementById('locationsCountProfile');
 
 // ==========================================
 // 2. CARICA IL PROFILO E IL CONTEGGIO LUOGHI
@@ -61,17 +45,16 @@ async function loadUserProfile() {
         let nomeUtente = profileData.nome?.trim() || "";
         let cognomeUtente = profileData.cognome?.trim() || "";
         const nomeCompletoUtente = [nomeUtente, cognomeUtente].filter(Boolean).join(" ").trim() || "Utente Senza Nome";
-        let citta = profileData.citta?.trim() || "Roma";
+        let citta = profileData.citta?.trim() || "Città non specificata";
 
-        // Gestione dinamica Avatar
-        let avatarHTML = '';
-        if (profileData.avatar_url) {
-            const { data } = supabase.storage.from('storage_veterinari').getPublicUrl(profileData.avatar_url);
-            avatarHTML = `<img src="${data.publicUrl}" alt="Avatar" class="user-image-avatar">`;
-        } else {
-            const initials = getInitials(nomeUtente, cognomeUtente);
-            avatarHTML = `<div class="user-initials-avatar">${initials}</div>`;
-        }
+        // ==========================================
+        // GESTIONE AVATAR: FORZA INIZIALI ARANCIONI
+        // ==========================================
+        // Come richiesto, qui ignoriamo la foto profilo e forziamo sempre le iniziali arancioni
+        const encodedName = encodeURIComponent(nomeCompletoUtente);
+        const avatarUrl = `https://ui-avatars.com/api/?name=${encodedName}&background=F58220&color=FFFFFF`;
+        
+        const avatarHTML = `<img src="${avatarUrl}" alt="Avatar" class="user-image-avatar">`;
 
         // STAMPA FINALE nell'HTML
         if (profileHeaderContainer) {
@@ -96,8 +79,13 @@ async function loadUserProfile() {
             context: { userId: currentUser?.id }
         });
 
-        if (userNameDisplay) userNameDisplay.textContent = "Errore";
-        if (userDetailsDisplay) userDetailsDisplay.textContent = "Impossibile caricare i dati";
+        if (profileHeaderContainer) {
+            profileHeaderContainer.innerHTML = `
+                <div class="user-initials-avatar" style="background-color: #DC2626; color: white;">!</div>
+                <h1 id="userNameDisplay">Errore</h1>
+                <p id="userDetailsDisplay">Impossibile caricare i dati</p>
+            `;
+        }
     }
 }
 
@@ -110,7 +98,7 @@ async function loadLocationsCount() {
             .from('provider_locations')
             .select('*', { count: 'exact', head: true })
             .eq('provider_id', currentUser.id)
-            .eq('ruolo_associato', 'professionista'); // Isola i dati del professionista
+            .eq('ruolo_associato', 'professionista'); 
 
         if (error) throw error;
 
@@ -147,67 +135,6 @@ if (btnLogout) {
             });
             
             alert("Errore durante il logout. Riprova.");
-        }
-    });
-}
-
-// ==========================================
-// 4. TASTO ELIMINA RUOLO
-// ==========================================
-if (deleteRoleBtn) {
-    deleteRoleBtn.addEventListener('click', async () => {
-        const confermato = confirm("Attenzione: Sei sicuro di voler rinunciare al ruolo di Professionista (Pet Sitter/Educatore)? Il tuo account generale rimarrà intatto.");
-        if (!confermato) return;
-
-        deleteRoleBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Rimozione in corso...';
-        deleteRoleBtn.style.pointerEvents = 'none';
-
-        try {
-            // A. Trova l'ID del ruolo "Professionista"
-            const { data: roleData, error: roleError } = await supabase
-                .from('roles')
-                .select('id')
-                .ilike('nome', '%professionista%')
-                .single();
-                
-            if (roleError) throw Object.assign(new Error(roleError.message), { code: roleError.code || 'DB_FETCH_ROLE_ERROR' });
-
-            // B. Sgancia il ruolo da user_roles
-            const { error: unlinkError } = await supabase
-                .from('user_roles')
-                .delete()
-                .eq('user_id', currentUser.id)
-                .eq('role_id', roleData.id);
-                
-            if (unlinkError) throw Object.assign(new Error(unlinkError.message), { code: unlinkError.code || 'DB_DELETE_USER_ROLE_ERROR' });
-
-            // C. Cancella i dati specifici del listino/professione
-            const { error: deleteProError } = await supabase
-                .from('professionals')
-                .delete()
-                .eq('user_id', currentUser.id);
-
-            if (deleteProError) throw Object.assign(new Error(deleteProError.message), { code: deleteProError.code || 'DB_DELETE_PROFESSIONAL_ERROR' });
-
-            alert("Ruolo rimosso con successo!");
-            window.location.href = "../../ruoli.html"; 
-
-        } catch (error) {
-            console.error("Errore durante l'eliminazione del ruolo:", error);
-            
-            // LOG DI SISTEMA
-            await logError({
-                source: 'impostazioni_profilo',
-                action: 'delete_professional_role',
-                errorMessage: error.message || "Fallimento durante la rimozione a cascata del ruolo",
-                errorCode: error.code || 'UNKNOWN_DB_ERROR',
-                context: { userId: currentUser?.id }
-            });
-
-            alert("Errore di sistema. Riprova più tardi. I tecnici sono stati informati.");
-            
-            deleteRoleBtn.innerHTML = 'Elimina Ruolo Professionista';
-            deleteRoleBtn.style.pointerEvents = 'auto';
         }
     });
 }

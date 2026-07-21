@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Modifica Annuncio — Mercatino Veterinari.it</title>
+    <link rel="stylesheet" href="../../css/global.css">
+    <link rel="stylesheet" href="../../css/mercatino.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .form-group { margin-bottom: 20px; }
+        .form-group label { display: block; font-size: 0.85rem; font-weight: 700; color: #1E293B; margin-bottom: 8px; }
+        .form-input { width: 100%; padding: 14px; border: 1px solid #E2E8F0; border-radius: 12px; font-family: inherit; font-size: 0.95rem; box-sizing: border-box; }
+        .form-input:focus { border-color: #F58220; outline: none; }
+        textarea.form-input { resize: vertical; min-height: 100px; }
+        
+        .photo-preview-container { display: flex; gap: 10px; overflow-x: auto; padding: 10px 0; }
+        .photo-wrapper { position: relative; flex-shrink: 0; }
+        .photo-thumb { width: 80px; height: 80px; object-fit: cover; border-radius: 12px; border: 1px solid #E2E8F0; }
+        .photo-remove-btn { position: absolute; top: -5px; right: -5px; background: #EF4444; color: white; border: none; border-radius: 50%; width: 24px; height: 24px; font-size: 12px; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
+        
+        .upload-box { border: 2px dashed #CBD5E1; border-radius: 12px; padding: 20px; text-align: center; cursor: pointer; background: #F8FAFC; transition: all 0.2s; }
+        .upload-box:hover { border-color: #F58220; background: #FFF7ED; }
+    </style>
+</head>
+<body style="background-color: #F8F7F4;">
+
+    <main class="app-container mercatino-detail-container" style="padding-bottom: 40px;">
+
+        <header class="mercatino-header">
+            <a id="backBtn" href="#" class="back-btn"><i class="fas fa-chevron-left"></i></a>
+            <div class="title-wrapper">
+                <h2>Modifica annuncio</h2>
+            </div>
+            <div class="spacer"></div>
+        </header>
+
+        <div id="loadingState">
+            <i class="fa-solid fa-spinner fa-spin"></i>
+        </div>
+
+        <form id="editForm" hidden>
+            <div class="content-box">
+                <div class="form-group">
+                    <label for="editTitle">Titolo dell'annuncio</label>
+                    <input type="text" id="editTitle" class="form-input" required maxlength="100">
+                </div>
+
+                <div class="form-group">
+                    <label for="editDescription">Descrizione</label>
+                    <textarea id="editDescription" class="form-input" required maxlength="1000"></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="editPickupNotes">Note per il ritiro (Opzionale)</label>
+                    <textarea id="editPickupNotes" class="form-input" placeholder="Es. Disponibile la sera dopo le 18:00..."></textarea>
+                </div>
+            </div>
+
+            <div class="content-box">
+                <h3 style="margin-top: 0;">Foto dell'annuncio</h3>
+                <p style="font-size: 0.85rem; color: #64748B; margin-bottom: 15px;">Aggiungi nuove foto (Max 5MB l'una). Le foto attuali sono mantenute automaticamente.</p>
+                
+                <!-- Anteprima foto già esistenti (Solo visualizzazione) -->
+                <div id="existingPhotosContainer" class="photo-preview-container" style="margin-bottom: 10px;"></div>
+
+                <div class="upload-box" onclick="document.getElementById('editPhotos').click()">
+                    <i class="fa-solid fa-camera" style="font-size: 1.5rem; color: #94A3B8; margin-bottom: 8px;"></i>
+                    <div style="font-weight: 600; color: #475569; font-size: 0.9rem;">Tocca per aggiungere foto</div>
+                </div>
+                <input type="file" id="editPhotos" accept="image/jpeg, image/png" multiple style="display: none;">
+                
+                <!-- Anteprima nuove foto selezionate -->
+                <div id="newPhotosPreview" class="photo-preview-container"></div>
+            </div>
+
+            <div id="formMessage" style="text-align: center; margin-bottom: 15px; font-weight: 600; font-size: 0.9rem;" hidden></div>
+
+            <button type="submit" id="btnSalva" style="width: 100%; background: #F58220; color: #fff; border: none; padding: 16px; border-radius: 16px; font-weight: 800; font-size: 1rem; cursor: pointer; box-shadow: 0 4px 6px rgba(245, 130, 32, 0.2);">
+                Salva modifiche
+            </button>
+        </form>
+
+    </main>
+
+    <script type="module" src="../../js/modifica-annuncio.js"></script>
+</body>
+</html>

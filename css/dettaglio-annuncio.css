@@ -1,0 +1,158 @@
+/* ==========================================
+   STILI DETTAGLIO ANNUNCIO - MERCATINO
+   ========================================== */
+
+body {
+    background-color: #F8F7F4;
+}
+
+/* Contenitore Principale */
+.mercatino-detail-container {
+    max-width: 480px;
+    margin: 0 auto;
+    min-height: 100vh;
+    padding: 20px;
+    box-sizing: border-box;
+    position: relative;
+    padding-bottom: 110px;
+}
+
+/* Header */
+.mercatino-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+}
+
+.mercatino-header .back-btn {
+    color: #1E293B;
+    font-size: 1.2rem;
+    text-decoration: none;
+}
+
+.mercatino-header .title-wrapper {
+    text-align: center;
+}
+
+.mercatino-header h2 {
+    margin: 0;
+    color: #1E293B;
+    font-size: 1.1rem;
+    font-weight: 700;
+}
+
+.mercatino-header .spacer {
+    width: 20px;
+}
+
+/* Stato di Caricamento */
+#loadingState {
+    text-align: center;
+    padding: 60px 0;
+    color: #94A3B8;
+}
+
+#loadingState i {
+    font-size: 2rem;
+}
+
+/* Elementi dell'Annuncio */
+#galleria {
+    margin-bottom: 16px;
+}
+
+#listingTitle {
+    margin: 0 0 8px 0;
+    color: #1E293B;
+    font-size: 1.3rem;
+    font-weight: 800;
+}
+
+#listingTags {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 16px;
+}
+
+/* Località */
+.listing-location {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #475569;
+    font-size: 0.9rem;
+    margin-bottom: 16px;
+}
+
+.listing-location i {
+    color: #94A3B8;
+}
+
+/* Box Contenuti (Descrizione, Note, ecc.) */
+.content-box {
+    background: #fff;
+    border-radius: 16px;
+    padding: 16px;
+    margin-bottom: 16px;
+}
+
+.content-box h3 {
+    margin: 0 0 8px 0;
+    color: #1E293B;
+    font-size: 0.95rem;
+}
+
+#listingDescription,
+#pickupNotesText {
+    margin: 0;
+    color: #475569;
+    font-size: 0.9rem;
+    line-height: 1.5;
+}
+
+#listingDescription {
+    white-space: pre-line;
+}
+
+/* Box Donatore / Proprietario */
+.owner-box {
+    background: #fff;
+    border-radius: 16px;
+    padding: 16px;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+#ownerAvatar {
+    width: 46px;
+    height: 46px;
+    border-radius: 50%;
+    background: #F1F5F9;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #94A3B8;
+    font-weight: 700;
+    flex-shrink: 0;
+    overflow: hidden;
+}
+
+.owner-info {
+    flex: 1;
+}
+
+#ownerName {
+    font-weight: 700;
+    color: #1E293B;
+    font-size: 0.95rem;
+}
+
+#ownerReputation {
+    color: #64748B;
+    font-size: 0.8rem;
+    margin-top: 2px;
+}
