@@ -1,0 +1,188 @@
+/* ==========================================
+   STILI LE MIE ATTIVITÀ - MERCATINO
+   ========================================== */
+
+body {
+    background-color: #F8F7F4;
+}
+
+/* Contenitore Principale */
+.attivita-main-container {
+    max-width: 480px;
+    margin: 0 auto;
+    min-height: 100vh;
+    padding: 20px;
+    box-sizing: border-box;
+    position: relative;
+}
+
+/* Header */
+.attivita-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+}
+
+.attivita-header .back-btn {
+    color: #1E293B;
+    font-size: 1.2rem;
+    text-decoration: none;
+}
+
+.header-title-wrapper {
+    text-align: center;
+}
+
+.header-title-wrapper h2 {
+    margin: 0;
+    color: #1E293B;
+    font-size: 1.2rem;
+    font-weight: 700;
+}
+
+.header-title-wrapper p {
+    margin: 2px 0 0 0;
+    color: #64748B;
+    font-size: 0.85rem;
+}
+
+.header-spacer {
+    width: 20px;
+}
+
+/* Tab Switcher */
+.tab-switcher {
+    display: flex;
+    background: #fff;
+    border: 1px solid #E2E8F0;
+    border-radius: 12px;
+    padding: 4px;
+    margin-bottom: 18px;
+}
+
+.tab-btn {
+    flex: 1;
+    border: none;
+    background: transparent;
+    padding: 10px;
+    border-radius: 9px;
+    font-weight: 700;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.tab-btn.active {
+    background: #F58220;
+    color: #fff;
+}
+
+.tab-btn:not(.active) {
+    color: #64748B;
+}
+
+/* Card Attività */
+.attivita-card {
+    background: #fff;
+    border-radius: 16px;
+    padding: 16px;
+    margin-bottom: 12px;
+    cursor: pointer;
+    border: 1px solid #E2E8F0;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.attivita-card:active {
+    transform: scale(0.98);
+}
+
+/* Modale Dettaglio / Chat */
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.5);
+    align-items: flex-end;
+    justify-content: center;
+    z-index: 200;
+}
+
+.modal-content {
+    background: #F8F7F4;
+    width: 100%;
+    max-width: 480px;
+    height: 88vh;
+    border-radius: 24px 24px 0 0;
+    overflow-y: auto;
+    padding: 20px;
+    box-sizing: border-box;
+    position: relative;
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+}
+
+.modal-header h3 {
+    margin: 0;
+    color: #1E293B;
+    font-size: 1.1rem;
+    font-weight: 700;
+}
+
+.close-modal-btn {
+    font-size: 1.6rem;
+    color: #94A3B8;
+    cursor: pointer;
+    line-height: 1;
+}
+
+/* Stili Chat e Recensioni */
+.chat-bubble {
+    max-width: 78%;
+    padding: 10px 14px;
+    border-radius: 14px;
+    font-size: 0.88rem;
+    line-height: 1.4;
+    margin-bottom: 8px;
+    word-wrap: break-word;
+}
+
+.chat-bubble.mine {
+    background: #F58220;
+    color: #fff;
+    margin-left: auto;
+    border-bottom-right-radius: 4px;
+}
+
+.chat-bubble.other {
+    background: #fff;
+    border: 1px solid #E2E8F0;
+    color: #1E293B;
+    margin-right: auto;
+    border-bottom-left-radius: 4px;
+}
+
+.rating-dot {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    border: 2px solid #E2E8F0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-weight: 700;
+    color: #94A3B8;
+    margin-right: 6px;
+    transition: all 0.2s ease;
+}
+
+.rating-dot.selected {
+    background: #F58220;
+    border-color: #F58220;
+    color: #fff;
+}

@@ -7,13 +7,37 @@
     <link rel="stylesheet" href="css/auth.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <title>Login — Veterinari.it</title>
+    <style>
+        /* Stili per la spunta Ricordami */
+        .remember-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 24px;
+            margin-top: -5px;
+        }
+        .remember-group input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            accent-color: #1883A8; /* Colore blu del brand */
+            cursor: pointer;
+            border-radius: 4px;
+        }
+        .remember-group label {
+            font-size: 0.95rem;
+            color: #2c3e50;
+            font-weight: 500;
+            cursor: pointer;
+            margin: 0;
+        }
+    </style>
 </head>
 <body>
 
     <main class="login-card">
         <div class="logo-container">
-    <img src="img/Logo-Veterinari-wp1-1-1024x190.webp" alt="Logo Veterinari.it" class="app-logo">
-</div>
+            <img src="img/Logo-Veterinari-wp1-1-1024x190.webp" alt="Logo Veterinari.it" class="app-logo">
+        </div>
         
         <p class="subtitle">Bentornato! Accedi al tuo account per continuare.</p>
 
@@ -28,6 +52,12 @@
             <div class="form-group">
                 <label for="password">Password</label>
                 <input type="password" id="password" name="password" required minlength="8" autocomplete="current-password" placeholder="••••••••">
+            </div>
+
+            <!-- NUOVA FLAG RICORDAMI -->
+            <div class="remember-group">
+                <input type="checkbox" id="rememberMe" name="rememberMe" checked>
+                <label for="rememberMe">Ricordami su questo dispositivo</label>
             </div>
 
             <button type="submit" id="submitButton">Accedi <i class="fa-solid fa-arrow-right" style="margin-left: 5px;"></i></button>
