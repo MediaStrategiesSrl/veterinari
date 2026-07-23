@@ -1,7 +1,6 @@
 // ==========================================
 // 1. IMPORT CENTRALIZZATI E SETUP
 // ==========================================
-// Assicurati che i percorsi (es. ../utils/) puntino alla cartella corretta
 import { supabase } from '../utils/supabaseClient.js';
 import { logError } from '../utils/logger.js';
 
@@ -65,7 +64,7 @@ async function initPage() {
 
         if (accessError) throw Object.assign(new Error(accessError.message), { code: accessError.code || 'DB_GUARD_CHECK_ERROR' });
 
-        // ERRORE LOGICO: Lo status NON è "active", blocca tutto! (Nessun log DB, è fisiologico)
+        // ERRORE LOGICO: Lo status NON è "active", blocca tutto!
         if (!accessData || accessData.status !== 'active') {
             alert("Accesso negato: non sei autorizzato a visualizzare o modificare questo paziente (Accesso revocato dal proprietario).");
             window.location.href = "/pages/veterinario/pazienti.html";
@@ -96,16 +95,25 @@ async function initPage() {
             petMicrochipText.textContent = pet.microchip ? `Microchip ${pet.microchip}` : "Microchip non inserito";
         }
 
+        // ==========================================
+        // FIX: GESTIONE STORAGE AVATAR
+        // ==========================================
         if (petAvatar) {
             if (pet.avatar_url) {
-                const { data: publicUrlData } = supabase.storage.from('avatars').getPublicUrl(pet.avatar_url);
-                petAvatar.src = publicUrlData.publicUrl;
+                // Controllo: se è già un URL http completo, usalo. Altrimenti genera il public URL dallo storage.
+                if (pet.avatar_url.startsWith('http')) {
+                    petAvatar.src = pet.avatar_url;
+                } else {
+                    const { data: publicUrlData } = supabase.storage.from('storage_veterinari').getPublicUrl(pet.avatar_url);
+                    petAvatar.src = publicUrlData.publicUrl;
+                }
             } else {
+                // Fallback: Iniziali generate dinamicamente
                 petAvatar.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(pet.nome)}&background=F58220&color=fff`;
             }
         }
 
-        // Conta le visite fatte (Ottimizzato con head:true)
+        // Conta le visite fatte
         const { count, error: countError } = await supabase
             .from('medical_records')
             .select('*', { count: 'exact', head: true })
@@ -120,9 +128,7 @@ async function initPage() {
     } catch (err) {
         console.error("Errore caricamento scheda:", err);
         
-        // ==========================================
         // TRIGGER LOG ERROR
-        // ==========================================
         await logError({
             source: 'scheda_paziente_vet',
             action: 'init_page',
@@ -152,7 +158,7 @@ if (uploadRefertoInput) {
         if (refertoSub) refertoSub.textContent = "Verifica in corso...";
         
         try {
-            // 1. Chiediamo a Supabase la lista dei referti già presenti
+            // Chiediamo a Supabase la lista dei referti già presenti
             const { data: existingFiles, error: listError } = await supabase.storage
                 .from('storage_veterinari')
                 .list('referti', { search: petId });
@@ -162,16 +168,14 @@ if (uploadRefertoInput) {
             let fileCaricati = 0;
             let fileSaltati = 0;
 
-            // 2. Cicliamo su tutti i file selezionati
             for (let i = 0; i < files.length; i++) {
                 const file = files[i];
                 
-                // Creiamo un nome univoco e sicuro: ID_CANE_NOMEFILE
                 const safeName = file.name.replace(/[^a-zA-Z0-9.\-_]/g, '_');
                 const finalFileName = `${petId}_${safeName}`;
                 const filePath = `referti/${finalFileName}`;
 
-                // 3. CONTROLLO ANTI-DOPPIONE
+                // CONTROLLO ANTI-DOPPIONE
                 const isDuplicate = existingFiles && existingFiles.some(f => f.name === finalFileName);
 
                 if (isDuplicate) {
@@ -180,7 +184,6 @@ if (uploadRefertoInput) {
                     continue; 
                 }
 
-                // 4. Upload vero e proprio
                 if (refertoSub) refertoSub.textContent = `Invio ${i + 1} di ${files.length}...`;
 
                 const { error: uploadError } = await supabase.storage
@@ -189,12 +192,10 @@ if (uploadRefertoInput) {
 
                 if (uploadError) throw Object.assign(new Error(uploadError.message), { code: uploadError.code || 'STORAGE_UPLOAD_ERROR' });
 
-                // 5. Otteniamo il link
                 const { data: publicUrlData } = supabase.storage
                     .from('storage_veterinari')
                     .getPublicUrl(filePath);
 
-                // 6. Salviamo nel database
                 const { error: insertRecordError } = await supabase.from('medical_records').insert({
                     pet_id: petId,
                     vet_id: currentUser.id, 
@@ -207,7 +208,6 @@ if (uploadRefertoInput) {
                 fileCaricati++;
             }
 
-            // 7. Resoconto finale
             if (fileSaltati > 0 && fileCaricati === 0) {
                 alert(`Nessun nuovo file caricato. Tutti i file selezionati (${fileSaltati}) erano già presenti in memoria!`);
             } else if (fileSaltati > 0) {
@@ -236,7 +236,6 @@ if (uploadRefertoInput) {
 
             alert("Si è verificato un errore di sistema durante il caricamento. I tecnici sono stati avvisati.");
         } finally {
-            // Ripristiniamo la grafica del bottone originale
             if (refertoTitle) {
                 refertoTitle.textContent = "Allega referto";
                 refertoTitle.style.color = "#1E293B";
@@ -256,14 +255,12 @@ if (btnRevocaAccesso) {
         
         if (!conferma) return;
 
-        // UI: Feedback visivo e disabilitazione per evitare click multipli
         btnRevocaAccesso.disabled = true;
         btnRevocaAccesso.style.opacity = "0.6";
         const h4Element = btnRevocaAccesso.querySelector('h4');
         if (h4Element) h4Element.textContent = "Revoca in corso...";
 
         try {
-            // Soft delete
             const { error } = await supabase
                 .from('veterinarian_patients')
                 .update({ 
@@ -291,7 +288,6 @@ if (btnRevocaAccesso) {
 
             alert("Errore di sistema. Impossibile revocare l'accesso in questo momento.");
             
-            // Ripristino interfaccia
             btnRevocaAccesso.disabled = false;
             btnRevocaAccesso.style.opacity = "1";
             if (h4Element) h4Element.textContent = "Revoca accesso";

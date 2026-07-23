@@ -119,3 +119,26 @@ button[type="submit"]:active, .btn-simulate:active { transform: scale(0.97); box
     height: 100%;
     object-fit: cover; /* Evita che l'immagine si deformi */
 }
+
+ /* Stili per la spunta Ricordami */
+        .remember-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 24px;
+            margin-top: -5px;
+        }
+        .remember-group input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            accent-color: #1883A8; /* Colore blu del brand */
+            cursor: pointer;
+            border-radius: 4px;
+        }
+        .remember-group label {
+            font-size: 0.95rem;
+            color: #2c3e50;
+            font-weight: 500;
+            cursor: pointer;
+            margin: 0;
+        }

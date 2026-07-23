@@ -36,6 +36,34 @@ function getProfileData(profileObj, field) {
     return profileObj[field] || null;
 }
 
+// ==========================================
+// GESTIONE AVATAR (FIX)
+// ==========================================
+// Nome del bucket Storage (visto nello screenshot: "storage_veterinari").
+// Verifica che corrisponda esattamente al nome del tuo bucket su Supabase.
+const AVATAR_BUCKET = 'storage_veterinari';
+
+// Trasforma il valore salvato in `avatar_url` in un URL immagine realmente
+// raggiungibile. Copre due casi:
+//  1) in DB è già salvato un URL assoluto (https://...) -> lo usa così com'è
+//  2) in DB è salvato solo il path relativo dentro il bucket
+//     (es. "avatar_vet/xxxx.jpg") -> costruisce l'URL pubblico con l'SDK Supabase
+function resolveAvatarUrl(path) {
+    if (!path) return null;
+    if (path.startsWith('http://') || path.startsWith('https://')) return path;
+    const { data } = supabase.storage.from(AVATAR_BUCKET).getPublicUrl(path);
+    return data?.publicUrl || null;
+}
+
+// Fallback quando non c'è alcun avatar: genera un'immagine con l'iniziale
+// del nome. NB: il vecchio fallback "via.placeholder.com" non è più
+// affidabile (il servizio è ormai in stato di abbandono e risponde in modo
+// incostante), per questo è stato sostituito con ui-avatars.com.
+function getFallbackAvatar(nome) {
+    const lettera = nome ? nome.charAt(0).toUpperCase() : '?';
+    return `https://ui-avatars.com/api/?name=${encodeURIComponent(lettera)}&background=E2E8F0&color=64748B&size=150&rounded=true&bold=true`;
+}
+
 // Formula per calcolare la distanza in Km
 function calcolaDistanza(lat1, lon1, lat2, lon2) {
     if (!lat1 || !lon1 || !lat2 || !lon2) return NaN;
@@ -319,7 +347,12 @@ function renderProfessionals(listaDaMostrare) {
 
     if (listaDaMostrare.length > 0) {
         listaDaMostrare.forEach(pro => {
-            const avatarUrl = pro.avatar_url || 'https://via.placeholder.com/150/E2E8F0/64748B';
+            // --- FIX AVATAR ---
+            // 1. Prova a risolvere l'URL vero (assoluto o path nel bucket Storage)
+            // 2. Se non c'è nulla, usa un fallback funzionante (non più via.placeholder.com)
+            const avatarUrl = resolveAvatarUrl(pro.avatar_url) || getFallbackAvatar(pro.nome);
+            const fallbackUrl = getFallbackAvatar(pro.nome);
+
             const prezzo = pro.tariffa_oraria ? `da €${parseFloat(pro.tariffa_oraria).toFixed(2)}` : 'Prezzo su richiesta';
 
             let distanzaTesto = "Distanza n.d.";
@@ -342,7 +375,7 @@ function renderProfessionals(listaDaMostrare) {
                 
                 const proHTML = `
                     <a href="dettaglio-professionista.html?id=${pro.user_id}" class="pro-card" style="display: flex; align-items: center; background: #fff; padding: 15px; border-radius: 16px; margin-bottom: 12px; text-decoration: none; border: 1px solid #E2E8F0;">
-                        <img src="${avatarUrl}" alt="${pro.nome} ${pro.cognome}" style="width: 50px; height: 50px; border-radius: 50%; object-fit: cover; margin-right: 15px;">
+                        <img src="${avatarUrl}" alt="${pro.nome} ${pro.cognome}" onerror="this.onerror=null;this.src='${fallbackUrl}'" style="width: 50px; height: 50px; border-radius: 50%; object-fit: cover; margin-right: 15px;">
                         <div style="flex-grow: 1;">
                             <div style="font-weight: bold; color: #1E293B; font-size: 1.1rem; margin-bottom: 2px;">${pro.nome} ${pro.cognome}</div>
                             <div style="font-size: 0.8rem; color: #64748B;">${distanzaTesto} &middot; ${prezzo}</div>

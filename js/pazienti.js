@@ -13,6 +13,8 @@ const searchInput = document.getElementById("searchInput");
 const activeCountText = document.getElementById("activeCount");
 const revokedCountText = document.getElementById("revokedCount"); 
 
+const DEFAULT_AVATAR_URL = "https://images.unsplash.com/photo-1543466835-00a7907e9de1?auto=format&fit=crop&w=150&q=80";
+
 // ==========================================
 // INIZIALIZZAZIONE PAGINA
 // ==========================================
@@ -81,12 +83,13 @@ async function caricaPazienti() {
 
         // Estraiamo in modo pulito l'array di pazienti (solo quelli attivi)
         allPatients = attiviData.map(item => {
-            let finalAvatarUrl = "https://images.unsplash.com/photo-1543466835-00a7907e9de1?auto=format&fit=crop&w=150&q=80"; // Default
+            let finalAvatarUrl = DEFAULT_AVATAR_URL;
             
             // Se c'è un avatar salvato in Supabase, recupera il link pubblico
+            // NOTA: il bucket dell'app è "storage_veterinari" (non "avatars", che non esiste)
             if (item.pets && item.pets.avatar_url) {
-                const { data: publicUrlData } = supabase.storage.from('avatars').getPublicUrl(item.pets.avatar_url);
-                if (publicUrlData) {
+                const { data: publicUrlData } = supabase.storage.from('storage_veterinari').getPublicUrl(item.pets.avatar_url);
+                if (publicUrlData && publicUrlData.publicUrl) {
                     finalAvatarUrl = publicUrlData.publicUrl;
                 }
             }
@@ -147,7 +150,7 @@ function renderPatients(patientsToRender) {
         
         card.innerHTML = `
             <div class="patient-info-wrapper">
-                <img src="${pet.avatarUrl}" alt="${pet.nome}" class="patient-avatar">
+                <img src="${pet.avatarUrl}" alt="${pet.nome}" class="patient-avatar" onerror="this.onerror=null; this.src='${DEFAULT_AVATAR_URL}';">
                 <div class="patient-details">
                     <h4>${pet.nome}</h4>
                     <p>${pet.razza} · Accesso attivo</p>
