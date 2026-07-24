@@ -1,7 +1,6 @@
 // ==========================================
 // 1. IMPORT CENTRALIZZATI
 // ==========================================
-// Sostituiamo l'inizializzazione locale con i moduli centralizzati dell'app
 import { supabase } from '../utils/supabaseClient.js';
 import { logError } from '../utils/logger.js';
 
@@ -13,6 +12,7 @@ const emailInput = document.getElementById("email");
 const passwordInput = document.getElementById("password");
 const confirmPasswordInput = document.getElementById("confirmPassword");
 const passwordError = document.getElementById("passwordError");
+const emailConsentInput = document.getElementById("emailConsent"); // NUOVO ELEMENTO
 const statusMessage = document.getElementById("statusMessage");
 const submitButton = document.getElementById("submitButton");
 
@@ -64,8 +64,9 @@ form.addEventListener("submit", async function (event) {
     const email = emailInput.value.trim();
     const password = passwordInput.value;
     const confirmPassword = confirmPasswordInput.value;
+    const hasConsentedToEmails = emailConsentInput.checked; // LEGGE IL VALORE DELLA SPUNTA
 
-    // Validazione Logica (Nessun log a database per errori utente)
+    // Validazione Logica
     if (password !== confirmPassword) {
         passwordError.classList.add("visible");
         confirmPasswordInput.focus();
@@ -76,7 +77,6 @@ form.addEventListener("submit", async function (event) {
     setLoading(true);
 
     try {
-        // Calcolo URL di reindirizzamento dinamico per Supabase V2
         const targetRedirectUrl = window.location.origin + "/completeprofile.html";
 
         // Chiamata Supabase Auth
@@ -85,6 +85,10 @@ form.addEventListener("submit", async function (event) {
             password: password,
             options: {
                 emailRedirectTo: targetRedirectUrl, 
+                // PASSIAMO IL CONSENSO QUI: Verrà salvato nei metadati dell'utente
+                data: {
+                    newsletter_consent: hasConsentedToEmails
+                }
             },
         });
 
@@ -92,13 +96,11 @@ form.addEventListener("submit", async function (event) {
 
         // Gestione flussi post-registrazione
         if (data.user && !data.session) {
-            // Caso 1: Conferma Email Richiesta (Impostazione di default di Supabase)
             showStatus(
                 "Registrazione completata! Controlla la tua casella email per confermare l'account.",
                 "success"
             );
         } else {
-            // Caso 2: Conferma Email disabilitata (Auto-login)
             showStatus("Registrazione completata. Accesso in corso...", "success");
             setTimeout(() => {
                 window.location.href = "/completeprofile.html";
@@ -110,10 +112,6 @@ form.addEventListener("submit", async function (event) {
     } catch (error) {
         console.error("Errore durante la registrazione:", error);
         
-        // ==========================================
-        // TRIGGER LOG ERROR
-        // ==========================================
-        // Logghiamo gli errori che non siano semplicemente "L'utente esiste già"
         if (error.code !== 'user_already_exists') {
             await logError({
                 source: 'registrazione_utente',
@@ -124,7 +122,6 @@ form.addEventListener("submit", async function (event) {
             });
         }
 
-        // Mostriamo un messaggio tradotto e pulito all'utente
         const displayMessage = error.code === 'user_already_exists' 
             ? "Questo indirizzo email è già registrato. Prova ad accedere." 
             : "Si è verificato un errore di sistema. Riprova più tardi.";
