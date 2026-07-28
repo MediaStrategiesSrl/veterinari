@@ -3,15 +3,74 @@
 // ==========================================
 import { supabase } from '../utils/supabaseClient.js';
 import { logError } from '../utils/logger.js';
+import { canUsePlatform } from "../utils/permission.js";
+
+// ==========================================
+// FIX SYNTAX ERROR: "Illegal return statement"
+// ==========================================
+// Il controllo canUsePlatform() usava un `return;` a livello di file, fuori da
+// qualunque funzione: in JS questo è SEMPRE un errore di sintassi (non solo
+// nei moduli), e blocca l'esecuzione dell'intero script. Avvolgendo tutto in
+// una IIFE async, il `return` diventa legale e continua a fermare l'esecuzione
+// come previsto quando l'utente non ha accettato le comunicazioni email.
+(async function main() {
+
+if(!(await canUsePlatform())){
+
+    alert("Per utilizzare Veterinari.it devi accettare le comunicazioni email.");
+
+    return;
+
+}
 
 const urlParams = new URLSearchParams(window.location.search);
 let vetId = urlParams.get('user_id');
 if (vetId) vetId = vetId.replace(/\/$/, '').trim();
 
 const urlServiceId = urlParams.get('service_id');
+const ruoloRichiesto = urlParams.get('ruolo'); // es. "Veterinario" oppure il tipo_professione, es. "Pet Sitter"
 
 let currentUser = null;
 let isPersonalVisit = false;
+
+// ==========================================
+// FIX ACCOUNT MULTI-RUOLO
+// ==========================================
+// Stesso identico problema già risolto in dettaglio-professionista.js: questa
+// pagina non sapeva NULLA del ruolo (vet vs professionista) dell'account che
+// si sta prenotando. Risultato:
+//  - il titolo mostrava sempre "Dott. Nome Cognome" anche prenotando un pet
+//    sitter
+//  - i servizi mostrati in "SERVIZIO" erano TUTTI quelli del provider_id,
+//    mischiando quelli del ruolo veterinario e quelli del ruolo professionista
+//  - la sede/gli orari usati per calcolare gli slot disponibili potevano
+//    appartenere all'ALTRO ruolo dello stesso account
+//  - l'appuntamento veniva salvato SENZA ruolo_provider (colonna NOT NULL con
+//    default '' ) -> qualunque "agenda" che filtra per ruolo (stessa logica di
+//    servizi-pro.js) non lo trovava mai: sembrava "non salvato"
+let isVet = null;
+let categoria = null; // 'veterinario' | 'professionista' - convenzione DB (vedi servizi-pro.js: RUOLO_ATTUALE = 'professionista')
+let tipoProfessioneSpecifico = null; // es. "Pet Sitter" - solo per UI e per il check "a domicilio"
+let isMultiRuolo = false;
+
+function stessoRuolo(a, b) {
+    if (!a || !b) return false;
+    return a.trim().toLowerCase() === b.trim().toLowerCase();
+}
+
+const PROFESSIONI_A_DOMICILIO = [
+    'pet sitter', 'dog sitter', 'pet sitting', 'dog walker', 'passeggiatore', 'passeggiate cani'
+];
+
+function lavoraADomicilio(tipoProfessione) {
+    if (!tipoProfessione) return false;
+    const normalizzato = tipoProfessione.trim().toLowerCase();
+    return PROFESSIONI_A_DOMICILIO.some(p => normalizzato.includes(p));
+}
+// NOTA: questi 3 helper (stessoRuolo, PROFESSIONI_A_DOMICILIO, lavoraADomicilio)
+// sono duplicati identici a quelli in dettaglio-professionista.js. Conviene
+// spostarli in ../utils/ruoli.js e importarli in entrambi i file, così restano
+// sempre sincronizzati - dimmi se vuoi che prepari anche quello.
 
 // Variabili di Stato
 let selectedDateStr = null;
@@ -61,7 +120,29 @@ async function initPrenota() {
        
         // CONTROLLO AUTOPRENOTAZIONE
         isPersonalVisit = (String(currentUser.id).trim() === String(vetId).trim());
-       
+
+        // ==========================================
+        // FIX: stabiliamo IL RUOLO che si sta prenotando prima di caricare
+        // qualunque altra cosa, così tutto il resto della pagina può essere
+        // consapevole del ruolo.
+        // ==========================================
+        const [{ data: vetRow }, { data: proRow }] = await Promise.all([
+            supabase.from('veterinarians').select('user_id').eq('user_id', vetId).maybeSingle(),
+            supabase.from('professionals').select('user_id, tipo_professione').eq('user_id', vetId).maybeSingle()
+        ]);
+        const hasVetRole = !!vetRow;
+        const hasProRole = !!proRow;
+        isMultiRuolo = hasVetRole && hasProRole;
+
+        // Se arriva ?ruolo=... dalla pagina precedente ci fidiamo di quello
+        // (fondamentale per un account con doppio ruolo). Altrimenti (link
+        // vecchio o diretto) ripieghiamo su: veterinario se esiste quel ruolo,
+        // altrimenti professionista - stesso comportamento legacy già usato
+        // in dettaglio-professionista.js.
+        isVet = ruoloRichiesto ? stessoRuolo(ruoloRichiesto, 'Veterinario') : hasVetRole;
+        categoria = isVet ? 'veterinario' : 'professionista';
+        tipoProfessioneSpecifico = !isVet ? (ruoloRichiesto || proRow?.tipo_professione || null) : null;
+
         await loadVetInfo();
         await loadPets();
 
@@ -85,27 +166,48 @@ async function loadVetInfo() {
             .from('profiles')
             .select(`
                 nome, cognome,
-                provider_locations (id, indirizzo, is_principale, orari_disponibilita)
+                provider_locations (id, indirizzo, nome_struttura, is_principale, orari_disponibilita, ruolo_associato)
             `)
             .eq('id', vetId)
             .single();
 
-        if (error) throw Object.assign(new Error(error.message), { code: error.code || 'DB_FETCH_VET_ERROR' });
+        if (error) throw Object.assign(new Error(error.message), { code: error.code || 'DB_FETCH_ERROR' });
 
         if (profile) {
             const nomeCompleto = `${profile.nome || ''} ${profile.cognome || ''}`.trim();
-            vetNameSubtitle.textContent = `Dott. ${nomeCompleto}`;
+            // "Dott." solo se stiamo prenotando il ruolo Veterinario
+            vetNameSubtitle.textContent = isVet ? `Dott. ${nomeCompleto}` : nomeCompleto;
 
-            // Estrapoliamo la sede principale (o la prima disponibile)
-            if (profile.provider_locations && profile.provider_locations.length > 0) {
-                primaryLocation = profile.provider_locations.find(l => l.is_principale) || profile.provider_locations[0];
-                vetAddress.textContent = primaryLocation.indirizzo || "Indirizzo non specificato";
-            } else {
+            const tutteLeSedi = profile.provider_locations || [];
+            
+            // Filtra le sedi solo per il ruolo che stiamo prenotando (Veterinario o Professionista)
+            const sediDelRuolo = tutteLeSedi.filter(l => stessoRuolo(l.ruolo_associato, categoria));
+
+            // ==========================================
+            // FIX: PROFESSIONISTI A DOMICILIO (PET SITTER)
+            // ==========================================
+            if (!isVet && lavoraADomicilio(tipoProfessioneSpecifico)) {
+                // Invece di mettere null, peschiamo la sede "A domicilio" per estrarne gli orari!
+                primaryLocation = sediDelRuolo.find(l => l.nome_struttura === 'A domicilio') || sediDelRuolo[0] || null;
+                vetAddress.textContent = "Servizio a domicilio";
+            } 
+            // ==========================================
+            // LOGICA STANDARD (VETERINARI, TOELETTATORI IN STRUTTURA)
+            // ==========================================
+            else if (sediDelRuolo.length > 0) {
+                primaryLocation = sediDelRuolo.find(l => l.is_principale) || sediDelRuolo[0] || null;
+                vetAddress.textContent = primaryLocation
+                    ? (primaryLocation.indirizzo || "Indirizzo non specificato")
+                    : "Nessuna sede configurata per questo ruolo";
+            } 
+            // FALLBACK
+            else {
+                primaryLocation = null;
                 vetAddress.textContent = "Nessuna sede configurata";
             }
         }
     } catch (error) {
-        console.error("Errore caricamento info vet:", error);
+        console.error("Errore caricamento info:", error);
         vetNameSubtitle.textContent = `Professionista non trovato`;
     }
 }
@@ -516,15 +618,23 @@ function renderMonthView() {
     dateContainer.appendChild(wrapper);
 }
 
-// 4. Carica Servizi
+// 4. Carica Servizi (filtrati per il ruolo che si sta prenotando)
 async function loadServices() {
     try {
-        const { data: services, error } = await supabase
+        const { data: allServices, error } = await supabase
             .from('provider_services')
             .select('*')
             .eq('provider_id', vetId);
 
         if (error) throw error;
+
+        // FIX ACCOUNT MULTI-RUOLO: prima qui non c'era NESSUN filtro, quindi il
+        // menu "SERVIZIO" mostrava insieme sia "Visita Generale" (vet) sia
+        // "Pet sitting" (professionista) per lo stesso account.
+        const serviziTaggati = (allServices || []).some(s => s.ruolo_provider);
+        const services = isMultiRuolo
+            ? (allServices || []).filter(s => stessoRuolo(s.ruolo_provider, categoria))
+            : (serviziTaggati ? (allServices || []).filter(s => stessoRuolo(s.ruolo_provider, categoria)) : (allServices || []));
 
         const noServicesMsg = document.getElementById("noServicesMsg");
         serviceSelect.innerHTML = "";
@@ -597,7 +707,11 @@ async function loadAvailableTimes(dateStr) {
     });
 
     try {
-        // C. Scarica gli Appuntamenti Esistenti per controllare gli accavallamenti
+        // C. Scarica gli Appuntamenti Esistenti per controllare gli accavallamenti.
+        // NB: qui NON filtriamo per ruolo_provider di proposito: è la stessa
+        // persona fisica dietro l'account, quindi un impegno preso con l'altro
+        // ruolo deve comunque bloccare lo slot (non può essere in due posti
+        // contemporaneamente).
         const { data: bookedAppointments, error } = await supabase
             .from('appointments')
             .select('data_inizio, data_fine')
@@ -708,7 +822,17 @@ confirmBtn.addEventListener("click", async () => {
                 data_inizio: dataInizio.toISOString(),
                 data_fine: dataFine.toISOString(),
                 stato: 'programmato',
-                costo: costoFinale
+                costo: costoFinale,
+                // ==========================================
+                // FIX FONDAMENTALE: ruolo_provider è NOT NULL nello schema
+                // (default '') e qui non veniva MAI valorizzato. L'appuntamento
+                // veniva creato, ma con ruolo_provider = '' - qualunque agenda
+                // che filtra per ruolo (stessa logica già vista in
+                // servizi-pro.js) non lo trovava mai, quindi sembrava "non
+                // salvato". Ora lo tagghiamo con lo stesso ruolo scelto in
+                // questa pagina.
+                // ==========================================
+                ruolo_provider: categoria
             });
 
         if (error) throw error;
@@ -756,3 +880,5 @@ confirmBtn.addEventListener("click", async () => {
 });
 
 initPrenota();
+
+})(); // fine IIFE main()

@@ -193,10 +193,13 @@ function attivaAscoltoNotificheQR(activePetId) {
 // ========================================================
 window.rispondiAllaRichiesta = async function(idRichiesta, sceltaUtente) {
     try {
-        const { error } = await supabase
+        // NB: aggiunto .select().single() per recuperare pet_id/veterinarian_id e poter inviare le mail
+        const { data: richiesta, error } = await supabase
             .from('pet_access_requests')
             .update({ status: sceltaUtente })
-            .eq('id', idRichiesta);
+            .eq('id', idRichiesta)
+            .select('pet_id, veterinarian_id')
+            .single();
 
         if (error) throw Object.assign(new Error(error.message), { code: error.code || 'DB_UPDATE_REQUEST_ERROR' });
 
@@ -205,6 +208,9 @@ window.rispondiAllaRichiesta = async function(idRichiesta, sceltaUtente) {
         if (sceltaUtente === 'approved') {
             // Opzionale: un piccolo feedback di conferma per l'utente
             console.log("Accesso consentito con successo.");
+            if (richiesta) {
+                inviaMailNuovoPaziente(richiesta.pet_id, richiesta.veterinarian_id);
+            }
         }
 
     } catch (err) {
@@ -221,6 +227,28 @@ window.rispondiAllaRichiesta = async function(idRichiesta, sceltaUtente) {
         alert("Errore di connessione durante la conferma. Riprova.");
     }
 };
+
+// ========================================================
+// 5. EMAIL: NUOVO PAZIENTE (al vet) / NUOVO VETERINARIO (al proprietario)
+// ========================================================
+async function inviaMailNuovoPaziente(petId, veterinarianId) {
+    try {
+        const { error: fnError } = await supabase.functions.invoke('send-new-patient-email', {
+            body: { petId, veterinarianId }
+        });
+        if (fnError) throw fnError;
+
+    } catch (error) {
+        console.error("Errore invio mail nuovo paziente:", error);
+        await logError({
+            source: 'condivisione_qr',
+            action: 'invia_mail_nuovo_paziente',
+            errorMessage: error.message || "Errore durante l'invio della mail di nuovo paziente",
+            errorCode: error.code || 'EMAIL_SEND_ERROR',
+            context: { petId, veterinarianId }
+        });
+    }
+}
 
 // ========================================================
 // UI: VIEW A SCHERMO INTERO DINAMICA

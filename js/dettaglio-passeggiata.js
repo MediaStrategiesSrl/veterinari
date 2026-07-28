@@ -4,6 +4,7 @@
 import { supabase } from '../utils/supabaseClient.js';
 import { logError } from '../utils/logger.js';
 
+
 let currentUser = null;
 let currentPetId = null;
 let currentWalkId = null;

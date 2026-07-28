@@ -3,6 +3,7 @@
 // ==========================================
 import { supabase } from '../utils/supabaseClient.js';
 import { logError } from '../utils/logger.js';
+import { canUsePlatform } from "../utils/permission.js";
 
 // ==========================================
 // ELEMENTI DOM E VARIABILI GLOBALI
@@ -11,6 +12,7 @@ const marketGrid = document.getElementById("marketGrid");
 const categoryFiltersContainer = document.getElementById("categoryFilters");
 const searchInput = document.getElementById("searchInput");
 
+let currentUser = null; // Aggiunto per tracciare chi sta guardando il mercatino
 let allItems = []; // Salveremo qui tutti gli oggetti per poterli filtrare lato client
 let allCategories = []; // Salveremo qui le categorie del DB
 let userLocation = null; // Posizione dell'utente
@@ -19,6 +21,13 @@ let userLocation = null; // Posizione dell'utente
 // INIZIALIZZAZIONE
 // ==========================================
 async function initMercatino() {
+    // IL CONTROLLO SPOSTATO QUI DENTRO
+    if(!(await canUsePlatform())){
+        alert("Per utilizzare Veterinari.it devi accettare le comunicazioni email.");
+        window.location.href = "../../index.html"; // Redirezione per bloccare l'utente
+        return;
+    }
+
     try {
         const { data: { user }, error: authError } = await supabase.auth.getUser();
         
@@ -28,6 +37,8 @@ async function initMercatino() {
             window.location.href = "../../index.html";
             return;
         }
+
+        currentUser = user; // Salviamo l'utente loggato
 
         // 1. Chiediamo la posizione dell'utente
         userLocation = await getUserLocation();
@@ -81,7 +92,7 @@ async function fetchMarketItems() {
     try {
         marketGrid.innerHTML = '<div style="grid-column: span 2; text-align: center; color: #888;">Caricamento oggetti...</div>';
 
-        // Recuperiamo dalla tabella corretta: marketplace_listings con JOIN su foto e categoria
+        // Recuperiamo non solo AVAILABLE, ma anche quelli in corso di cessione
         const { data, error } = await supabase
             .from('marketplace_listings')
             .select(`
@@ -89,12 +100,19 @@ async function fetchMarketItems() {
                 category:marketplace_categories(name),
                 photos:marketplace_listing_photos(photo_url, position)
             `)
-            .eq('status', 'AVAILABLE') // Stato corretto del DB
+            .in('status', ['AVAILABLE', 'RESERVED', 'DELIVERED']) // Escludiamo DRAFT e ARCHIVED
             .order('published_at', { ascending: false });
 
         if (error) throw Object.assign(new Error(error.message), { code: error.code || 'DB_ITEMS_FETCH_ERROR' });
 
-        allItems = data || [];
+        // LOGICA DI VISIBILITA'
+        // Mostriamo l'oggetto a tutti se è AVAILABLE. 
+        // Se è RESERVED o DELIVERED, lo mostriamo SOLO a chi lo ha creato.
+        allItems = (data || []).filter(item => {
+            if (item.status === 'AVAILABLE') return true;
+            return item.owner_user_id === currentUser.id;
+        });
+
         renderItems(allItems);
 
     } catch (error) {
@@ -154,7 +172,6 @@ function renderItems(items) {
         let imgUrl = "../../assets/default-item.png";
         
         if (item.photos && item.photos.length > 0) {
-            // Ordina le foto per posizione
             const fotoOrdinate = [...item.photos].sort((a, b) => (a.position || 0) - (b.position || 0));
             imgUrl = fotoOrdinate[0].photo_url;
         } else if (item.image_url) {
@@ -164,7 +181,7 @@ function renderItems(items) {
         const cittaDisplay = item.city ? item.city : "Città ignota";
         let distanceDisplay = "";
 
-        // Calcolo distanza (se coordinate presenti)
+        // Calcolo distanza
         if (userLocation && item.latitude && item.longitude) {
             const distance = getDistanceFromLatLonInKm(
                 userLocation.lat, 
@@ -175,6 +192,17 @@ function renderItems(items) {
             distanceDisplay = ` · ${distance.toFixed(1)} km`;
         }
 
+        // Adattamento visivo per il proprietario se l'oggetto è in trattativa
+        let statoHtml = `<div class="market-item-price" style="color: #059669; font-weight: 800;">GRATIS</div>`;
+        let opacity = "1";
+
+        if (item.status === 'RESERVED') {
+            statoHtml = `<div class="market-item-price" style="color: #D97706; font-weight: 800; font-size: 0.85rem;"><i class="fa-solid fa-handshake"></i> IN TRATTATIVA</div>`;
+        } else if (item.status === 'DELIVERED') {
+            statoHtml = `<div class="market-item-price" style="color: #2563EB; font-weight: 800; font-size: 0.85rem;"><i class="fa-solid fa-box"></i> IN CONSEGNA</div>`;
+            opacity = "0.7";
+        }
+
         // Creazione Card
         const card = document.createElement("a");
         card.className = "market-item-card";
@@ -183,13 +211,14 @@ function renderItems(items) {
         card.style.textDecoration = "none";
         card.style.color = "inherit";
         card.style.display = "block";
+        card.style.opacity = opacity;
 
         card.innerHTML = `
             <img src="${imgUrl}" alt="${item.title}" class="market-item-img" onerror="this.onerror=null; this.src='https://via.placeholder.com/300x200/E2E8F0/94A3B8?text=No+Immagine';">
             <div class="market-item-content">
                 <div class="market-item-title">${item.title}</div>
                 <div class="market-item-location">${cittaDisplay} ${distanceDisplay}</div>
-                <div class="market-item-price" style="color: #059669; font-weight: 800;">GRATIS</div>
+                ${statoHtml}
             </div>
         `;
 

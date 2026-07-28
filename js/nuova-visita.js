@@ -168,7 +168,7 @@ if(documentUpload) {
 }
 
 // ==========================================
-// SALVATAGGIO CARTELLA CLINICA + LOGICA CASSA
+// SALVATAGGIO CARTELLA CLINICA + LOGICA CASSA E MAIL
 // ==========================================
 form.addEventListener("submit", async (e) => {
     e.preventDefault();
@@ -189,15 +189,23 @@ form.addEventListener("submit", async (e) => {
         let attachmentUrl = null;
         const file = documentUpload ? documentUpload.files[0] : null;
 
-        // 1. SE C'È UN FILE, FAI L'UPLOAD (Nelle sottocartelle per Paziente)
+        // FIX: leggiamo TUTTI i campi della visita una sola volta qui, così
+        // possiamo riusarli sia per il salvataggio su DB sia per l'email
+        // (prima l'email riceveva SOLO la diagnosi in un unico campo
+        // "esitoTesto", che la Edge Function non legge nemmeno: si aspetta
+        // motivo/anamnesi/diagnosi/terapia separati - per questo l'email,
+        // quando arrivava, mostrava sempre "Non specificato" ovunque).
+        const testoMotivo = document.getElementById("motivo") ? document.getElementById("motivo").value : "";
+        const testoAnamnesi = document.getElementById("anamnesi") ? document.getElementById("anamnesi").value : "";
+        const testoDiagnosi = document.getElementById("diagnosi") ? document.getElementById("diagnosi").value : "";
+        const testoTerapia = document.getElementById("terapia") ? document.getElementById("terapia").value : "";
+
+        // 1. SE C'È UN FILE, FAI L'UPLOAD
         if (file) {
             submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Caricamento file...';
             
             const safeName = file.name.replace(/[^a-zA-Z0-9.\-_]/g, '_');
-            // Aggiungiamo il timestamp per evitare che file con lo stesso nome vengano sovrascritti
             const fileName = `${Date.now()}_${safeName}`;
-            
-            // LA TUA RICHIESTA: La cartella è 'referti / id_paziente'
             const folderPath = `referti/${petId}`;
             const filePath = `${folderPath}/${fileName}`;
 
@@ -222,32 +230,61 @@ form.addEventListener("submit", async (e) => {
             .insert({
                 pet_id: petId,
                 vet_id: currentUser.id,
-                motivo: document.getElementById("motivo") ? document.getElementById("motivo").value : "",
-                anamnesi: document.getElementById("anamnesi") ? document.getElementById("anamnesi").value : "",
-                diagnosi: document.getElementById("diagnosi") ? document.getElementById("diagnosi").value : "",
-                terapia: document.getElementById("terapia") ? document.getElementById("terapia").value : "",
-                attachment_url: attachmentUrl // Salviamo il Public URL diretto (o il path relativo a seconda della tua logica di lettura)
+                motivo: testoMotivo,
+                anamnesi: testoAnamnesi,
+                diagnosi: testoDiagnosi,
+                terapia: testoTerapia,
+                attachment_url: attachmentUrl
             })
             .select() 
             .single();
 
         if (insertError) throw Object.assign(new Error(insertError.message), { code: insertError.code || 'DB_INSERT_RECORD_ERROR' });
 
-        formMessage.textContent = "Referto salvato!";
+        // ==========================================
+        // 2.5 INVIO EMAIL TRAMITE EDGE FUNCTION
+        // ==========================================
+        submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Invio esito...';
+        
+        const infoAnimaleVisato = pazientiMemoria.find(p => p.pet_id === petId);
+        
+        if (infoAnimaleVisato && infoAnimaleVisato.pets) {
+            const ownerId = infoAnimaleVisato.pets.owner_id;
+            const nomeCane = infoAnimaleVisato.pets.nome;
+
+            // Recupera l'email del proprietario (assicurati che la tabella profiles abbia un campo email o usa auth.users se accessibile)
+            const { data: ownerProfile } = await supabase
+                .from('profiles')
+                .select('email') // Sostituisci con il campo esatto in cui salvi la mail utente
+                .eq('id', ownerId)
+                .single();
+
+            const emailDestinatario = ownerProfile?.email;
+
+            if (emailDestinatario) {
+                // FIX: passiamo tutti e 4 i campi della visita, non solo la diagnosi
+                await inviaEsitoVisita(emailDestinatario, nomeCane, nomeVeterinario, {
+                    motivo: testoMotivo,
+                    anamnesi: testoAnamnesi,
+                    diagnosi: testoDiagnosi,
+                    terapia: testoTerapia
+                });
+            } else {
+                console.warn("Nessuna email trovata per il proprietario. Mail non inviata.");
+            }
+        }
+
+        formMessage.textContent = "Referto salvato ed inviato!";
         formMessage.style.color = "#059669";
 
         // ==========================================
-        // 3. LOGICA DI INDIRIZZAMENTO 
+        // 3. LOGICA DI INDIRIZZAMENTO (CASSA)
         // ==========================================
-        const infoAnimaleVisato = pazientiMemoria.find(p => p.pet_id === petId);
-        
         setTimeout(() => {
             if (infoAnimaleVisato && infoAnimaleVisato.pets.owner_id === currentUser.id) {
-                // EDGE CASE: Il cane è del veterinario stesso! 
                 alert("Visita personale registrata con successo (Costo 0€).");
                 window.location.href = "dashboard-veterinario.html";
             } else {
-                // FLUSSO NORMALE: Cassa.
                 window.location.href = `cassa.html?recordId=${newRecord.id}&petId=${petId}`;
             }
         }, 1500);
@@ -270,6 +307,65 @@ form.addEventListener("submit", async (e) => {
         submitBtn.innerHTML = 'Firma e salva nella cartella';
     }
 });
+
+// datiVisita = { motivo, anamnesi, diagnosi, terapia } - FIX: prima qui
+// arrivava solo "testoEsito" (la diagnosi) e la chiave si chiamava
+// "esitoTesto", che la Edge Function non legge affatto (si aspetta
+// motivo/anamnesi/diagnosi/terapia). Risultato: l'email, quando partiva,
+// mostrava sempre i placeholder di default ("Non specificato" ecc.),
+// indipendentemente da cosa avesse scritto il veterinario.
+async function inviaEsitoVisita(emailProprietario, nomeCane, nomeVet, datiVisita) {
+    try {
+        const { data, error } = await supabase.functions.invoke('send-summary-email', {
+            body: {
+                emailProprietario: emailProprietario,
+                nomePet: nomeCane,
+                nomeVet: nomeVet,
+                motivo: datiVisita.motivo,
+                anamnesi: datiVisita.anamnesi,
+                diagnosi: datiVisita.diagnosi,
+                terapia: datiVisita.terapia
+            }
+        });
+
+        if (error) {
+            // FIX DIAGNOSTICO: "error.message" qui è quasi sempre il generico
+            // "Edge Function returned a non-2xx status code" (è quello che hai
+            // visto nei log). La function però risponde già con il motivo vero
+            // nel corpo ({ success:false, error:"..." }) - lo recuperiamo da
+            // error.context così la PROSSIMA volta che qualcosa va storto,
+            // error_logs conterrà il motivo reale e non dovremo più indovinare.
+            let dettaglio = error.message;
+            if (error.context && typeof error.context.json === 'function') {
+                try {
+                    const corpoErrore = await error.context.json();
+                    if (corpoErrore?.error) dettaglio = corpoErrore.error;
+                } catch (_) {
+                    // corpo non leggibile come JSON: teniamo il messaggio generico
+                }
+            }
+            throw Object.assign(new Error(dettaglio), { code: 'EDGE_FUNCTION_ERROR' });
+        }
+
+        alert("Esito inviato con successo via email!");
+
+    } catch (err) {
+        console.error("Errore invio email:", err);
+        
+        // Log dell'errore nel tuo sistema centrale
+        await logError({
+            source: 'scheda_paziente_vet',
+            action: 'invia_esito_email',
+            errorMessage: err.message || "Fallimento durante l'invocazione della Edge Function",
+            errorCode: err.code || 'EDGE_INVOKE_ERROR',
+            context: { emailProprietario, nomeCane }
+        });
+
+        // FIX: mostriamo anche a schermo il motivo vero (non solo nei log),
+        // così non serve aprire Supabase per capire cosa è successo.
+        alert("Referto salvato, ma si è verificato un errore nell'invio dell'email: " + (err.message || "errore sconosciuto"));
+    }
+}
 
 // Avvia tutto!
 initPage();

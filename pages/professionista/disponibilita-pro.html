@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Disponibilità e Turni — Professionista</title>
     
-    <!-- Usa lo stesso CSS creato prima, è perfetto e universale -->
+    <!-- Fogli di stile -->
     <link rel="stylesheet" href="../../css/global.css">
     <link rel="stylesheet" href="../../css/disponibilita.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -22,34 +22,36 @@
         <div style="width: 24px;"></div>
     </header>
 
-    <!-- Corpo principale -->
-    <main class="main-content">
-        
-        <!-- Hero Card (Azzurra) -->
-        <div class="blue-header-card">
-            <h2>Gestione Turni</h2>
-            <p>Imposta i tuoi orari di lavoro per consentire ai clienti di prenotare i tuoi servizi nei momenti giusti.</p>
-        </div>
+  <main class="main-content">
+    
+    <!-- Hero Card (Azzurra) -->
+    <div class="blue-header-card">
+        <h2>Gestione Turni</h2>
+        <p>Imposta i tuoi orari di lavoro per consentire ai clienti di prenotare i tuoi servizi nei momenti giusti.</p>
+    </div>
 
-        <!-- Selettore Struttura/Zona (Filtro per Professionista) -->
+    <!-- Selettore Struttura/Zona (AGGIUNTO ID: locationCardContainer e display: none) -->
+    <div id="locationCardContainer" class="location-card" style="display: none;">
         <div class="location-selector">
-            <label for="locationSelect">Seleziona la sede / zona operativa</label>
+            <label for="locationSelect" style="font-weight: 700; color: #1E293B; margin-bottom: 12px; display: block; font-size: 0.95rem;">
+                Seleziona la sede / zona operativa
+            </label>
             <div class="select-wrapper">
                 <i class="fa-solid fa-location-dot select-icon"></i>
-                <select id="locationSelect" class="form-control">
+                <select id="locationSelect" class="custom-select form-control">
                     <option value="" disabled selected>Caricamento sedi...</option>
                 </select>
                 <i class="fa-solid fa-chevron-down dropdown-icon"></i>
             </div>
         </div>
+    </div>
 
-        <!-- Area dei turni (nascosta finché non si sceglie la sede) -->
-        <div id="turniContainer" style="display: none;">
-            <!-- Renderizzato via JS -->
-        </div>
+    <!-- Area dei turni -->
+    <div id="turniContainer" style="display: none; margin-top: 15px;">
+        <!-- Renderizzato via JS -->
+    </div>
 
-    </main>
-
+</main>
     <!-- Bottom Bar con Bottone Salva -->
     <div class="floating-bottom-bar">
         <button id="btnSaveSchedule" class="btn-primary" disabled>
@@ -57,7 +59,7 @@
         </button>
     </div>
 
-    <!-- Punta al JS specifico del professionista -->
-    <script type="module" src="../../js/disponibilita-pro.js"></script>
+    <!-- Punta al JS specifico del professionista. Defer garantisce che il DOM sia pronto -->
+    <script type="module" src="../../js/disponibilita-pro.js" defer></script>
 </body>
 </html>

@@ -2,8 +2,7 @@
 // 1. IMPORT CENTRALIZZATI
 // ==========================================
 import { supabase } from '../utils/supabaseClient.js';
-// Assicurati che logError esista, altrimenti commentalo se non lo usi
-// import { logError } from '../utils/logger.js'; 
+import { logError } from '../utils/logger.js'; 
 
 const categoriesContainer = document.getElementById("categoriesContainer");
 const professionalsList = document.getElementById("professionalsList");
@@ -17,7 +16,7 @@ const closeFiltri = document.getElementById('closeFiltri');
 const distanceRange = document.getElementById('distanceRange');
 const distanceValue = document.getElementById('distanceValue');
 const applyFiltri = document.getElementById('applyFiltri');
-const resetFiltri = document.getElementById('resetFiltri'); // ORA ESISTE NELL'HTML!
+const resetFiltri = document.getElementById('resetFiltri'); 
 
 // Variabili globali
 let leafletMap = null;
@@ -26,7 +25,6 @@ let userLng = 9.1900;
 let allLocations = []; 
 let markersLayer = null; 
 
-// STATO FILTRO DISTANZA: All'avvio è DISATTIVATO (false)
 let isDistanceFilterActive = false;
 
 // Estrazione sicura dei dati profilo
@@ -37,17 +35,29 @@ function getProfileData(profileObj, field) {
 }
 
 // ==========================================
+// FIX ACCOUNT MULTI-RUOLO
+// ==========================================
+// Chi lavora "a domicilio" (es. Pet Sitter) non ha MAI sedi fisse. Se non
+// escludiamo esplicitamente le sue "sedi" qui, per un account che ha SIA
+// il ruolo Veterinario SIA il ruolo Pet Sitter, la card Pet Sitter finirebbe
+// per mostrare indirizzo/distanza presi dalle sedi del veterinario (perché
+// provider_locations(*) qui sotto non filtra per ruolo). Adatta l'elenco
+// se usi altri nomi di professione "a domicilio".
+const PROFESSIONI_A_DOMICILIO = [
+    'pet sitter', 'dog sitter', 'pet sitting', 'dog walker', 'passeggiatore', 'passeggiate cani'
+];
+
+function lavoraADomicilio(tipoProfessione) {
+    if (!tipoProfessione) return false;
+    const normalizzato = tipoProfessione.trim().toLowerCase();
+    return PROFESSIONI_A_DOMICILIO.some(p => normalizzato.includes(p));
+}
+
+// ==========================================
 // GESTIONE AVATAR (FIX)
 // ==========================================
-// Nome del bucket Storage (visto nello screenshot: "storage_veterinari").
-// Verifica che corrisponda esattamente al nome del tuo bucket su Supabase.
 const AVATAR_BUCKET = 'storage_veterinari';
 
-// Trasforma il valore salvato in `avatar_url` in un URL immagine realmente
-// raggiungibile. Copre due casi:
-//  1) in DB è già salvato un URL assoluto (https://...) -> lo usa così com'è
-//  2) in DB è salvato solo il path relativo dentro il bucket
-//     (es. "avatar_vet/xxxx.jpg") -> costruisce l'URL pubblico con l'SDK Supabase
 function resolveAvatarUrl(path) {
     if (!path) return null;
     if (path.startsWith('http://') || path.startsWith('https://')) return path;
@@ -55,10 +65,6 @@ function resolveAvatarUrl(path) {
     return data?.publicUrl || null;
 }
 
-// Fallback quando non c'è alcun avatar: genera un'immagine con l'iniziale
-// del nome. NB: il vecchio fallback "via.placeholder.com" non è più
-// affidabile (il servizio è ormai in stato di abbandono e risponde in modo
-// incostante), per questo è stato sostituito con ui-avatars.com.
 function getFallbackAvatar(nome) {
     const lettera = nome ? nome.charAt(0).toUpperCase() : '?';
     return `https://ui-avatars.com/api/?name=${encodeURIComponent(lettera)}&background=E2E8F0&color=64748B&size=150&rounded=true&bold=true`;
@@ -124,7 +130,6 @@ if (navigator.geolocation) {
 // ==========================================
 async function loadSearchData() {
     try {
-        // A. Scarica i Veterinari e le loro sedi fisiche
         const { data: vetsData, error: vetsError } = await supabase
             .from('veterinarians') 
             .select(`
@@ -153,7 +158,6 @@ async function loadSearchData() {
             return sedi.map(s => ({ ...basicInfo, id_sede: s.id, latitudine: s.latitudine, longitudine: s.longitudine, address: s.indirizzo }));
         });
 
-        // B. Scarica i Professionisti (Sitter, Educatori)
         const { data: prosData, error: prosError } = await supabase
             .from('professionals') 
             .select(`
@@ -179,15 +183,19 @@ async function loadSearchData() {
                 tipo_professione: p.tipo_professione || 'Altro',
                 tariffa_oraria: p.tariffa_oraria
             };
-            const sedi = getProfileData(p.profiles, 'provider_locations') || [];
+
+            // FIX: chi lavora a domicilio non ha MAI sedi fisiche valide, anche se
+            // provider_locations(*) qui sopra ne ha restituite (potrebbero essere
+            // quelle dell'ALTRO ruolo dello stesso account, es. Veterinario).
+            const sediGrezze = getProfileData(p.profiles, 'provider_locations') || [];
+            const sedi = lavoraADomicilio(basicInfo.tipo_professione) ? [] : sediGrezze;
+
             if (sedi.length === 0) return [{ ...basicInfo, latitudine: null, longitudine: null, address: 'n.d.' }];
             return sedi.map(s => ({ ...basicInfo, id_sede: s.id, latitudine: s.latitudine, longitudine: s.longitudine, address: s.indirizzo }));
         });
 
-        // C. Unisce le due liste di SEDI
         allLocations = [...normalizedVets, ...normalizedPros];
 
-        // Creazione Pille/Categorie
         if (categoriesContainer) {
             categoriesContainer.innerHTML = '';
             
@@ -248,7 +256,6 @@ async function loadSearchData() {
 function applicaFiltriIncrociati() {
     let risultati = [...allLocations];
 
-    // 1. FILTRO DI TESTO (L'INPUT DELL'UTENTE VIENE SEMPRE RISPETTATO)
     const termine = searchInput ? searchInput.value.toLowerCase().trim() : '';
     if (termine !== '') {
         risultati = risultati.filter(pro => {
@@ -259,7 +266,6 @@ function applicaFiltriIncrociati() {
         });
     }
 
-    // 2. FILTRO CATEGORIA (PILLOLE)
     const activePill = document.querySelector('.category-pill.active');
     const categoriaSelezionata = activePill ? activePill.textContent.trim() : 'Tutti';
     
@@ -267,7 +273,6 @@ function applicaFiltriIncrociati() {
         risultati = risultati.filter(p => (p.tipo_professione || '').toLowerCase() === categoriaSelezionata.toLowerCase());
     }
 
-    // 3. FILTRO DISTANZA (SOLO SE L'UTENTE HA CLICCATO "APPLICA FILTRO")
     if (isDistanceFilterActive) {
         let kmScelti = Infinity;
         if (distanceRange && distanceRange.value) {
@@ -276,13 +281,11 @@ function applicaFiltriIncrociati() {
 
         risultati = risultati.filter(pro => {
             const distanzaVera = calcolaDistanza(userLat, userLng, pro.latitudine, pro.longitudine);
-            // CORREZIONE: Se non ha coordinate, lo escludiamo! Prima bypassava il filtro
             if (isNaN(distanzaVera)) return false; 
             return distanzaVera <= kmScelti;
         });
     }
 
-    // 4. ORDINAMENTO PER DISTANZA
     risultati.sort((a, b) => {
         const distA = calcolaDistanza(userLat, userLng, a.latitudine, a.longitudine);
         const distB = calcolaDistanza(userLat, userLng, b.latitudine, b.longitudine);
@@ -295,7 +298,6 @@ function applicaFiltriIncrociati() {
     renderProfessionals(risultati);
 }
 
-// Ascolta i tasti digitati nell'input
 if (searchInput) {
     searchInput.addEventListener('input', applicaFiltriIncrociati);
 }
@@ -311,7 +313,6 @@ if (distanceRange) distanceRange.addEventListener('input', (e) => {
     if (distanceValue) distanceValue.textContent = e.target.value; 
 });
 
-// APPLICA IL FILTRO DISTANZA
 if (applyFiltri) {
     applyFiltri.addEventListener('click', () => {
         isDistanceFilterActive = true; 
@@ -320,15 +321,11 @@ if (applyFiltri) {
     });
 }
 
-// RIMUOVE IL FILTRO DISTANZA E RIPORTA TUTTO ALLA NORMALITÀ
 if (resetFiltri) {
     resetFiltri.addEventListener('click', () => {
         isDistanceFilterActive = false; 
-        
-        // Opzionale: resetta visivamente la barra a 50km
         if(distanceRange) distanceRange.value = 50;
         if(distanceValue) distanceValue.textContent = 50;
-        
         modalFiltri.classList.remove('show');
         applicaFiltriIncrociati();
     });
@@ -347,12 +344,8 @@ function renderProfessionals(listaDaMostrare) {
 
     if (listaDaMostrare.length > 0) {
         listaDaMostrare.forEach(pro => {
-            // --- FIX AVATAR ---
-            // 1. Prova a risolvere l'URL vero (assoluto o path nel bucket Storage)
-            // 2. Se non c'è nulla, usa un fallback funzionante (non più via.placeholder.com)
             const avatarUrl = resolveAvatarUrl(pro.avatar_url) || getFallbackAvatar(pro.nome);
             const fallbackUrl = getFallbackAvatar(pro.nome);
-
             const prezzo = pro.tariffa_oraria ? `da €${parseFloat(pro.tariffa_oraria).toFixed(2)}` : 'Prezzo su richiesta';
 
             let distanzaTesto = "Distanza n.d.";
@@ -360,8 +353,6 @@ function renderProfessionals(listaDaMostrare) {
             
             if (!isNaN(km)) {
                 distanzaTesto = `${km} km`;
-
-                // Aggiunge marker sulla mappa
                 if (markersLayer) {
                     L.marker([pro.latitudine, pro.longitudine])
                         .addTo(markersLayer)
@@ -369,12 +360,14 @@ function renderProfessionals(listaDaMostrare) {
                 }
             }
 
-            // Evita duplicati se lo stesso utente ha più sedi vicine
+            // ========================================================
+            // FIX FONDAMENTALE: INIEZIONE DEL RUOLO NELL'URL DELLA CARD
+            // ========================================================
             if (!utentiStampati.has(pro.user_id)) {
                 utentiStampati.add(pro.user_id);
                 
                 const proHTML = `
-                    <a href="dettaglio-professionista.html?id=${pro.user_id}" class="pro-card" style="display: flex; align-items: center; background: #fff; padding: 15px; border-radius: 16px; margin-bottom: 12px; text-decoration: none; border: 1px solid #E2E8F0;">
+                    <a href="dettaglio-professionista.html?id=${pro.user_id}&ruolo=${encodeURIComponent(pro.tipo_professione)}" class="pro-card" style="display: flex; align-items: center; background: #fff; padding: 15px; border-radius: 16px; margin-bottom: 12px; text-decoration: none; border: 1px solid #E2E8F0;">
                         <img src="${avatarUrl}" alt="${pro.nome} ${pro.cognome}" onerror="this.onerror=null;this.src='${fallbackUrl}'" style="width: 50px; height: 50px; border-radius: 50%; object-fit: cover; margin-right: 15px;">
                         <div style="flex-grow: 1;">
                             <div style="font-weight: bold; color: #1E293B; font-size: 1.1rem; margin-bottom: 2px;">${pro.nome} ${pro.cognome}</div>

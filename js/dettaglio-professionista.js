@@ -1,7 +1,6 @@
-/// ==========================================
+// ==========================================
 // 1. IMPORT CENTRALIZZATI
 // ==========================================
-// ASSICURATI che i percorsi (../ o ./) puntino ai file corretti in base alle tue cartelle!
 import { supabase } from '../utils/supabaseClient.js'; 
 import { logError } from '../utils/logger.js';
 
@@ -17,17 +16,58 @@ const servicesList = document.getElementById("servicesList");
 const availabilityTitle = document.getElementById("availabilityTitle");
 const availabilitySubtitle = document.getElementById("availabilitySubtitle");
 
-// Estrazione sicura dei dati profilo
 function getProfileData(profileObj, field) {
     if (!profileObj) return null;
     if (Array.isArray(profileObj)) return profileObj[0]?.[field] || null;
     return profileObj[field] || null;
 }
 
+function stessoRuolo(a, b) {
+    if (!a || !b) return false;
+    return a.trim().toLowerCase() === b.trim().toLowerCase();
+}
+
+// ==========================================
+// FUNZIONE AVATAR FALLBACK ESATTA
+// ==========================================
+function getFallbackAvatar(nome) {
+    const lettera = nome ? nome.charAt(0).toUpperCase() : '?';
+    return `https://ui-avatars.com/api/?name=${encodeURIComponent(lettera)}&background=E2E8F0&color=64748B&size=150&rounded=true&bold=true`;
+}
+
+// ==========================================
+// FIX DEFINITIVO: CATEGORIA DI RUOLO NEL DB
+// ==========================================
+function categoriaRuoloDB(isVet) {
+    return isVet ? 'veterinario' : 'professionista';
+}
+
+const PROFESSIONI_A_DOMICILIO = [
+    'pet sitter', 'dog sitter', 'pet sitting', 'dog walker', 'passeggiatore', 'passeggiate cani'
+];
+
+function lavoraADomicilio(tipoProfessione) {
+    if (!tipoProfessione) return false;
+    const normalizzato = tipoProfessione.trim().toLowerCase();
+    return PROFESSIONI_A_DOMICILIO.some(p => normalizzato.includes(p));
+}
+
+function filtraSediPerRuolo(sedi, tipoProfessioneSpecifico, categoria) {
+    if (lavoraADomicilio(tipoProfessioneSpecifico)) return [];
+    const sedieTaggate = sedi.some(s => s.ruolo_associato);
+    return sedieTaggate ? sedi.filter(s => stessoRuolo(s.ruolo_associato, categoria)) : sedi;
+}
+
+function filtraServiziPerRuolo(servizi, categoria, isMultiRuolo) {
+    const serviziTaggati = servizi.some(s => s.ruolo_provider);
+    if (isMultiRuolo) return servizi.filter(s => stessoRuolo(s.ruolo_provider, categoria));
+    return serviziTaggati ? servizi.filter(s => stessoRuolo(s.ruolo_provider, categoria)) : servizi;
+}
+
 async function initPage() {
-    // 1. Legge l'ID dalla URL
     const urlParams = new URLSearchParams(window.location.search);
     const targetId = urlParams.get('id'); 
+    const ruoloRichiesto = urlParams.get('ruolo'); 
 
     if (!targetId) {
         if (vetName) vetName.textContent = "Errore: ID professionista mancante";
@@ -36,37 +76,43 @@ async function initPage() {
 
     const btnPrenota = document.getElementById("btnPrenota");
     if (btnPrenota) {
-        btnPrenota.href = `prenota.html?user_id=${targetId}`;
+        btnPrenota.href = ruoloRichiesto
+            ? `prenota.html?user_id=${targetId}&ruolo=${encodeURIComponent(ruoloRichiesto)}`
+            : `prenota.html?user_id=${targetId}`;
     }
 
     try {
         let profileData = null;
-        let isVet = true;
+        let isVet = ruoloRichiesto ? stessoRuolo(ruoloRichiesto, 'Veterinario') : null;
 
-        // ==========================================
-        // 2. RICERCA INTELLIGENTE: VETERINARI (CON ORARI!)
-        // ==========================================
-        const { data: vetData, error: vetError } = await supabase
-            .from('veterinarians')
-            .select(`
-                user_id,
-                numero_ordine,
-                profiles (
-                    nome, cognome, avatar_url,
-                    provider_locations (orari_disponibilita, is_principale)
-                )
-            `)
-            .eq('user_id', targetId)
-            .maybeSingle();
+        const [{ count: vetCount }, { count: proCount }] = await Promise.all([
+            supabase.from('veterinarians').select('user_id', { count: 'exact', head: true }).eq('user_id', targetId),
+            supabase.from('professionals').select('user_id', { count: 'exact', head: true }).eq('user_id', targetId)
+        ]);
+        const isMultiRuolo = (vetCount || 0) > 0 && (proCount || 0) > 0;
 
-        if (vetError) throw Object.assign(new Error(vetError.message), { code: 'DB_VET_PROFILE_ERROR' });
+        if (isVet !== false) {
+            const { data: vetData, error: vetError } = await supabase
+                .from('veterinarians')
+                .select(`
+                    user_id,
+                    numero_ordine,
+                    profiles (
+                        nome, cognome, avatar_url,
+                        provider_locations (orari_disponibilita, is_principale, ruolo_associato)
+                    )
+                `)
+                .eq('user_id', targetId)
+                .maybeSingle();
 
-        if (vetData) {
-            profileData = vetData;
-        } else {
-            // ==========================================
-            // 3. FALLBACK: PROFESSIONISTI (CON ORARI!)
-            // ==========================================
+            if (vetError) throw Object.assign(new Error(vetError.message), { code: 'DB_VET_PROFILE_ERROR' });
+            if (vetData) {
+                profileData = vetData;
+                isVet = true;
+            }
+        }
+
+        if (!profileData && isVet !== true) {
             isVet = false;
             const { data: proData, error: proError } = await supabase
                 .from('professionals')
@@ -76,36 +122,52 @@ async function initPage() {
                     tariffa_oraria,
                     profiles (
                         nome, cognome, avatar_url,
-                        provider_locations (orari_disponibilita, is_principale)
+                        provider_locations (orari_disponibilita, is_principale, ruolo_associato)
                     )
                 `)
                 .eq('user_id', targetId)
                 .maybeSingle();
 
             if (proError) throw Object.assign(new Error(proError.message), { code: 'DB_PRO_PROFILE_ERROR' });
-            
-            if (!proData) {
-                throw Object.assign(new Error("Profilo non trovato nel database"), { code: 'PROFILE_NOT_FOUND' });
-            }
-            
+            if (!proData) throw Object.assign(new Error("Profilo non trovato nel database"), { code: 'PROFILE_NOT_FOUND' });
+
             profileData = proData;
         }
 
+        if (!profileData) {
+            throw Object.assign(new Error("Profilo non trovato nel database"), { code: 'PROFILE_NOT_FOUND' });
+        }
+
+        const ruoloCorrente = isVet ? 'Veterinario' : (profileData.tipo_professione || ruoloRichiesto || '');
+        const categoria = categoriaRuoloDB(isVet);
+
         // ==========================================
-        // 4. POPOLA NOME E AVATAR
+        // 4. POPOLA NOME E AVATAR (LOGICA RIGIDA)
         // ==========================================
         const nome = getProfileData(profileData.profiles, 'nome') || "";
         const cognome = getProfileData(profileData.profiles, 'cognome') || "";
-        const avatarUrl = getProfileData(profileData.profiles, 'avatar_url');
+        let avatarPath = getProfileData(profileData.profiles, 'avatar_url');
 
         const nomeCompleto = (nome || cognome) ? `${nome} ${cognome}`.trim() : "Professionista Sconosciuto";
         if (vetName) vetName.textContent = nomeCompleto;
         
         if (vetAvatar) {
-            if (avatarUrl) {
-                vetAvatar.src = avatarUrl;
+            if (avatarPath) {
+                // SE C'È UN AVATAR NEL DB, SI USA QUELLO E BASTA. NESSUN FALLBACK.
+                if (avatarPath.startsWith('http') || avatarPath.startsWith('data:')) {
+                    vetAvatar.src = avatarPath;
+                } else {
+                    // Pulisce la stringa da slash iniziali per evitare path corrotti e prende l'URL dallo storage
+                    const cleanPath = avatarPath.replace(/^\/+/, '');
+                    const { data: publicUrlData } = supabase.storage.from('storage_veterinari').getPublicUrl(cleanPath);
+                    vetAvatar.src = publicUrlData?.publicUrl || avatarPath;
+                }
+                
+                // Disattiva esplicitamente il comportamento onerror. L'immagine del db ha priorità assoluta.
+                vetAvatar.onerror = null; 
             } else {
-                vetAvatar.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(nomeCompleto)}&background=E2E8F0&color=64748B`;
+                // Solo se il campo avatar_url nel DB è VUOTO, usa le iniziali.
+                vetAvatar.src = getFallbackAvatar(nomeCompleto);
             }
         }
 
@@ -122,58 +184,64 @@ async function initPage() {
             }
         }
 
-        // 6. Mostra la distanza pescata dal LocalStorage
         if (vetDistance) {
             const distSalvata = localStorage.getItem(`dist_${targetId}`);
             vetDistance.textContent = distSalvata ? `${distSalvata} km` : "Distanza n.d.";
         }
 
         // ==========================================
-        // 7. MAGIA: CONTROLLO DISPONIBILITÀ OGGI
+        // 7. CONTROLLO DISPONIBILITÀ OGGI
         // ==========================================
         if (availabilityTitle && availabilitySubtitle) {
-            const locations = getProfileData(profileData.profiles, 'provider_locations') || [];
-            const primaryLocation = locations.find(l => l.is_principale) || locations[0];
-
-            let isAvailableToday = false;
-
-            if (primaryLocation && primaryLocation.orari_disponibilita) {
-                const orari = primaryLocation.orari_disponibilita;
-                
-                // Mappa dei giorni in italiano per incrociarli col JSON
-                const giorniSettimana = ["domenica", "lunedi", "martedi", "mercoledi", "giovedi", "venerdi", "sabato"];
-                const oggi = new Date();
-                const nomeOggi = giorniSettimana[oggi.getDay()];
-
-                // Se l'array degli orari per "oggi" esiste e ha almeno una fascia (es. non è vuoto)
-                if (orari[nomeOggi] && orari[nomeOggi].length > 0) {
-                    isAvailableToday = true;
-                }
-            }
-
-            if (isAvailableToday) {
-                availabilityTitle.textContent = "Oggi";
-                availabilityTitle.style.color = "#1E293B"; // Nero standard
-                availabilitySubtitle.textContent = "Disponibile";
-                availabilitySubtitle.style.color = "#64748B"; // Grigietto standard
+            if (!isVet && lavoraADomicilio(ruoloCorrente)) {
+                availabilityTitle.textContent = "A domicilio";
+                availabilityTitle.style.color = "#1E293B";
+                availabilitySubtitle.textContent = "Contatta per disponibilità";
+                availabilitySubtitle.style.color = "#64748B";
             } else {
-                availabilityTitle.textContent = "Oggi";
-                availabilityTitle.style.color = "#94A3B8"; // Grigio spento
-                availabilitySubtitle.textContent = "Non disponibile";
-                availabilitySubtitle.style.color = "#DC2626"; // Rosso per allertare l'utente
+                const allLocations = getProfileData(profileData.profiles, 'provider_locations') || [];
+                const locations = filtraSediPerRuolo(allLocations, ruoloCorrente, categoria);
+                const primaryLocation = locations.find(l => l.is_principale) || locations[0];
+
+                let isAvailableToday = false;
+
+                if (primaryLocation && primaryLocation.orari_disponibilita) {
+                    const orari = primaryLocation.orari_disponibilita;
+                    const giorniSettimana = ["domenica", "lunedi", "martedi", "mercoledi", "giovedi", "venerdi", "sabato"];
+                    const oggi = new Date();
+                    const nomeOggi = giorniSettimana[oggi.getDay()];
+
+                    if (orari[nomeOggi] && orari[nomeOggi].length > 0) {
+                        isAvailableToday = true;
+                    }
+                }
+
+                if (isAvailableToday) {
+                    availabilityTitle.textContent = "Oggi";
+                    availabilityTitle.style.color = "#1E293B";
+                    availabilitySubtitle.textContent = "Disponibile";
+                    availabilitySubtitle.style.color = "#64748B";
+                } else {
+                    availabilityTitle.textContent = "Oggi";
+                    availabilityTitle.style.color = "#94A3B8";
+                    availabilitySubtitle.textContent = "Non disponibile";
+                    availabilitySubtitle.style.color = "#DC2626";
+                }
             }
         }
 
         // ==========================================
         // 8. SCARICA E MOSTRA I SERVIZI
         // ==========================================
-        const { data: services, error: servicesError } = await supabase
+        const { data: allServices, error: servicesError } = await supabase
             .from('provider_services')
-            .select('id, nome_servizio, durata_minuti, prezzo') 
+            .select('id, nome_servizio, durata_minuti, prezzo, ruolo_provider') 
             .eq('provider_id', targetId)
             .order('prezzo', { ascending: true }); 
 
         if (servicesError) throw Object.assign(new Error(servicesError.message), { code: 'DB_SERVICES_FETCH_ERROR' });
+
+        const services = filtraServiziPerRuolo(allServices || [], categoria, isMultiRuolo);
 
         if (services && services.length > 0) {
             if (servicesList) servicesList.innerHTML = ""; 
@@ -182,7 +250,7 @@ async function initPage() {
 
             services.forEach(servizio => {
                 const serviceCard = document.createElement("a");
-                serviceCard.href = `prenota.html?user_id=${targetId}&service_id=${servizio.id}`;
+                serviceCard.href = `prenota.html?user_id=${targetId}&service_id=${servizio.id}${ruoloRichiesto ? '&ruolo=' + encodeURIComponent(ruoloRichiesto) : ''}`;
                 
                 serviceCard.style.cssText = `
                     display: flex; 
@@ -235,7 +303,7 @@ async function initPage() {
                 action: 'fetch_profile_and_services',
                 errorMessage: error.message || "Impossibile comunicare col server",
                 errorCode: error.code || 'UNKNOWN_SYS_ERROR',
-                context: { requested_target_id: targetId }
+                context: { requested_target_id: targetId, requested_ruolo: ruoloRichiesto }
             });
         }
 

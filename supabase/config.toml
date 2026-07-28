@@ -423,3 +423,58 @@ entrypoint = "./functions/send-booking-email/index.ts"
 # Specifies static files to be bundled with the function. Supports glob patterns.
 # For example, if you want to serve static HTML pages in your function:
 # static_files = [ "./functions/send-booking-email/*.html" ]
+
+[functions.send-summary-email]
+enabled = true
+verify_jwt = false
+import_map = "./functions/send-summary-email/deno.json"
+# Uncomment to specify a custom file path to the entrypoint.
+# Supported file extensions are: .ts, .js, .mjs, .jsx, .tsx
+entrypoint = "./functions/send-summary-email/index.ts"
+# Specifies static files to be bundled with the function. Supports glob patterns.
+# For example, if you want to serve static HTML pages in your function:
+# static_files = [ "./functions/send-summary-email/*.html" ]
+
+[functions.send-walk-friend-email]
+enabled = true
+verify_jwt = false
+import_map = "./functions/send-walk-friend-email/deno.json"
+# Uncomment to specify a custom file path to the entrypoint.
+# Supported file extensions are: .ts, .js, .mjs, .jsx, .tsx
+entrypoint = "./functions/send-walk-friend-email/index.ts"
+# Specifies static files to be bundled with the function. Supports glob patterns.
+# For example, if you want to serve static HTML pages in your function:
+# static_files = [ "./functions/send-walk-friend-email/*.html" ]
+
+[functions.send-new-patient-email]
+enabled = true
+verify_jwt = false
+import_map = "./functions/send-new-patient-email/deno.json"
+# Uncomment to specify a custom file path to the entrypoint.
+# Supported file extensions are: .ts, .js, .mjs, .jsx, .tsx
+entrypoint = "./functions/send-new-patient-email/index.ts"
+# Specifies static files to be bundled with the function. Supports glob patterns.
+# For example, if you want to serve static HTML pages in your function:
+# static_files = [ "./functions/send-new-patient-email/*.html" ]
+
+[functions.send-walk-created-email]
+enabled = true
+verify_jwt = false
+import_map = "./functions/send-walk-created-email/deno.json"
+# Uncomment to specify a custom file path to the entrypoint.
+# Supported file extensions are: .ts, .js, .mjs, .jsx, .tsx
+entrypoint = "./functions/send-walk-created-email/index.ts"
+# Specifies static files to be bundled with the function. Supports glob patterns.
+# For example, if you want to serve static HTML pages in your function:
+# static_files = [ "./functions/send-walk-created-email/*.html" ]
+
+[functions.send-marketplace-claim-email]
+enabled = true
+verify_jwt = false
+import_map = "./functions/send-marketplace-claim-email/deno.json"
+# Uncomment to specify a custom file path to the entrypoint.
+# Supported file extensions are: .ts, .js, .mjs, .jsx, .tsx
+entrypoint = "./functions/send-marketplace-claim-email/index.ts"
+# Specifies static files to be bundled with the function. Supports glob patterns.
+# For example, if you want to serve static HTML pages in your function:
+# static_files = [ "./functions/send-marketplace-claim-email/*.html" ]

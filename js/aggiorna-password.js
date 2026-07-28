@@ -1,4 +1,5 @@
 import { supabase } from '../utils/supabaseClient.js';
+import { logError } from '../utils/logger.js'; // Import del sistema di logging centrale
 
 const form = document.getElementById("updatePasswordForm");
 const statusMessage = document.getElementById("statusMessage");
@@ -45,6 +46,15 @@ form.addEventListener("submit", async function (event) {
         });
 
         if (error) {
+            // LOG ERRORE SUPABASE: Token scaduto, password debole, ecc.
+            await logError({
+                source: 'aggiorna_password',
+                action: 'update_user_password',
+                errorMessage: error.message || "Errore rifiutato da Supabase durante l'aggiornamento",
+                errorCode: error.code || 'SUPABASE_UPDATE_ERROR',
+                context: {}
+            });
+
             showStatus("Errore nell'aggiornamento: " + error.message, "error");
             setLoading(false);
             return;
@@ -59,6 +69,17 @@ form.addEventListener("submit", async function (event) {
 
     } catch (err) {
         console.error("Errore generico:", err);
+        
+        // LOG ERRORE DI SISTEMA/RETE
+        await logError({
+            source: 'aggiorna_password',
+            action: 'submit_form_catch',
+            errorMessage: err.message || "Errore imprevisto durante l'aggiornamento.",
+            errorCode: err.code || 'UNKNOWN_SYS_ERROR',
+            stackTrace: err.stack,
+            context: { userAgent: navigator.userAgent }
+        });
+
         showStatus("Errore imprevisto. Riprova più tardi.", "error");
         setLoading(false);
     }

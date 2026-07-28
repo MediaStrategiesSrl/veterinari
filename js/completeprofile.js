@@ -3,6 +3,7 @@
 // Assicurati che i percorsi puntino alla cartella corretta (es. ../utils/)
 import { supabase } from '../utils/supabaseClient.js';
 import { logError } from '../utils/logger.js';
+import { canUsePlatform } from "../utils/permissions.js";
 
 // Elementi DOM
 const form = document.getElementById("completeProfileForm");
@@ -27,6 +28,7 @@ const statusMessage = document.getElementById("statusMessage");
 const submitButton = document.getElementById("submitButton");
 
 let rolesMap = {};
+let hasExistingProfile = false; // NUOVO: distingue prima creazione da modifica profilo esistente
 
 const roleDescriptions = {
     "proprietario": "Animali, salute, servizi e incontri",
@@ -81,6 +83,8 @@ async function prefillExistingProfile(userId) {
 
         // Se il profilo esiste, auto-compiliamo i campi e li blocchiamo
         if (profile) {
+            hasExistingProfile = true; // NUOVO: il profilo esiste già, non toccare il consenso email al submit
+
             const fieldsToFill = {
                 'firstName': profile.nome,
                 'lastName': profile.cognome,
@@ -231,6 +235,8 @@ form.addEventListener("submit", async function (event) {
     const selectedRoleName = roleSelectHidden.value;
     const selectedRoleId = rolesMap[selectedRoleName];
 
+    
+
     // STEP 1: Profilo Base
     const profileData = {
         id: user.id,
@@ -242,6 +248,12 @@ form.addEventListener("submit", async function (event) {
         indirizzo: document.getElementById("address").value.trim(),
         email: user.email
     };
+
+    // NUOVO: riporta il consenso email scelto in registrazione, solo alla prima creazione del profilo
+    // (per non sovrascrivere una preferenza già cambiata in seguito dalla schermata Notifiche)
+    if (!hasExistingProfile) {
+        profileData.email_notifications_enabled = user.user_metadata?.newsletter_consent === true;
+    }
 
     const { error: profileError } = await supabase.from("profiles").upsert(profileData);
     if (profileError) {

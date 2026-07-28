@@ -644,6 +644,9 @@ async function segnaConsegnato(ctx) {
 
         await supabase.from('marketplace_listings').update({ status: 'DELIVERED', delivered_at: new Date().toISOString() }).eq('id', listing.id);
 
+        // Mail al donatore e a chi riceve l'oggetto (fire-and-forget)
+        inviaMailConsegnaOggetto(ctx);
+
         await ricaricaDettaglioAperto();
 
     } catch (error) {
@@ -653,6 +656,28 @@ async function segnaConsegnato(ctx) {
             source: 'mercatino_attivita', action: 'mark_delivered',
             errorMessage: error.message, errorCode: error.code || 'MARK_DELIVERED_ERROR',
             context: { request_id: request.id }
+        });
+    }
+}
+
+// ==========================================
+// EMAIL: CONSEGNA OGGETTO MERCATINO
+// ==========================================
+async function inviaMailConsegnaOggetto(ctx) {
+    try {
+        const { error: fnError } = await supabase.functions.invoke('send-marketplace-claim-email', {
+            body: { requestId: ctx.request.id }
+        });
+        if (fnError) throw fnError;
+
+    } catch (error) {
+        console.error("Errore invio mail consegna oggetto:", error);
+        await logError({
+            source: 'mercatino_attivita',
+            action: 'invia_mail_consegna_oggetto',
+            errorMessage: error.message || "Errore durante l'invio della mail di consegna oggetto",
+            errorCode: error.code || 'EMAIL_SEND_ERROR',
+            context: { request_id: ctx.request.id, listing_id: ctx.listing.id }
         });
     }
 }

@@ -155,7 +155,7 @@ async function loadAmici() {
         friendsList.innerHTML = "";
         friendships.forEach(f => {
             const amico = f.pet1.id === currentPetId ? f.pet2 : f.pet1;
-            const foto = amico.avatar_url ? supabase.storage.from('avatars').getPublicUrl(amico.avatar_url).data.publicUrl : '../../img/default-dog.jpg';
+           const foto = amico.avatar_url ? supabase.storage.from('storage_veterinari').getPublicUrl(amico.avatar_url).data.publicUrl : '../../img/default-dog.jpg';
 
             friendsList.innerHTML += `
                 <div class="friend-card">
@@ -238,12 +238,23 @@ async function checkNotificheAmicizia() {
 
 async function rispondiAmicizia(friendshipId, nuovoStatus) {
     try {
-        const { error } = await supabase.from('pet_friendships').update({ status: nuovoStatus }).eq('id', friendshipId);
+        // NB: aggiunto .select().single() per recuperare pet1_id/pet2_id e poter inviare le mail di conferma
+        const { data: friendshipRow, error } = await supabase
+            .from('pet_friendships')
+            .update({ status: nuovoStatus })
+            .eq('id', friendshipId)
+            .select('pet1_id, pet2_id')
+            .single();
         
         if (error) throw Object.assign(new Error(error.message), { code: error.code || 'DB_UPDATE_FRIENDSHIP_ERROR' });
 
         alert(nuovoStatus === 'accepted' ? "Amicizia accettata!" : "Richiesta rifiutata.");
         modalNotifiche.style.display = "none";
+
+        // Se l'amicizia è stata accettata, avvisiamo via mail entrambi i proprietari (fire-and-forget)
+        if (nuovoStatus === 'accepted' && friendshipRow) {
+            inviaMailNuovoAmico(friendshipRow.pet1_id, friendshipRow.pet2_id);
+        }
         
         // Ricarichiamo dati UI
         checkNotificheAmicizia();
@@ -258,6 +269,31 @@ async function rispondiAmicizia(friendshipId, nuovoStatus) {
             errorMessage: error.message || "Impossibile aggiornare lo status dell'amicizia",
             errorCode: error.code || 'UNKNOWN_DB_ERROR',
             context: { friendshipId, nuovoStatus }
+        });
+    }
+}
+
+// ==========================================
+// 6. EMAIL: NUOVO AMICO DI PASSEGGIATA
+// ==========================================
+// Invocata quando un'amicizia passa a 'accepted': la Edge Function risolve
+// email e nomi dei due proprietari con la Service Role Key (bypassa la RLS).
+async function inviaMailNuovoAmico(pet1Id, pet2Id) {
+    try {
+        const { error: fnError } = await supabase.functions.invoke('send-walk-friend-email', {
+            body: { pet1Id, pet2Id }
+        });
+        if (fnError) throw fnError;
+
+    } catch (error) {
+        // Un errore di invio mail non deve bloccare il flusso di accettazione amicizia
+        console.error("Errore invio mail nuovo amico:", error);
+        await logError({
+            source: 'passeggiate_amici',
+            action: 'invia_mail_nuovo_amico',
+            errorMessage: error.message || "Errore durante l'invio della mail di nuovo amico",
+            errorCode: error.code || 'EMAIL_SEND_ERROR',
+            context: { pet1Id, pet2Id }
         });
     }
 }
@@ -303,19 +339,22 @@ document.getElementById("formCreaPasseggiata").addEventListener("submit", async 
         const dataFormattata = new Date(dataInput).toISOString();
         const maxCaniFormattato = parseInt(maxCaniInput, 10);
 
-        const { error } = await supabase.from('walks').insert({
+        const { data: nuovaPasseggiata, error } = await supabase.from('walks').insert({
             creator_id: currentUser.id,
             titolo: titolo,
             luogo: luogo,
             data_passeggiata: dataFormattata,
             max_animali: maxCaniFormattato
-        });
+        }).select('id').single();
         
         if (error) throw Object.assign(new Error(error.message), { code: error.code || 'DB_INSERT_WALK_ERROR' });
 
         modalCrea.style.display = "none";
         e.target.reset();
         await loadPasseggiate(); 
+
+        // Mail di conferma al proprietario che ha creato la passeggiata (fire-and-forget)
+        if (nuovaPasseggiata) inviaMailPasseggiataCreata(nuovaPasseggiata.id);
 
     } catch (error) {
         console.error("Errore salvataggio passeggiata:", error);
@@ -334,6 +373,28 @@ document.getElementById("formCreaPasseggiata").addEventListener("submit", async 
         btn.disabled = false;
     }
 });
+
+// ==========================================
+// 7. EMAIL: CONFERMA CREAZIONE PASSEGGIATA
+// ==========================================
+async function inviaMailPasseggiataCreata(walkId) {
+    try {
+        const { error: fnError } = await supabase.functions.invoke('send-walk-created-email', {
+            body: { walkId }
+        });
+        if (fnError) throw fnError;
+
+    } catch (error) {
+        console.error("Errore invio mail conferma passeggiata:", error);
+        await logError({
+            source: 'passeggiate_amici',
+            action: 'invia_mail_passeggiata_creata',
+            errorMessage: error.message || "Errore durante l'invio della mail di conferma passeggiata",
+            errorCode: error.code || 'EMAIL_SEND_ERROR',
+            context: { walkId }
+        });
+    }
+}
 
 // Avvia tutto!
 init();
