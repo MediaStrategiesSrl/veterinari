@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Notifiche — Veterinari.it</title>
+    <link rel="stylesheet" href="../../css/global.css">
+    <link rel="stylesheet" href="../../css/profile.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* Stili per l'interruttore attiva/disattiva: non presenti in profile.css */
+        .switch { position: relative; width: 50px; height: 30px; flex-shrink: 0; }
+        .switch input { opacity: 0; width: 0; height: 0; position: absolute; }
+        .switch-track {
+            position: absolute; inset: 0; background: #CBD5E1; border-radius: 30px;
+            cursor: pointer; transition: background .2s ease; display: block;
+        }
+        .switch-track::before {
+            content: ""; position: absolute; width: 24px; height: 24px; left: 3px; top: 3px;
+            background: #fff; border-radius: 50%; transition: transform .2s ease;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+        }
+        .switch input:checked + .switch-track { background: #F58220; }
+        .switch input:checked + .switch-track::before { transform: translateX(20px); }
+        .switch input:disabled + .switch-track { opacity: .5; cursor: not-allowed; }
+
+        .switch-skeleton {
+            display: block; height: 30px; width: 50px; border-radius: 30px;
+            background: linear-gradient(90deg, #E2E8F0 25%, #EDF2F7 37%, #E2E8F0 63%);
+            background-size: 400% 100%; animation: shimmer 1.4s ease infinite;
+        }
+        @keyframes shimmer { 0% { background-position: 100% 50%; } 100% { background-position: 0 50%; } }
+
+        .avviso-box { display: none; margin-top: 14px; padding: 14px; background: #FEF3C7; border: 1px solid #FDE68A; border-radius: 12px; gap: 10px; }
+        .avviso-box.visibile { display: flex; }
+        .avviso-box i { color: #D97706; font-size: 1rem; margin-top: 2px; flex-shrink: 0; }
+        .avviso-box p { margin: 0; font-size: 0.82rem; color: #92400E; line-height: 1.5; }
+
+        .lista-comunicazioni { margin: 16px 0 0; padding: 14px 16px; background: #F8FAFC; border-radius: 12px; list-style: none; }
+        .lista-comunicazioni li { display: flex; align-items: flex-start; gap: 10px; font-size: 0.84rem; color: #1E293B; padding: 5px 0; }
+        .lista-comunicazioni li i { color: #0284C7; font-size: 0.78rem; margin-top: 3px; }
+
+        .status-message { margin-top: 14px; padding: 12px 16px; border-radius: 10px; font-size: 0.85rem; font-weight: 600; text-align: center; }
+        .status-message.success { background: #F0FDF4; color: #16A34A; }
+        .status-message.error { background: #FEE2E2; color: #DC2626; }
+        .status-message[hidden] { display: none; }
+    </style>
+</head>
+<body style="background-color: #F8F7F4;">
+
+    <main class="app-container">
+
+        <header class="header-nav" style="background: transparent;">
+            <a href="profilo-pro.html" class="back-btn"><i class="fas fa-chevron-left"></i></a>
+            <div class="header-title">
+                <h2>Notifiche</h2>
+                <p>Promemoria e preferenze</p>
+            </div>
+            <div class="header-icon"><i class="fa-solid fa-diamond"></i></div>
+        </header>
+
+        <div class="section-container">
+
+            <div class="profile-card" style="display: flex; align-items: flex-start; justify-content: space-between; background: #fff; padding: 15px; border-radius: 12px; margin-bottom: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.02);">
+                <div style="display: flex; align-items: flex-start; gap: 15px;">
+                    <div class="card-icon" style="background: #E0F2FE; color: #0284C7; width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                        <i class="fa-solid fa-bell"></i>
+                    </div>
+                    <div>
+                        <h4 style="margin: 0; color: #1E293B; font-size: 1rem;">Comunicazioni email</h4>
+                        <p style="margin: 4px 0 0; color: #64748B; font-size: 0.85rem;">Ricevi via email le comunicazioni relative al funzionamento del servizio.</p>
+                    </div>
+                </div>
+
+                <!-- Stato iniziale: skeleton finché non carichiamo il valore reale dal DB -->
+                <div class="switch" id="switchWrapper" style="margin-left: 12px; flex-shrink: 0;">
+                    <span class="switch-skeleton" id="switchSkeleton"></span>
+                </div>
+            </div>
+
+            <div style="background: #fff; padding: 15px; border-radius: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.02);">
+                <ul class="lista-comunicazioni">
+                    <li><i class="fa-solid fa-check"></i> Conferme e riepiloghi di prenotazioni e appuntamenti</li>
+                    <li><i class="fa-solid fa-check"></i> Notifiche di attività (amicizie, passeggiate, mercatino)</li>
+                    <li><i class="fa-solid fa-check"></i> Aggiornamenti importanti sul tuo account</li>
+                </ul>
+
+                <div class="avviso-box" id="avvisoDisattivate">
+                    <i class="fa-solid fa-triangle-exclamation"></i>
+                    <p>Con le comunicazioni email disattivate non potrai prenotare visite o appuntamenti: sono necessarie al funzionamento del servizio, non solo comunicazioni di marketing.</p>
+                </div>
+
+                <p class="status-message" id="statusMessage" hidden></p>
+            </div>
+
+        </div>
+
+        <div style="height: 100px;"></div>
+
+        <nav class="bottom-nav">
+            <a href="dashboard-professionista.html" class="nav-item">
+                <i class="fa-solid fa-house"></i><span>Home</span>
+            </a>
+            <a href="animali.html" class="nav-item">
+                <i class="fa-solid fa-paw"></i><span>Animali</span>
+            </a>
+            <a href="cerca.html" class="nav-item">
+                <i class="fa-solid fa-magnifying-glass"></i><span>Cerca</span>
+            </a>
+            <a href="#" class="nav-item">
+                <i class="fa-solid fa-euro-sign"></i><span>Wallet</span>
+            </a>
+            <a href="profilo.html" class="nav-item active">
+                <i class="fa-solid fa-user"></i><span>Profilo</span>
+            </a>
+        </nav>
+
+    </main>
+
+    <script type="module" src="../../js/notifiche.js"></script>
+</body>
+</html>

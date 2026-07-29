@@ -4,6 +4,22 @@
 import { supabase } from '../utils/supabaseClient.js';
 import { logError } from '../utils/logger.js';
 
+// ==========================================
+// FIX AVATAR ANIMALI: bucket sbagliato
+// ==========================================
+// Il codice puntava a un bucket chiamato "avatars", che non esiste: gli
+// avatar degli animali sono nel bucket pubblico "storage_veterinari",
+// dentro la cartella pets_avatar - esattamente come mostrato nello
+// screenshot dello Storage che mi hai mandato. Per questo le immagini
+// risultavano rotte (icona di immagine non trovata).
+const PETS_AVATAR_BUCKET = 'storage_veterinari';
+
+function resolvePetAvatarUrl(path) {
+    if (!path) return null;
+    if (path.startsWith('http://') || path.startsWith('https://')) return path;
+    const { data } = supabase.storage.from(PETS_AVATAR_BUCKET).getPublicUrl(path);
+    return data?.publicUrl || null;
+}
 
 let currentUser = null;
 let currentPetId = null;
@@ -248,10 +264,9 @@ async function loadPartecipanti() {
                 }
             }
 
-            // Gestione foto avatar
-            const avatarUrl = pet.avatar_url 
-                ? supabase.storage.from('avatars').getPublicUrl(pet.avatar_url).data.publicUrl 
-                : '../../img/default-dog.jpg';
+            // FIX: gli avatar sono in storage_veterinari/pets_avatar, non in un
+            // bucket "avatars" (che non esiste)
+            const avatarUrl = resolvePetAvatarUrl(pet.avatar_url) || '../../img/default-dog.jpg';
 
             listaContainer.innerHTML += `
                 <div class="participant-card">

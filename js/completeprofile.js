@@ -3,7 +3,7 @@
 // Assicurati che i percorsi puntino alla cartella corretta (es. ../utils/)
 import { supabase } from '../utils/supabaseClient.js';
 import { logError } from '../utils/logger.js';
-import { canUsePlatform } from "../utils/permissions.js";
+import { canUsePlatform } from "../utils/permission.js";
 
 // Elementi DOM
 const form = document.getElementById("completeProfileForm");

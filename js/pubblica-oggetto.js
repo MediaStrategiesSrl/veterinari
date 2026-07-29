@@ -247,6 +247,12 @@ form.addEventListener('submit', async (e) => {
 
         if (declError) throw Object.assign(new Error(declError.message), { code: declError.code || 'DB_INSERT_DECLARATIONS_ERROR' });
 
+        // 8. Notifica email (fire-and-forget: non blocca il redirect in caso di errore)
+supabase.functions.invoke('send-listing-created-email', {
+    body: { listingId }
+}).then(res => console.log("Email invoke result:", res))
+  .catch(err => console.error("Email invoke error:", err));
+
         window.location.href = `dettaglio-annuncio.html?id=${listingId}`;
 
     } catch (error) {
@@ -261,5 +267,7 @@ form.addEventListener('submit', async (e) => {
         btnPubblica.innerHTML = 'Pubblica annuncio';
     }
 });
+
+
 
 initPagina();

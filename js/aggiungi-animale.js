@@ -9,7 +9,27 @@ const petAvatarInput = document.getElementById('petAvatar');
 const avatarPreview = document.getElementById('avatarPreview');
 const statusMessage = document.getElementById('statusMessage');
 
+const petSpeciesSelect = document.getElementById('petSpecies');
+const breedGroup = document.getElementById('breedGroup');
+const speciesGroup = document.getElementById('speciesGroup');
+const petBreedInput = document.getElementById('petBreed');
+
 let selectedFile = null;
+let currentUser = null; // NUOVO: reso accessibile anche nel catch, per il log errori
+
+// NUOVO: specie per cui ha senso chiedere la razza
+const SPECIE_CON_RAZZA = new Set(['Cane', 'Gatto', 'Coniglio', 'Cavallo']);
+
+// NUOVO: mostra/nasconde il campo Razza in base alla specie selezionata
+function aggiornaCampoRazza() {
+    const haRazza = SPECIE_CON_RAZZA.has(petSpeciesSelect.value);
+    breedGroup.style.display = haRazza ? '' : 'none';
+    speciesGroup.style.flex = haRazza ? '' : '1 1 100%';
+    if (!haRazza) petBreedInput.value = '';
+}
+
+petSpeciesSelect.addEventListener('change', aggiornaCampoRazza);
+aggiornaCampoRazza(); // stato corretto già al caricamento (default "Cane" ha razza)
 
 // Gestione preview immagine
 document.getElementById('avatarUploadArea').addEventListener('click', () => petAvatarInput.click());
@@ -36,7 +56,8 @@ addPetForm.addEventListener('submit', async (e) => {
 
     try{
     const { data: { user } } = await supabase.auth.getUser();
-    
+    currentUser = user; // NUOVO: salvato anche fuori dal try, disponibile nel catch
+
     let avatarPath = null;
     
     // 1. Carica immagine su Storage
@@ -57,12 +78,16 @@ addPetForm.addEventListener('submit', async (e) => {
         // dato che il tuo database lo richiede come NOT NULL e UNIQUE.
         const hashGenerato = "QR-" + Date.now() + "-" + Math.random().toString(36).substring(2, 9);
 
+        // NUOVO: stringa vuota -> NULL (specie senza razza, o campo lasciato vuoto)
+        const razzaValue = petBreedInput.value.trim();
+        const finalRazza = razzaValue === "" ? null : razzaValue;
+
         // 2. Salva nel DB
         const { error: dbError } = await supabase.from('pets').insert({
             owner_id: user.id,
             nome: document.getElementById('petName').value,
             specie: document.getElementById('petSpecies').value,
-            razza: document.getElementById('petBreed').value,
+            razza: finalRazza,           // NUOVO: null invece di stringa vuota
             avatar_url: avatarPath,      // Assicurati che questa colonna esista nel DB!
             qr_code_hash: hashGenerato   // <--- DATO OBBLIGATORIO MANCANTE AGGIUNTO!
         });
