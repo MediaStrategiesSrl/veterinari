@@ -27,14 +27,11 @@
     padding: 20px 20px 4px;
 }
 
-.home-header__logo {
-    font-size: 1.4rem;
-    font-weight: 800;
-    color: var(--sp-ink);
-}
-
-.home-header__logo span {
-    color: var(--sp-blue);
+/* Regola corretta per il tuo logo */
+.dash-header-logo {
+    max-height: 36px; /* Altezza ottimale per mobile */
+    width: auto;      /* Mantiene le proporzioni */
+    object-fit: contain;
 }
 
 /* ==========================================
