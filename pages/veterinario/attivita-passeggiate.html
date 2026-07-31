@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Attività e Passeggiate — Veterinari.it</title>
+    <link rel="stylesheet" href="../../css/global.css">
+    <link rel="stylesheet" href="../../css/attivita-passeggiate.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+
+    <main class="app-container">
+        
+        <header class="page-header">
+            <!-- Il link per tornare indietro, in un'app reale JS potrebbe gestire la history -->
+            <a href="scheda-paziente.html" class="back-btn" id="btnBack"><i class="fas fa-chevron-left"></i></a>
+            <div class="header-title">
+                <h2>Attività e passeggiate</h2>
+                <p id="petNameSub">Caricamento storico...</p>
+            </div>
+            <div class="header-action">
+                <i class="fa-solid fa-tree"></i>
+            </div>
+        </header>
+
+        <div class="dashboard-content">
+            <h3 class="section-title">Storico delle passeggiate</h3>
+
+            <div id="walksContainer" class="walks-list">
+                <!-- Stato di caricamento iniziale -->
+                <div class="loading-state">
+                    <i class="fa-solid fa-circle-notch fa-spin"></i>
+                    <p>Recupero attività in corso...</p>
+                </div>
+            </div>
+            
+            <div style="height: 40px;"></div>
+        </div>
+
+    </main>
+
+    <script type="module" src="../../js/attivita-passeggiate.js"></script>
+</body>
+</html>

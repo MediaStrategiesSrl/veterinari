@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Sponsor · Veterinari.it</title>
+    <link rel="stylesheet" href="../../css/global.css">
+    <link rel="stylesheet" href="../../css/sponsor.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body style="background-color: #F8F7F4;">
+
+    <main class="app-container">
+
+        <header class="home-header">
+            <div class="home-header__logo">Veterin<span>a</span>ri.it</div>
+            <a href="notifiche.html" class="header-icon" style="text-decoration:none;"><i class="fa-solid fa-diamond"></i></a>
+        </header>
+
+        <!-- HERO: stato sponsor -->
+        <section class="sponsor-hero" id="sponsorHero">
+            <span class="sponsor-hero__badge">Sponsor attivo</span>
+            <h1 class="sponsor-hero__title" id="nomeAzienda">Caricamento...</h1>
+            <p class="sponsor-hero__text" id="testoReach">Stiamo calcolando le tue statistiche del mese...</p>
+            <a href="campagne.html" class="sponsor-hero__btn">Gestisci campagne</a>
+        </section>
+
+        <!-- STATISTICHE RAPIDE -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-card__label">Visualizzazioni</div>
+                <div class="stat-card__value" id="statVisualizzazioni">—</div>
+                <span class="stat-card__delta" id="deltaVisualizzazioni" hidden></span>
+            </div>
+            <div class="stat-card">
+                <div class="stat-card__label">Clic</div>
+                <div class="stat-card__value" id="statClic">—</div>
+                <span class="stat-card__delta" id="deltaClic" hidden></span>
+            </div>
+        </div>
+
+        <!-- CAMPAGNA ATTIVA -->
+        <section class="sp-section">
+            <h2 class="sp-section-title">Campagna attiva</h2>
+            <div id="campagnaAttivaContainer">
+                <div class="sp-skeleton"><i class="fa-solid fa-spinner fa-spin"></i> Caricamento...</div>
+            </div>
+        </section>
+
+        <div style="height: 100px;"></div>
+
+        <nav class="bottom-nav">
+            <a href="dashboard-sponsor.html" class="nav-item active">
+                <i class="fa-solid fa-house"></i><span>Home</span>
+            </a>
+            <a href="campagne.html" class="nav-item">
+                <i class="fa-solid fa-rectangle-ad"></i><span>Campagne</span>
+            </a>
+            <a href="statistiche.html" class="nav-item">
+                <i class="fa-solid fa-arrow-trend-up"></i><span>Statistiche</span>
+            </a>
+            <a href="#" class="nav-item">
+                <i class="fa-solid fa-euro-sign"></i><span>Acquisti</span>
+            </a>
+            <a href="profilo-sponsor.html" class="nav-item">
+                <i class="fa-solid fa-user"></i><span>Profilo</span>
+            </a>
+        </nav>
+
+    </main>
+
+    <script type="module" src="../../js/dashboard-sponsor.js"></script>
+</body>
+</html>

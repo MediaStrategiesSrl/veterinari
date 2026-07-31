@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Campagne · Veterinari.it</title>
+    <link rel="stylesheet" href="../../css/global.css">
+    <link rel="stylesheet" href="../../css/sponsor.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body style="background-color: #F8F7F4;">
+
+    <main class="app-container">
+
+        <header class="header-nav" style="background: transparent;">
+            <a href="dashboard-sponsor.html" class="back-btn"><i class="fas fa-chevron-left"></i></a>
+            <div class="header-title">
+                <h2>Campagne</h2>
+                <p>Banner in app</p>
+            </div>
+            <div class="header-icon"><i class="fa-solid fa-diamond"></i></div>
+        </header>
+
+        <section class="sp-section" style="padding-top: 8px;">
+            <div class="sp-section-header">
+                <h2 class="sp-section-title" style="margin:0;">Attive</h2>
+                <button type="button" class="link-nuova" id="btnNuovaCampagna"><i class="fa-solid fa-plus"></i> Nuova</button>
+            </div>
+            <div id="listaAttive">
+                <div class="sp-skeleton"><i class="fa-solid fa-spinner fa-spin"></i> Caricamento...</div>
+            </div>
+        </section>
+
+        <section class="sp-section">
+            <h2 class="sp-section-title">Concluse</h2>
+            <div id="listaConcluse">
+                <div class="sp-skeleton"><i class="fa-solid fa-spinner fa-spin"></i> Caricamento...</div>
+            </div>
+        </section>
+
+        <div style="height: 100px;"></div>
+
+        <nav class="bottom-nav">
+            <a href="dashboard-sponsor.html" class="nav-item">
+                <i class="fa-solid fa-house"></i><span>Home</span>
+            </a>
+            <a href="campagne.html" class="nav-item active">
+                <i class="fa-solid fa-rectangle-ad"></i><span>Campagne</span>
+            </a>
+            <a href="statistiche.html" class="nav-item">
+                <i class="fa-solid fa-arrow-trend-up"></i><span>Statistiche</span>
+            </a>
+            <a href="#" class="nav-item">
+                <i class="fa-solid fa-euro-sign"></i><span>Acquisti</span>
+            </a>
+            <a href="profilo-sponsor.html" class="nav-item">
+                <i class="fa-solid fa-user"></i><span>Profilo</span>
+            </a>
+        </nav>
+
+    </main>
+
+    <!-- MODALE: NUOVA CAMPAGNA -->
+    <div class="sp-modal-overlay" id="modalOverlay" hidden>
+        <div class="sp-modal">
+            <h3>Nuova campagna</h3>
+            <form id="formNuovaCampagna">
+
+                <div class="campo">
+                    <label for="inputTitolo">Titolo campagna</label>
+                    <input type="text" id="inputTitolo" placeholder="Es. Protezione PetCare+" required>
+                </div>
+
+                <div class="campo">
+                    <label for="selBannerType">Posizione banner</label>
+                    <select id="selBannerType">
+                        <option value="banner_app">Banner app</option>
+                    </select>
+                </div>
+
+                <div class="campo-riga">
+                    <div class="campo">
+                        <label for="inputCitta">Città target</label>
+                        <input type="text" id="inputCitta" placeholder="Es. Milano" required>
+                    </div>
+                    <div class="campo">
+                        <label for="inputRaggio">Raggio (km)</label>
+                        <input type="number" id="inputRaggio" min="1" placeholder="25">
+                    </div>
+                </div>
+
+                <div class="campo-riga">
+                    <div class="campo">
+                        <label for="inputDataInizio">Data inizio</label>
+                        <input type="date" id="inputDataInizio" required>
+                    </div>
+                    <div class="campo">
+                        <label for="inputDataFine">Data fine</label>
+                        <input type="date" id="inputDataFine" required>
+                    </div>
+                </div>
+
+                <p class="sp-form-status" id="formStatus" hidden></p>
+
+                <div class="sp-modal__azioni">
+                    <button type="button" class="btn-annulla" id="btnAnnullaModale">Annulla</button>
+                    <button type="submit" class="btn-conferma" id="btnConfermaCampagna">Crea campagna</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script type="module" src="../../js/campagne.js"></script>
+</body>
+</html>

@@ -23,6 +23,7 @@ const vetNumeroOrdine = document.getElementById("vetNumeroOrdine");
 const avatarUpload = document.getElementById("avatarUpload");
 const ciUpload = document.getElementById("ciUpload");
 const tesseraUpload = document.getElementById("tesseraUpload");
+const firmaUpload = document.getElementById("firmaUpload"); // FIX: nuovo campo firma (per le prescrizioni)
 
 // ==========================================
 // 2. HELPER PER L'UI DEGLI UPLOAD
@@ -47,6 +48,7 @@ function setupFileInput(inputId, nameId, subtextId) {
 setupFileInput("avatarUpload", "avatarFileName", "avatarSubtext");
 setupFileInput("ciUpload", "ciFileName", "ciSubtext");
 setupFileInput("tesseraUpload", "tesseraFileName", "tesseraSubtext");
+setupFileInput("firmaUpload", "firmaFileName", "firmaSubtext"); // FIX
 
 // ==========================================
 // 3. INIZIALIZZAZIONE E CARICAMENTO DATI
@@ -77,7 +79,7 @@ async function initPage() {
 
         const { data: vetData } = await supabase
             .from('veterinarians')
-            .select('numero_ordine, foto_professionale_url, documento_identita_url, tessera_ordine_url')
+            .select('numero_ordine, foto_professionale_url, documento_identita_url, tessera_ordine_url, firma_url')
             .eq('user_id', user.id)
             .maybeSingle();
 
@@ -89,6 +91,10 @@ async function initPage() {
             if (vetData.foto_professionale_url) document.getElementById("avatarSubtext").textContent = "Foto presente a sistema";
             if (vetData.documento_identita_url) document.getElementById("ciSubtext").textContent = "Documento presente a sistema";
             if (vetData.tessera_ordine_url) document.getElementById("tesseraSubtext").textContent = "Tessera presente a sistema";
+            if (vetData.firma_url) { // FIX
+                const firmaSubtext = document.getElementById("firmaSubtext");
+                if (firmaSubtext) firmaSubtext.textContent = "Firma presente a sistema";
+            }
         }
 
         disabilitaCampi(true);
@@ -106,6 +112,7 @@ function disabilitaCampi(disabilita) {
     avatarUpload.disabled = disabilita;
     ciUpload.disabled = disabilita;
     tesseraUpload.disabled = disabilita;
+    if (firmaUpload) firmaUpload.disabled = disabilita; // FIX
     
     if (disabilita) {
         btnModificaSalva.innerHTML = '<i class="fa-solid fa-pen"></i> Modifica Profilo';
@@ -140,10 +147,12 @@ form.addEventListener("submit", async (e) => {
         let newAvatarPath = null;
         let newCiPath = null;
         let newTesseraPath = null;
+        let newFirmaPath = null; // FIX
 
         const avatarFile = avatarUpload.files[0];
         const ciFile = ciUpload.files[0];
         const tesseraFile = tesseraUpload.files[0];
+        const firmaFile = firmaUpload ? firmaUpload.files[0] : null; // FIX
 
         // --- UPLOAD FOTO PROFESSIONALE ---
         if (avatarFile) {
@@ -172,6 +181,15 @@ form.addEventListener("submit", async (e) => {
             if (uploadError) throw uploadError;
         }
 
+        // --- UPLOAD FIRMA (usata nelle prescrizioni) --- FIX: nuovo blocco
+        if (firmaFile) {
+            btnModificaSalva.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Upload Firma...';
+            const fileExt = firmaFile.name.split('.').pop();
+            newFirmaPath = `firme/${currentUser.id}/firma_${Date.now()}.${fileExt}`;
+            const { error: uploadError } = await supabase.storage.from('storage_veterinari').upload(newFirmaPath, firmaFile, { upsert: true });
+            if (uploadError) throw uploadError;
+        }
+
         btnModificaSalva.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Aggiornamento DB...';
 
         const [nuovoNome, ...restoCognome] = vetNomeCognome.value.trim().split(' ');
@@ -194,6 +212,7 @@ form.addEventListener("submit", async (e) => {
         if (newAvatarPath) vetUpdates.foto_professionale_url = newAvatarPath;
         if (newCiPath) vetUpdates.documento_identita_url = newCiPath;
         if (newTesseraPath) vetUpdates.tessera_ordine_url = newTesseraPath;
+        if (newFirmaPath) vetUpdates.firma_url = newFirmaPath; // FIX
 
         const { error: vetError } = await supabase.from('veterinarians').update(vetUpdates).eq('user_id', currentUser.id); 
         if (vetError) throw vetError;
@@ -213,6 +232,7 @@ form.addEventListener("submit", async (e) => {
         avatarUpload.value = "";
         ciUpload.value = "";
         tesseraUpload.value = "";
+        if (firmaUpload) firmaUpload.value = ""; // FIX
 
     } catch (error) {
         console.error("Errore di salvataggio:", error);

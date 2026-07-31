@@ -1,0 +1,233 @@
+/* ==========================================================================
+   Prescrizione Medica · Veterinari.it
+   ========================================================================== */
+
+:root {
+    --arancio-brand: #F28B24;
+    --arancio-scuro: #D9771A;
+    --blu-brand: #3BA3D0;
+    
+    --grigio-900: #1C2430;
+    --grigio-600: #6B7280;
+    --grigio-400: #9CA3AF;
+    --grigio-300: #D1D5DB;
+    --grigio-150: #F3F4F6;
+    --grigio-100: #F9F7F4; /* Sfondo crema tipico dell'app */
+    
+    --superficie: #FFFFFF;
+    --raggio-sm: 12px;
+    --raggio: 16px;
+    --ombra: 0 8px 30px rgba(28, 36, 48, 0.05);
+}
+
+body {
+    background: var(--grigio-100);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    color: var(--grigio-900);
+    margin: 0;
+    padding: 0;
+}
+
+/* --- Toolbar --- */
+.page-toolbar {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 32px 24px;
+}
+
+.toolbar-group {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.toolbar-back {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--grigio-900);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 8px 0;
+}
+
+.toolbar-back svg {
+    width: 22px;
+    height: 22px;
+}
+
+.btn-print {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--arancio-brand);
+    color: #ffffff;
+    border: none;
+    padding: 10px 18px;
+    border-radius: var(--raggio-sm);
+    font-weight: 700;
+    font-size: 15px;
+    cursor: pointer;
+    box-shadow: 0 4px 15px rgba(242, 139, 36, 0.3);
+    transition: all 0.2s ease;
+}
+
+.btn-print:hover {
+    background: var(--arancio-scuro);
+}
+
+.btn-print svg {
+    width: 18px;
+    height: 18px;
+}
+
+/* --- Foglio Prescrizione --- */
+.sheet-wrapper {
+    max-width: 760px;
+    margin: 0 auto 60px;
+    padding: 0 24px;
+    box-sizing: border-box;
+}
+
+.prescription-sheet {
+    background: var(--superficie);
+    border-radius: var(--raggio);
+    box-shadow: var(--ombra);
+    padding: 50px 56px 40px;
+    position: relative;
+    overflow: hidden;
+    border: none;
+}
+
+.prescription-sheet::before {
+    content: "";
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 6px;
+    /* Sfumatura Arancio -> Blu presa dal mockup */
+    background: linear-gradient(90deg, var(--arancio-brand), var(--blu-brand));
+}
+
+.sheet-header {
+    text-align: center;
+    padding-bottom: 24px;
+}
+
+.vet-name {
+    font-family: Georgia, 'Times New Roman', serif; /* Font Serif per il nome medico */
+    font-size: 26px;
+    font-weight: 700;
+    color: var(--grigio-900);
+    letter-spacing: 0.2px;
+    margin: 0 0 6px 0;
+}
+
+.vet-address {
+    font-size: 14.5px;
+    color: var(--grigio-600);
+    margin: 4px 0;
+}
+
+.vet-meta {
+    font-size: 12.5px;
+    color: var(--grigio-600);
+    margin: 4px 0 0 0;
+}
+
+.sheet-divider {
+    height: 1px;
+    background: var(--grigio-300); /* Linea divisoria grigio chiaro */
+    margin: 32px 0;
+}
+
+.sheet-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 24px;
+    flex-wrap: wrap;
+}
+
+.sheet-col {
+    display: flex;
+    flex-direction: column;
+}
+
+.sheet-label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    color: var(--grigio-600);
+    font-weight: 700;
+    margin-bottom: 8px;
+}
+
+.sheet-value {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--grigio-900);
+}
+
+.sheet-microchip {
+    font-size: 13px;
+    color: var(--grigio-600);
+    margin-top: 8px;
+}
+
+.sheet-body {
+    margin-top: 40px;
+    min-height: 140px;
+}
+
+.therapy-text {
+    font-size: 16px;
+    line-height: 1.6;
+    margin-top: 12px;
+    color: var(--grigio-900);
+    white-space: pre-line;
+}
+
+.sheet-signature {
+    margin-top: 60px;
+    margin-left: auto;
+    width: 240px;
+    text-align: center;
+}
+
+.signature-image {
+    max-height: 60px;
+    max-width: 100%;
+    object-fit: contain;
+    display: block;
+    margin: 0 auto 8px;
+}
+
+.signature-placeholder {
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--grigio-400);
+    font-size: 13px;
+    font-style: italic;
+}
+
+.signature-line {
+    border-top: 1px solid var(--grigio-900);
+    margin-top: 8px;
+}
+
+.signature-name {
+    font-size: 13px;
+    color: var(--grigio-600);
+    margin-top: 6px;
+}
+
+/* Stampa ottimizzata: toglie ombre, arrotondamenti e interfacce web */
+@media print {
+    body { background: #ffffff; }
+    .page-toolbar { display: none; }
+    .sheet-wrapper { max-width: 100%; padding: 0; margin: 0; }
+    .prescription-sheet { box-shadow: none; border-radius: 0; padding: 0; }
+    .prescription-sheet::before { display: none; }
+}

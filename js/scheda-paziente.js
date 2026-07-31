@@ -18,6 +18,10 @@ const petMicrochipText = document.getElementById("petMicrochipText");
 const btnNuovaVisita = document.getElementById("btnNuovaVisita");
 const storiaClinicaStats = document.getElementById("storiaClinicaStats");
 const btnStoriaClinica = document.getElementById("btnStoriaClinica");
+const btnAttivitaPasseggiate = document.getElementById("btnAttivitaPasseggiate"); // FIX: mancava il riferimento a questo elemento
+// FIX: il box Vaccini non aveva id nell'HTML, quindi questo riferimento
+// tornava sempre null e il suo href non veniva mai aggiornato con petId.
+const btnVaccini = document.getElementById("btnVaccini");
 
 // Elementi DOM per Upload
 const uploadRefertoInput = document.getElementById("uploadReferto");
@@ -74,6 +78,8 @@ async function initPage() {
         // Prepara i bottoni
         if (btnNuovaVisita) btnNuovaVisita.href = `nuova-visita.html?petId=${petId}`;
         if (btnStoriaClinica) btnStoriaClinica.href = `../../storia-clinica.html?petId=${petId}`;
+        if (btnAttivitaPasseggiate) btnAttivitaPasseggiate.href = `attivita-passeggiate.html?petId=${petId}`; // FIX: mancava questa riga, per questo l'URL non aveva mai il petId
+        if (btnVaccini) btnVaccini.href = `vaccini.html?petId=${petId}`; // FIX: il box Vaccini non era mai stato collegato, per questo vaccini.html si apriva senza petId nell'URL
 
         // Scarica i dati dell'animale
         const { data: pet, error: petError } = await supabase
@@ -123,6 +129,30 @@ async function initPage() {
 
         if (storiaClinicaStats) {
             storiaClinicaStats.textContent = count > 0 ? `${count} visite/referti registrati` : `Nessuna visita registrata`;
+        }
+
+        // ==========================================
+        // LINK ALL'ULTIMA PRESCRIZIONE
+        // ==========================================
+        // Cerchiamo l'ultima visita di QUESTO animale che contiene una terapia
+        // (non tutti i medical_records ce l'hanno: i referti allegati via upload,
+        // ad esempio, hanno diagnosi ma niente terapia). Se la troviamo, mostriamo
+        // un link diretto a prescrizione.html con l'id di quella visita, senza
+        // richiedere modifiche all'HTML esistente.
+        const { data: ultimaTerapia, error: ultimaTerapiaError } = await supabase
+            .from('medical_records')
+            .select('id')
+            .eq('pet_id', petId)
+            .not('terapia', 'is', null)
+            .neq('terapia', '')
+            .order('data_visita', { ascending: false })
+            .limit(1)
+            .maybeSingle();
+
+        if (ultimaTerapiaError) {
+            console.warn("Impossibile verificare l'ultima prescrizione:", ultimaTerapiaError.message);
+        } else if (ultimaTerapia) {
+            inserisciLinkUltimaPrescrizione(ultimaTerapia.id);
         }
 
     } catch (err) {
@@ -295,5 +325,51 @@ if (btnRevocaAccesso) {
     });
 }
 
+// ==========================================
+// LINK DINAMICO: ULTIMA PRESCRIZIONE
+// ==========================================
+function inserisciLinkUltimaPrescrizione(recordId) {
+    if (document.getElementById('btnUltimaPrescrizione')) return; // evita doppioni
+
+    // Usiamo btnStoriaClinica come punto fisso di inserimento
+    const puntoInserimento = btnStoriaClinica;
+    if (!puntoInserimento || !puntoInserimento.parentNode) return;
+
+    const link = document.createElement('a');
+    link.id = 'btnUltimaPrescrizione';
+    link.href = `prescrizione.html?id=${recordId}`;
+    
+    // FIX CSS INLINE: Aggiunto width 100%, box-sizing e padding/margini identici alle altre card
+    link.style.cssText = `
+        text-decoration: none; 
+        display: flex; 
+        align-items: center; 
+        justify-content: space-between; 
+        background: #ffffff; 
+        padding: 16px; 
+        border-radius: 16px; 
+        margin-top: 16px; /* Spaziatura identica tra le card */
+        box-shadow: 0 4px 15px rgba(28, 36, 48, 0.04); 
+        width: 100%; 
+        box-sizing: border-box;
+    `;
+    
+    link.innerHTML = `
+        <div style="display:flex; align-items:center; gap:16px;">
+            <div style="background:#FFF3E9; color:#F58220; width:44px; height:44px; border-radius:12px; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+                <i class="fa-solid fa-file-medical" style="font-size:18px;"></i>
+            </div>
+            <div style="display:flex; flex-direction:column; justify-content:center;">
+                <h4 style="margin:0 0 2px 0; color:#1C2430; font-size:16px; font-weight:700; line-height:1.2;">Ultima prescrizione</h4>
+                <p style="margin:0; color:#6B7280; font-size:13px; line-height:1.2;">Visualizza e stampa</p>
+            </div>
+        </div>
+        <!-- FIX FRECCIA: Colore grigio chiaro standard UI (#CBD5E1) -->
+        <i class="fa-solid fa-chevron-right" style="color:#CBD5E1; font-size:14px;"></i>
+    `;
+
+    // Inserisce esattamente sotto la card "Storia clinica"
+    puntoInserimento.parentNode.insertBefore(link, puntoInserimento.nextSibling);
+}
 // Avvia tutto!
 initPage();

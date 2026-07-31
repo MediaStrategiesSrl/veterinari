@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Statistiche · Veterinari.it</title>
+    <link rel="stylesheet" href="../../css/global.css">
+    <link rel="stylesheet" href="../../css/sponsor.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body style="background-color: #F8F7F4;">
+
+    <main class="app-container">
+
+        <header class="header-nav" style="background: transparent;">
+            <a href="dashboard-sponsor.html" class="back-btn"><i class="fas fa-chevron-left"></i></a>
+            <div class="header-title">
+                <h2>Statistiche</h2>
+                <p id="periodoTesto">Caricamento...</p>
+            </div>
+            <div class="header-icon"><i class="fa-solid fa-diamond"></i></div>
+        </header>
+
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-card__label">Visualizzazioni</div>
+                <div class="stat-card__value" id="statVisualizzazioni">—</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-card__label">CTR</div>
+                <div class="stat-card__value" id="statCtr">—</div>
+            </div>
+        </div>
+
+        <section class="sp-section">
+            <div class="chart-card">
+                <div class="chart-card__label">Andamento giornaliero</div>
+                <div class="chart-bars" id="chartBars">
+                    <div class="sp-skeleton"><i class="fa-solid fa-spinner fa-spin"></i></div>
+                </div>
+            </div>
+        </section>
+
+        <section class="sp-section">
+            <h2 class="sp-section-title">Geolocalizzazione utenti</h2>
+            <div id="listaCitta">
+                <div class="sp-skeleton"><i class="fa-solid fa-spinner fa-spin"></i> Caricamento...</div>
+            </div>
+        </section>
+
+        <div style="height: 100px;"></div>
+
+        <nav class="bottom-nav">
+            <a href="dashboard-sponsor.html" class="nav-item">
+                <i class="fa-solid fa-house"></i><span>Home</span>
+            </a>
+            <a href="campagne.html" class="nav-item">
+                <i class="fa-solid fa-rectangle-ad"></i><span>Campagne</span>
+            </a>
+            <a href="statistiche.html" class="nav-item active">
+                <i class="fa-solid fa-arrow-trend-up"></i><span>Statistiche</span>
+            </a>
+            <a href="#" class="nav-item">
+                <i class="fa-solid fa-euro-sign"></i><span>Acquisti</span>
+            </a>
+            <a href="profilo-sponsor.html" class="nav-item">
+                <i class="fa-solid fa-user"></i><span>Profilo</span>
+            </a>
+        </nav>
+
+    </main>
+
+    <script type="module" src="../../js/statistiche.js"></script>
+</body>
+</html>

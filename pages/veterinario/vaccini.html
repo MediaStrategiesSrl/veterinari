@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vaccini · Veterinari.it</title>
+<link rel="stylesheet" href="../../css/global.css">
+<link rel="stylesheet" href="../../css/vaccini.css">
+</head>
+<body>
+<div class="page">
+
+    <header class="page-header">
+        <button class="icon-btn" id="btnIndietro" aria-label="Indietro">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="15 18 9 12 15 6"></polyline>
+            </svg>
+        </button>
+        <div class="page-header__titles">
+            <h1>Vaccini</h1>
+            <p id="animaleSubtitle">Storico e nuove somministrazioni</p>
+        </div>
+        <button class="icon-btn icon-btn--accent" id="btnNuovaRapida" aria-label="Nuova vaccinazione">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="12" y1="5" x2="12" y2="19"></line>
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+            </svg>
+        </button>
+    </header>
+
+    <nav class="tabs" role="tablist">
+        <button class="tab tab--attivo" id="tabStorico" role="tab" aria-selected="true">
+            <span class="tab__icona tab__icona--blu">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="9"></circle>
+                    <polyline points="12 7 12 12 15.5 14"></polyline>
+                </svg>
+            </span>
+            <span class="tab__testo">
+                <strong>Storico vaccini</strong>
+                <small>Vaccinazioni passate</small>
+            </span>
+        </button>
+        <button class="tab" id="tabCrea" role="tab" aria-selected="false">
+            <span class="tab__icona tab__icona--verde">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M18 2l4 4-9.5 9.5-5.5 1.5 1.5-5.5L18 2z"></path>
+                    <line x1="14.5" y1="5.5" x2="18.5" y2="9.5"></line>
+                    <line x1="3" y1="21" x2="7" y2="17"></line>
+                </svg>
+            </span>
+            <span class="tab__testo">
+                <strong>Crea visita vaccino</strong>
+                <small>Registra una dose</small>
+            </span>
+        </button>
+    </nav>
+
+    <main>
+        <section id="sezioneStorico" class="section">
+            <div id="storicoLista" class="storico-lista">
+                <div class="skeleton">Caricamento…</div>
+            </div>
+            <div id="storicoVuoto" class="stato-vuoto" hidden>
+                <p>Nessuna vaccinazione registrata</p>
+                <span>Le vaccinazioni che aggiungi compariranno qui.</span>
+            </div>
+        </section>
+
+        <section id="sezioneCrea" class="section" hidden>
+            <form id="formVaccino" novalidate>
+
+                <div class="campo">
+                    <label for="selVaccino">Vaccino</label>
+                    <select id="selVaccino" required>
+                        <option value="" disabled selected>Seleziona un vaccino</option>
+                    </select>
+                </div>
+
+                <div class="campo" id="campoVaccinoAltro" hidden>
+                    <label for="inputVaccinoAltro">Nome vaccino</label>
+                    <input type="text" id="inputVaccinoAltro" placeholder="Es. Bordetella">
+                </div>
+
+                <div class="campo">
+                    <label for="inputDataSomm">Data somministrazione</label>
+                    <input type="date" id="inputDataSomm" required>
+                </div>
+
+                <div class="campo">
+                    <label for="inputDataRichiamo">Data richiamo</label>
+                    <input type="date" id="inputDataRichiamo">
+                    <span class="hint" id="hintRichiamo"></span>
+                </div>
+
+                <div class="campo">
+                    <label for="inputNote">Note</label>
+                    <textarea id="inputNote" rows="3" placeholder="Lotto, reazioni, osservazioni…"></textarea>
+                </div>
+
+                <p id="formStatus" class="status-message" hidden></p>
+
+                <button type="submit" id="btnSalva" class="btn-primario">Salva vaccinazione</button>
+            </form>
+        </section>
+    </main>
+
+</div>
+
+<script type="module" src="../../js/vaccini.js"></script>
+</body>
+</html>

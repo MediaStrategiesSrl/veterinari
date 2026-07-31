@@ -1,0 +1,102 @@
+/* Container della lista */
+.walks-list {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    margin-top: 10px;
+}
+
+/* Stile della Card della singola passeggiata */
+.walk-card {
+    background-color: #ffffff;
+    border-radius: 20px;
+    padding: 20px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.04);
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    border: 1px solid #f1f5f9;
+}
+
+.walk-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.walk-date {
+    font-size: 0.85rem;
+    color: #f97316; /* Arancione Veterinari.it */
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.walk-level-badge {
+    font-size: 0.75rem;
+    background-color: #f1f5f9;
+    color: #475569;
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-weight: 600;
+}
+
+.walk-title {
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: #1e293b;
+    margin: 0;
+    line-height: 1.3;
+}
+
+.walk-details-row {
+    display: flex;
+    gap: 16px;
+    font-size: 0.9rem;
+    color: #64748b;
+    margin-top: 4px;
+}
+
+.walk-detail-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.walk-detail-item i {
+    color: #0ea5e9; /* Blu Veterinari.it */
+}
+
+/* Empty e Loading State */
+.empty-state, .loading-state {
+    text-align: center;
+    padding: 50px 20px;
+    color: #64748b;
+    background: #ffffff;
+    border-radius: 20px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.04);
+}
+
+.empty-state-icon {
+    width: 60px;
+    height: 60px;
+    background-color: #fff7ed; /* Sfondo arancione chiaro */
+    color: #f97316;
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    margin: 0 auto 16px auto;
+}
+
+.empty-state h4 {
+    color: #1e293b;
+    font-size: 1.1rem;
+    margin-bottom: 8px;
+}
+
+.empty-state p {
+    font-size: 0.9rem;
+    line-height: 1.4;
+}

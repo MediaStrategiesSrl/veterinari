@@ -7,6 +7,7 @@ import { logError } from '../utils/logger.js';
 
 let currentUser = null;
 let nomeVeterinario = "Dott. Sconosciuto";
+let firmaVeterinarioUrl = null; // null = nessuna firma caricata -> non si può prescrivere una terapia
 
 // Variabile globale per tenere in memoria i dati completi dei pazienti (incluso il proprietario)
 let pazientiMemoria = []; 
@@ -58,6 +59,22 @@ async function initPage() {
         console.warn("Impossibile recuperare il profilo vet, uso default.");
     }
     headerSubtitle.textContent = `Seleziona paziente · ${nomeVeterinario}`;
+
+    // 2.b Recupera la firma del veterinario: serve per sapere, PRIMA del submit,
+    // se può prescrivere una terapia (vedi controllo nel form submit più sotto)
+    try {
+        const { data: vetData, error: vetDataError } = await supabase
+            .from('veterinarians')
+            .select('firma_url')
+            .eq('user_id', currentUser.id)
+            .single();
+
+        if (vetDataError && vetDataError.code !== 'PGRST116') throw vetDataError;
+        firmaVeterinarioUrl = vetData?.firma_url || null;
+    } catch (err) {
+        console.warn("Impossibile verificare la firma del veterinario:", err.message);
+        firmaVeterinarioUrl = null; // in caso di dubbio, blocchiamo la prescrizione per sicurezza
+    }
 
     // ==========================================
     // GESTIONE URL E SICUREZZA (GUARD)
@@ -181,6 +198,19 @@ form.addEventListener("submit", async (e) => {
         return;
     }
 
+    // ==========================================
+    // BLOCCO: NIENTE FIRMA = NIENTE PRESCRIZIONE
+    // ==========================================
+    // Controllato PRIMA di disabilitare il bottone o toccare upload/DB, così se
+    // manca la firma non si spreca nessuna scrittura: la visita va comunque
+    // salvata solo se il veterinario toglie la terapia o carica prima la firma.
+    const terapiaDaVerificare = document.getElementById("terapia") ? document.getElementById("terapia").value : "";
+    if (terapiaDaVerificare.trim() && !firmaVeterinarioUrl) {
+        formMessage.textContent = "Per prescrivere una terapia devi prima caricare la tua firma in Dati personali.";
+        formMessage.style.color = "#DC2626";
+        return;
+    }
+
     submitBtn.disabled = true;
     submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Elaborazione in corso...';
     formMessage.innerHTML = "";
@@ -274,7 +304,17 @@ form.addEventListener("submit", async (e) => {
             }
         }
 
-        formMessage.textContent = "Referto salvato ed inviato!";
+        // ==========================================
+        // LINK ALLA PRESCRIZIONE (solo se è stata scritta una terapia)
+        // ==========================================
+        // Apriamo in una NUOVA scheda apposta: il redirect verso cassa.html /
+        // dashboard-veterinario.html qui sotto deve continuare come prima,
+        // senza essere interrotto o sostituito da questo link opzionale.
+        const linkPrescrizione = testoTerapia.trim()
+            ? ` <a href="prescrizione.html?id=${newRecord.id}" target="_blank" rel="noopener" style="color:#0284C7; font-weight:600; text-decoration:underline;">Vedi prescrizione</a>`
+            : "";
+
+        formMessage.innerHTML = "Referto salvato ed inviato!" + linkPrescrizione;
         formMessage.style.color = "#059669";
 
         // ==========================================

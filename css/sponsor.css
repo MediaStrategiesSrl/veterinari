@@ -1,0 +1,472 @@
+/* ==========================================
+   VARIABILI CONDIVISE SEZIONE SPONSOR
+   ========================================== */
+:root {
+    --sp-orange: #F58220;
+    --sp-orange-dark: #E0741C;
+    --sp-orange-soft: #FFF3E9;
+    --sp-blue: #3B82F6;
+    --sp-blue-soft: #E0F2FE;
+    --sp-green: #16A34A;
+    --sp-green-soft: #DCFCE7;
+    --sp-ink: #1E293B;
+    --sp-ink-soft: #64748B;
+    --sp-ink-faint: #94A3B8;
+    --sp-border: #E2E8F0;
+}
+
+/* ==========================================
+   HEADER HOME (logo + icona, senza back-btn)
+   ========================================== */
+.home-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 20px 20px 4px;
+}
+
+.home-header__logo {
+    font-size: 1.4rem;
+    font-weight: 800;
+    color: var(--sp-ink);
+}
+
+.home-header__logo span {
+    color: var(--sp-blue);
+}
+
+/* ==========================================
+   HERO "SPONSOR ATTIVO"
+   ========================================== */
+.sponsor-hero {
+    max-width: 720px;
+    margin: 16px auto 0;
+    padding: 28px 24px;
+    border-radius: 24px;
+    background: linear-gradient(135deg, var(--sp-orange), var(--sp-orange-dark));
+    color: #fff;
+    box-shadow: 0 10px 25px rgba(245, 130, 32, 0.25);
+    position: relative;
+    overflow: hidden;
+}
+
+.sponsor-hero__badge {
+    display: inline-block;
+    background: rgba(255, 255, 255, 0.25);
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    margin-bottom: 14px;
+}
+
+.sponsor-hero__title {
+    font-size: 1.6rem;
+    font-weight: 800;
+    margin: 0 0 10px;
+}
+
+.sponsor-hero__text {
+    font-size: 0.92rem;
+    opacity: 0.95;
+    line-height: 1.5;
+    margin: 0 0 20px;
+}
+
+.sponsor-hero__btn {
+    display: inline-block;
+    background: #fff;
+    color: var(--sp-orange);
+    font-weight: 700;
+    border: none;
+    padding: 13px 22px;
+    border-radius: 30px;
+    text-decoration: none;
+    font-size: 0.92rem;
+    cursor: pointer;
+}
+
+/* ==========================================
+   GRIGLIA STATISTICHE (2 card)
+   ========================================== */
+.stats-grid {
+    max-width: 720px;
+    margin: 16px auto 0;
+    padding: 0 20px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    box-sizing: border-box;
+}
+
+.stat-card {
+    background: #fff;
+    border-radius: 16px;
+    padding: 18px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+}
+
+.stat-card__label {
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--sp-ink-faint);
+}
+
+.stat-card__value {
+    font-size: 1.9rem;
+    font-weight: 800;
+    color: var(--sp-ink);
+    margin: 6px 0 10px;
+}
+
+.stat-card__delta {
+    display: inline-block;
+    font-size: 0.78rem;
+    font-weight: 700;
+    padding: 3px 10px;
+    border-radius: 20px;
+    background: var(--sp-green-soft);
+    color: var(--sp-green);
+}
+
+.stat-card__delta--down {
+    background: #FEE2E2;
+    color: #DC2626;
+}
+
+.stat-card__delta--neutral {
+    background: #F1F5F9;
+    color: var(--sp-ink-soft);
+}
+
+/* ==========================================
+   SEZIONI GENERICHE
+   ========================================== */
+.sp-section {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 24px 20px 0;
+    box-sizing: border-box;
+}
+
+.sp-section-title {
+    font-size: 1.15rem;
+    font-weight: 800;
+    color: var(--sp-ink);
+    margin: 0 0 12px;
+}
+
+.sp-section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+}
+
+.link-nuova {
+    color: var(--sp-blue);
+    font-weight: 700;
+    font-size: 0.9rem;
+    text-decoration: none;
+    background: none;
+    border: none;
+    cursor: pointer;
+}
+
+/* ==========================================
+   BADGE DI STATO CAMPAGNA
+   ========================================== */
+.status-badge {
+    display: inline-block;
+    font-size: 0.72rem;
+    font-weight: 700;
+    padding: 4px 12px;
+    border-radius: 20px;
+    margin-bottom: 10px;
+}
+
+.status-badge--active {
+    background: var(--sp-green-soft);
+    color: var(--sp-green);
+}
+
+.status-badge--done {
+    background: var(--sp-blue-soft);
+    color: #0284C7;
+}
+
+.status-badge--paused {
+    background: #FEF3C7;
+    color: #D97706;
+}
+
+/* ==========================================
+   CARD CAMPAGNA
+   ========================================== */
+.campaign-card {
+    background: #fff;
+    border-radius: 16px;
+    padding: 20px;
+    margin-bottom: 14px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+}
+
+.campaign-card__tag {
+    display: inline-block;
+    background: var(--sp-orange-soft);
+    color: var(--sp-orange);
+    font-size: 0.72rem;
+    font-weight: 700;
+    padding: 4px 10px;
+    border-radius: 20px;
+    margin-bottom: 10px;
+}
+
+.campaign-card__title {
+    font-size: 1.05rem;
+    font-weight: 800;
+    color: var(--sp-ink);
+    margin: 0 0 6px;
+}
+
+.campaign-card__meta {
+    font-size: 0.85rem;
+    color: var(--sp-ink-soft);
+    margin-bottom: 14px;
+}
+
+.campaign-card__progress {
+    height: 8px;
+    background: #F1F5F9;
+    border-radius: 20px;
+    overflow: hidden;
+    margin-bottom: 12px;
+}
+
+.campaign-card__progress-fill {
+    height: 100%;
+    background: var(--sp-orange);
+    border-radius: 20px;
+}
+
+.campaign-card__stats {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.85rem;
+    color: var(--sp-ink-soft);
+}
+
+.campaign-card__stats strong {
+    color: var(--sp-ink);
+}
+
+/* ==========================================
+   GRAFICO ANDAMENTO GIORNALIERO
+   ========================================== */
+.chart-card {
+    background: #fff;
+    border-radius: 16px;
+    padding: 20px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+}
+
+.chart-card__label {
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--sp-ink-faint);
+    margin-bottom: 18px;
+}
+
+.chart-bars {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 8px;
+    height: 140px;
+}
+
+.chart-bar-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    flex: 1;
+    height: 100%;
+    justify-content: flex-end;
+}
+
+.chart-bar {
+    width: 60%;
+    border-radius: 8px 8px 0 0;
+    min-height: 4px;
+}
+
+.chart-bar--blu { background: var(--sp-blue); }
+.chart-bar--arancio { background: var(--sp-orange); }
+
+.chart-day-label {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--sp-ink-faint);
+}
+
+/* ==========================================
+   GEOLOCALIZZAZIONE (per città, MVP senza lat/long reali)
+   ========================================== */
+.geo-row {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    background: #fff;
+    padding: 15px;
+    border-radius: 12px;
+    margin-bottom: 10px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+}
+
+.geo-row__icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    font-size: 1rem;
+}
+
+.geo-row__icon--arancio { background: var(--sp-orange-soft); color: var(--sp-orange); }
+.geo-row__icon--blu { background: var(--sp-blue-soft); color: #0284C7; }
+
+.geo-row__testo { flex: 1; min-width: 0; }
+.geo-row__testo h4 { margin: 0; font-size: 1rem; color: var(--sp-ink); }
+.geo-row__testo p { margin: 2px 0 0; font-size: 0.85rem; color: var(--sp-ink-soft); }
+
+/* ==========================================
+   STATO VUOTO / SKELETON
+   ========================================== */
+.sp-empty {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--sp-ink-faint);
+    background: #fff;
+    border-radius: 16px;
+    border: 1px dashed var(--sp-border);
+}
+
+.sp-skeleton {
+    text-align: center;
+    padding: 30px;
+    color: var(--sp-ink-faint);
+}
+
+/* ==========================================
+   MODALE "NUOVA CAMPAGNA"
+   ========================================== */
+.sp-modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.45);
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.sp-modal-overlay[hidden] { display: none; }
+
+.sp-modal {
+    background: #fff;
+    width: 100%;
+    max-width: 480px;
+    border-radius: 24px 24px 0 0;
+    padding: 24px 24px 30px;
+    max-height: 88vh;
+    overflow-y: auto;
+    box-sizing: border-box;
+}
+
+.sp-modal h3 {
+    margin: 0 0 18px;
+    font-size: 1.2rem;
+    color: var(--sp-ink);
+}
+
+.sp-modal .campo {
+    margin-bottom: 14px;
+}
+
+.sp-modal label {
+    display: block;
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: var(--sp-ink-soft);
+    margin-bottom: 6px;
+}
+
+.sp-modal input,
+.sp-modal select {
+    width: 100%;
+    padding: 12px 14px;
+    border: 1px solid var(--sp-border);
+    border-radius: 10px;
+    font-size: 0.95rem;
+    font-family: inherit;
+    box-sizing: border-box;
+    color: var(--sp-ink);
+}
+
+.sp-modal .campo-riga {
+    display: flex;
+    gap: 12px;
+}
+.sp-modal .campo-riga .campo { flex: 1; }
+
+.sp-modal__azioni {
+    display: flex;
+    gap: 12px;
+    margin-top: 20px;
+}
+
+.btn-annulla {
+    flex: 1;
+    background: #F1F5F9;
+    color: var(--sp-ink);
+    border: none;
+    padding: 14px;
+    border-radius: 12px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.btn-conferma {
+    flex: 1;
+    background: var(--sp-orange);
+    color: #fff;
+    border: none;
+    padding: 14px;
+    border-radius: 12px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.btn-conferma:disabled { opacity: 0.6; cursor: not-allowed; }
+
+.sp-form-status {
+    margin-top: 12px;
+    padding: 10px 14px;
+    border-radius: 10px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-align: center;
+}
+.sp-form-status--errore { background: #FEE2E2; color: #DC2626; }
+.sp-form-status--successo { background: var(--sp-green-soft); color: var(--sp-green); }
