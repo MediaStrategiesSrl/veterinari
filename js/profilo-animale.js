@@ -82,11 +82,25 @@ async function loadPetProfile() {
 
         // Avatar
         if (pet.avatar_url) {
-            const { data: publicUrlData } = supabase.storage.from('avatars').getPublicUrl(pet.avatar_url);
-            petProfileAvatar.src = publicUrlData.publicUrl;
-        } else {
-             petProfileAvatar.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(pet.nome)}&background=F58220&color=fff`;
-        }
+    // Il bucket è "storage_veterinari", le foto animali sono dentro la cartella "pets_avatar"
+    const avatarPath = pet.avatar_url.startsWith('pets_avatar/')
+        ? pet.avatar_url
+        : `pets_avatar/${pet.avatar_url}`;
+
+    const { data: publicUrlData } = supabase.storage
+        .from('storage_veterinari')
+        .getPublicUrl(avatarPath);
+
+    petProfileAvatar.src = publicUrlData.publicUrl;
+
+    // Fallback se il file non dovesse esistere/caricarsi
+    petProfileAvatar.onerror = () => {
+        petProfileAvatar.onerror = null;
+        petProfileAvatar.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(pet.nome)}&background=F58220&color=fff`;
+    };
+} else {
+    petProfileAvatar.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(pet.nome)}&background=F58220&color=fff`;
+}
 
         // ==========================================
         // 3. POPOLA ACCESSI VETERINARI (Doppio JOIN)
