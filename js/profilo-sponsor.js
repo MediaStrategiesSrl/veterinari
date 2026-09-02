@@ -18,7 +18,7 @@ async function init() {
         // Controllo Autenticazione
         const { data: { user }, error: authError } = await supabase.auth.getUser();
         if (authError || !user) {
-            window.location.href = 'login.html';
+            window.location.href = 'index.html';
             return;
         }
 
