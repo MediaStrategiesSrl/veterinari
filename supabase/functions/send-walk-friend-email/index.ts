@@ -4,6 +4,11 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2"
 
 const resendApiKey = Deno.env.get('RESEND_API_KEY')
 
+// Finché non verifichi un dominio tuo su Resend, onboarding@resend.dev consegna
+// SOLO all'indirizzo email registrato sul tuo account Resend. Per ora entrambe le
+// mail di questa function vanno lì, indipendentemente da chi sono i due proprietari.
+const EMAIL_REGISTRATA_RESEND = 'mediastrategiessrl@gmail.com'
+
 // Client con Service Role Key: bypassa la RLS, disponibile automaticamente in ogni Edge Function Supabase
 const supabaseAdmin = createClient(
   Deno.env.get('SUPABASE_URL') ?? '',
@@ -50,7 +55,8 @@ serve(async (req) => {
       nomeDestinatario: string,
       nomeAnimaleDestinatario: string,
       nomeAltroProprietario: string,
-      nomeAltroAnimale: string
+      nomeAltroAnimale: string,
+      emailRealeDestinatario: string
     ) => `
       <div style="font-family: 'Inter', Helvetica, sans-serif; color: #1E293B; max-width: 600px; margin: 0 auto; border: 1px solid #E2E8F0; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
 
@@ -59,6 +65,7 @@ serve(async (req) => {
         </div>
 
         <div style="padding: 30px;">
+            <p style="font-size: 12px; color: #94A3B8; margin: 0 0 15px 0;">[Modalità test] Destinatario reale: ${emailRealeDestinatario}</p>
             <p style="font-size: 16px; line-height: 1.5;">Ciao ${nomeDestinatario}! ${nomeAnimaleDestinatario} ha trovato un nuovo amico su Veterinari.it.</p>
 
             <div style="background: #F8FAFC; padding: 20px; border-radius: 12px; margin: 25px 0; border-left: 5px solid #F58220;">
@@ -75,32 +82,41 @@ serve(async (req) => {
     `;
 
     // 4. Mail per il Proprietario A (mostra i dati di B)
-    await fetch('https://api.resend.com/emails', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${resendApiKey}` },
-      body: JSON.stringify({
-        from: 'VeterinariApp <onboarding@resend.dev>', // Sostituisci con il tuo dominio verificato su Resend in futuro
-        to: ownerA.email,
-        subject: `${petB.nome} vuole fare amicizia con ${petA.nome}! 🐾`,
-        html: generaHtmlAmico(ownerA.nome, petA.nome, ownerB.nome, petB.nome),
-      }),
-    })
-
-    // 5. Mail per il Proprietario B (mostra i dati di A)
-    await fetch('https://api.resend.com/emails', {
+    const resendResponseA = await fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${resendApiKey}` },
       body: JSON.stringify({
         from: 'VeterinariApp <onboarding@resend.dev>',
-        to: ownerB.email,
-        subject: `${petA.nome} vuole fare amicizia con ${petB.nome}! 🐾`,
-        html: generaHtmlAmico(ownerB.nome, petB.nome, ownerA.nome, petA.nome),
+        to: EMAIL_REGISTRATA_RESEND, // TODO: tornare a ownerA.email quando verifichi un dominio su Resend
+        subject: `${petB.nome} vuole fare amicizia con ${petA.nome}! 🐾`,
+        html: generaHtmlAmico(ownerA.nome, petA.nome, ownerB.nome, petB.nome, ownerA.email),
       }),
     })
+    if (!resendResponseA.ok) {
+      const resendErrorBody = await resendResponseA.text()
+      throw new Error(`Resend error mail A (${resendResponseA.status}): ${resendErrorBody}`)
+    }
+
+    // 5. Mail per il Proprietario B (mostra i dati di A)
+    const resendResponseB = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${resendApiKey}` },
+      body: JSON.stringify({
+        from: 'VeterinariApp <onboarding@resend.dev>',
+        to: EMAIL_REGISTRATA_RESEND, // TODO: tornare a ownerB.email quando verifichi un dominio su Resend
+        subject: `${petA.nome} vuole fare amicizia con ${petB.nome}! 🐾`,
+        html: generaHtmlAmico(ownerB.nome, petB.nome, ownerA.nome, petA.nome, ownerB.email),
+      }),
+    })
+    if (!resendResponseB.ok) {
+      const resendErrorBody = await resendResponseB.text()
+      throw new Error(`Resend error mail B (${resendResponseB.status}): ${resendErrorBody}`)
+    }
 
     return new Response(JSON.stringify({ success: true }), { headers: { ...headers, 'Content-Type': 'application/json' }, status: 200 })
 
   } catch (error) {
+    console.error('send-walk-friend-email error:', error)
     return new Response(JSON.stringify({ error: error.message }), { headers: { ...headers, 'Content-Type': 'application/json' }, status: 400 })
   }
 })
