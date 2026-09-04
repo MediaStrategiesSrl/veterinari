@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Veterinari.it - Admin</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style/styles.css">
+</head>
+<body>
+  <div id="loginView" class="login-shell">
+    <div class="login-card">
+      <div class="logo-container">
+            <img src="../img/Logo-Veterinari-wp1-1-1024x190.webp" alt="Logo Veterinari.it" class="app-logo">
+        </div>
+      <h1>Admin</h1>
+      <p>Area riservata al solo amministratore.</p>
+      <form id="loginForm">
+        <label>Email
+          <input id="email" type="email" autocomplete="username" required placeholder="admin@azienda.it">
+        </label>
+        <label>Password
+          <input id="password" type="password" autocomplete="current-password" required placeholder="••••••••">
+        </label>
+        <button class="btn btn-primary btn-full" type="submit">Accedi</button>
+        <div id="loginError" class="alert error hidden"></div>
+      </form>
+    </div>
+  </div>
+
+  <div id="appView" class="app hidden">
+    <aside class="sidebar">
+      <div class="sidebar-brand"><img src="../img/Logo-Veterinari-wp1-1-1024x190.webp" alt="Logo"> <small>ADMIN</small></div>
+      <nav id="nav">
+        <button class="nav-item active" data-section="dashboard">⌂ <span>Dashboard</span></button>
+        <button class="nav-item" data-section="pets">🐾 <span>Animali</span></button>
+        <button class="nav-item" data-section="owners">👤 <span>Proprietari</span></button>
+        <button class="nav-item" data-section="vets">🩺 <span>Veterinari</span></button>
+        <button class="nav-item" data-section="professionals">💼 <span>Professionisti</span></button>
+        <button class="nav-item" data-section="sponsors">🏢 <span>Sponsor</span></button>
+        <button class="nav-item" data-section="relations">🔗 <span>Relazioni</span></button>
+        <button class="nav-item" data-section="appointments">📅 <span>Appuntamenti</span></button>
+        <button class="nav-item" data-section="medical">📋 <span>Cartelle mediche</span></button>
+        <button class="nav-item" data-section="marketplace">🛍️ <span>Marketplace</span></button>
+        <button class="nav-item" data-section="campaigns">📣 <span>Campagne sponsor</span></button>
+        <button class="nav-item" data-section="logs">⚠️ <span>Error logs</span></button>
+      </nav>
+      <button id="logoutBtn" class="nav-item logout">↪ <span>Esci</span></button>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <div>
+          <div class="eyebrow">AMMINISTRAZIONE</div>
+          <h2 id="pageTitle">Dashboard</h2>
+        </div>
+        <div class="top-actions">
+          <span id="adminEmail" class="user-pill">—</span>
+          <button id="refreshBtn" class="btn btn-secondary">↻ Aggiorna</button>
+        </div>
+      </header>
+
+      <section id="dashboard" class="section active">
+        <div class="stats-grid" id="statsGrid"></div>
+        <div class="panel">
+          <div class="panel-head"><div><h3>Panoramica dati</h3><p>Conteggi principali presenti nel database.</p></div></div>
+          <div id="dashboardSummary" class="summary-grid"></div>
+        </div>
+      </section>
+
+      <section id="pets" class="section">
+        <div class="section-head"><div><h3>Animali</h3><p>Animale, proprietario, microchip e specie.</p></div><button class="btn btn-secondary" data-export="pets">Esporta CSV</button></div>
+        <div class="toolbar"><input class="search" data-table-search="petsTable" placeholder="Cerca animale, proprietario, specie, microchip…"></div>
+        <div class="panel table-wrap"><table id="petsTable"><thead><tr><th>Animale</th><th>Specie</th><th>Razza</th><th>Data nascita</th><th>Microchip</th><th>Proprietario</th></tr></thead><tbody></tbody></table></div>
+      </section>
+
+      <section id="owners" class="section">
+        <div class="section-head"><div><h3>Proprietari</h3><p>Anagrafica utenti con ruolo proprietario o utenti che possiedono animali.</p></div><button class="btn btn-secondary" data-export="owners">Esporta CSV</button></div>
+        <div class="toolbar"><input class="search" data-table-search="ownersTable" placeholder="Cerca nome, email, città, telefono…"></div>
+        <div class="panel table-wrap"><table id="ownersTable"><thead><tr><th>Nome</th><th>Email</th><th>Telefono</th><th>Città</th><th>Animali</th><th>Ruoli</th></tr></thead><tbody></tbody></table></div>
+      </section>
+
+      <section id="vets" class="section">
+        <div class="section-head"><div><h3>Veterinari</h3><p>Professionisti iscritti all'ordine e disponibilità.</p></div><button class="btn btn-secondary" data-export="vets">Esporta CSV</button></div>
+        <div class="toolbar"><input class="search" data-table-search="vetsTable" placeholder="Cerca veterinario, email, numero ordine…"></div>
+        <div class="panel table-wrap"><table id="vetsTable"><thead><tr><th>Veterinario</th><th>Email</th><th>Telefono</th><th>Numero ordine</th><th>Disponibile</th><th>Pazienti</th></tr></thead><tbody></tbody></table></div>
+      </section>
+
+      <section id="professionals" class="section">
+        <div class="section-head"><div><h3>Professionisti</h3><p>Tipo professione, nome professionista, tariffa e sedi.</p></div><button class="btn btn-secondary" data-export="professionals">Esporta CSV</button></div>
+        <div class="toolbar"><input class="search" data-table-search="professionalsTable" placeholder="Cerca professionista, professione, città…"></div>
+        <div class="panel table-wrap"><table id="professionalsTable"><thead><tr><th>Professionista</th><th>Tipo professione</th><th>Email</th><th>Tariffa/h</th><th>Sedi</th></tr></thead><tbody></tbody></table></div>
+      </section>
+
+      <section id="sponsors" class="section">
+        <div class="section-head"><div><h3>Sponsor</h3><p>Aziende, partita IVA e campagne collegate.</p></div><button class="btn btn-secondary" data-export="sponsors">Esporta CSV</button></div>
+        <div class="toolbar"><input class="search" data-table-search="sponsorsTable" placeholder="Cerca azienda, P.IVA, email…"></div>
+        <div class="panel table-wrap"><table id="sponsorsTable"><thead><tr><th>Azienda</th><th>P. IVA</th><th>Referente</th><th>Email</th><th>Campagne</th></tr></thead><tbody></tbody></table></div>
+      </section>
+
+      <section id="relations" class="section">
+        <div class="section-head"><div><h3>Relazioni</h3><p>Viste operative per animale ↔ proprietario, animale ↔ veterinario e animale ↔ professionista.</p></div></div>
+        <div class="relation-tabs">
+          <button class="tab active" data-rel="pet-owner">Animale + Proprietario</button>
+          <button class="tab" data-rel="pet-vet">Animale + Veterinario</button>
+          <button class="tab" data-rel="pet-prof">Animale + Professionista</button>
+        </div>
+        <div id="relationPetOwner" class="relation-pane active panel table-wrap"><table><thead><tr><th>Animale</th><th>Specie</th><th>Proprietario</th><th>Email</th></tr></thead><tbody></tbody></table></div>
+        <div id="relationPetVet" class="relation-pane panel table-wrap"><table><thead><tr><th>Animale</th><th>Veterinario</th><th>Numero ordine</th><th>Stato accesso</th></tr></thead><tbody></tbody></table></div>
+        <div id="relationPetProf" class="relation-pane panel table-wrap"><table><thead><tr><th>Animale</th><th>Professionista</th><th>Professione</th><th>Appuntamenti</th></tr></thead><tbody></tbody></table></div>
+      </section>
+
+      <section id="appointments" class="section">
+        <div class="section-head"><div><h3>Appuntamenti</h3><p>Relazione proprietario, animale e provider.</p></div><button class="btn btn-secondary" data-export="appointments">Esporta CSV</button></div>
+        <div class="toolbar"><input class="search" data-table-search="appointmentsTable" placeholder="Cerca animale, proprietario, provider, stato…"></div>
+        <div class="panel table-wrap"><table id="appointmentsTable"><thead><tr><th>Data</th><th>Animale</th><th>Proprietario</th><th>Provider</th><th>Ruolo</th><th>Stato</th><th>Costo</th></tr></thead><tbody></tbody></table></div>
+      </section>
+
+      <section id="medical" class="section">
+        <div class="section-head"><div><h3>Cartelle mediche</h3><p>Visite, diagnosi, terapia e veterinario.</p></div><button class="btn btn-secondary" data-export="medical">Esporta CSV</button></div>
+        <div class="toolbar"><input class="search" data-table-search="medicalTable" placeholder="Cerca animale, veterinario, diagnosi…"></div>
+        <div class="panel table-wrap"><table id="medicalTable"><thead><tr><th>Data visita</th><th>Animale</th><th>Veterinario</th><th>Diagnosi</th><th>Terapia</th><th>Richiamo</th></tr></thead><tbody></tbody></table></div>
+      </section>
+
+      <section id="marketplace" class="section">
+        <div class="section-head"><div><h3>Marketplace</h3><p>Annunci, richieste, giveaway, rating, chat e segnalazioni.</p></div></div>
+        <div class="market-grid" id="marketCards"></div>
+      </section>
+
+      <section id="campaigns" class="section">
+        <div class="section-head"><div><h3>Campagne sponsor</h3><p>Target, periodo, stato ed eventi di campagna.</p></div><button class="btn btn-secondary" data-export="campaigns">Esporta CSV</button></div>
+        <div class="toolbar"><input class="search" data-table-search="campaignsTable" placeholder="Cerca campagna, sponsor, città, stato…"></div>
+        <div class="panel table-wrap"><table id="campaignsTable"><thead><tr><th>Campagna</th><th>Sponsor</th><th>Target</th><th>Periodo</th><th>Stato</th><th>Impression</th><th>Click</th></tr></thead><tbody></tbody></table></div>
+      </section>
+
+      <section id="logs" class="section">
+        <div class="section-head"><div><h3>Error logs</h3><p>Monitoraggio degli errori applicativi.</p></div><button id="resolveAllBtn" class="btn btn-secondary">Segna tutti risolti</button></div>
+        <div class="toolbar"><input class="search" data-table-search="logsTable" placeholder="Cerca source, action, messaggio, severity…"></div>
+        <div class="panel table-wrap"><table id="logsTable"><thead><tr><th>Data</th><th>Severity</th><th>Source</th><th>Action</th><th>Messaggio</th><th>Stato</th></tr></thead><tbody></tbody></table></div>
+      </section>
+    </main>
+  </div>
+
+  <div id="toast" class="toast"></div>
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>
