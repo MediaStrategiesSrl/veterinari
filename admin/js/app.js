@@ -76,6 +76,211 @@ function rows(table, html) {
   if (body) body.innerHTML = html;
 }
 
+function normalizeSortValue(value) {
+  const text = String(value ?? "").trim();
+
+  if (!text || text === "—") return "";
+
+  // Valori booleani / stato
+  const lower = text.toLowerCase();
+
+  if (lower === "sì" || lower === "si" || lower === "yes" || lower === "true") {
+    return 1;
+  }
+
+  if (lower === "no" || lower === "false") {
+    return 0;
+  }
+
+  // Data italiana: 31/12/2026 oppure 31/12/2026, 14:30
+  const dateMatch = text.match(
+    /^(\d{1,2})\/(\d{1,2})\/(\d{4})(?:,\s*(\d{1,2}):(\d{2}))?$/
+  );
+
+  if (dateMatch) {
+    const [
+      ,
+      day,
+      month,
+      year,
+      hour = "0",
+      minute = "0"
+    ] = dateMatch;
+
+    return new Date(
+      Number(year),
+      Number(month) - 1,
+      Number(day),
+      Number(hour),
+      Number(minute)
+    ).getTime();
+  }
+
+  // Valori numerici / monetari
+  const numeric = text
+    .replace(/[€$]/g, "")
+    .replace(/\./g, "")
+    .replace(",", ".")
+    .replace(/[^\d.-]/g, "");
+
+  if (numeric && !Number.isNaN(Number(numeric))) {
+    return Number(numeric);
+  }
+
+  return lower;
+}
+
+
+function sortTable(table, columnIndex, direction) {
+  const tbody = table.querySelector("tbody");
+
+  if (!tbody) return;
+
+  const rows = [...tbody.querySelectorAll("tr")];
+
+  rows.sort((a, b) => {
+    const aCell = a.children[columnIndex];
+    const bCell = b.children[columnIndex];
+
+    if (!aCell || !bCell) return 0;
+
+    const aValue = normalizeSortValue(aCell.innerText);
+    const bValue = normalizeSortValue(bCell.innerText);
+
+    if (aValue === bValue) return 0;
+
+    if (aValue === "") return 1;
+    if (bValue === "") return -1;
+
+    if (typeof aValue === "number" && typeof bValue === "number") {
+      return direction === "asc"
+        ? aValue - bValue
+        : bValue - aValue;
+    }
+
+    return direction === "asc"
+      ? String(aValue).localeCompare(String(bValue), "it", {
+          numeric: true,
+          sensitivity: "base"
+        })
+      : String(bValue).localeCompare(String(aValue), "it", {
+          numeric: true,
+          sensitivity: "base"
+        });
+  });
+
+  rows.forEach(row => tbody.appendChild(row));
+}
+
+
+function filterTableColumn(table, columnIndex, value) {
+  const tbody = table.querySelector("tbody");
+
+  if (!tbody) return;
+
+  const filter = String(value || "").trim().toLowerCase();
+
+  tbody.querySelectorAll("tr").forEach(row => {
+    const cell = row.children[columnIndex];
+
+    if (!cell) return;
+
+    const text = cell.innerText.toLowerCase();
+
+    row.style.display =
+      !filter || text.includes(filter)
+        ? ""
+        : "none";
+  });
+}
+
+
+function createColumnControls(table) {
+  const headers = table.querySelectorAll("thead th");
+
+  headers.forEach((th, columnIndex) => {
+
+    // Evita di creare i controlli più volte
+    if (th.querySelector(".column-controls")) return;
+
+    const originalText = th.innerText.trim();
+
+    th.innerHTML = `
+      <div class="th-title">
+        <span>${esc(originalText)}</span>
+
+        <div class="sort-buttons">
+          <button
+            type="button"
+            class="sort-btn"
+            data-sort="asc"
+            title="Ordine crescente"
+          >↑</button>
+
+          <button
+            type="button"
+            class="sort-btn"
+            data-sort="desc"
+            title="Ordine decrescente"
+          >↓</button>
+        </div>
+      </div>
+
+      <div class="column-controls">
+        <input
+          type="text"
+          class="column-filter"
+          placeholder="Filtra…"
+          aria-label="Filtra ${esc(originalText)}"
+        >
+      </div>
+    `;
+
+    const filterInput = th.querySelector(".column-filter");
+
+    filterInput.addEventListener("input", () => {
+      filterTableColumn(
+        table,
+        columnIndex,
+        filterInput.value
+      );
+    });
+
+    th.querySelectorAll(".sort-btn").forEach(button => {
+      button.addEventListener("click", event => {
+        event.stopPropagation();
+
+        const direction = button.dataset.sort;
+
+        sortTable(
+          table,
+          columnIndex,
+          direction
+        );
+
+        // Evidenzia il tipo di ordinamento attivo
+        th.querySelectorAll(".sort-btn").forEach(btn => {
+          btn.classList.remove("active");
+        });
+
+        button.classList.add("active");
+      });
+    });
+  });
+}
+
+
+function setupTableControls() {
+  document.querySelectorAll("table").forEach(table => {
+    // Non aggiungiamo i controlli alle tabelle che non hanno tbody
+    if (!table.querySelector("thead") || !table.querySelector("tbody")) {
+      return;
+    }
+
+    createColumnControls(table);
+  });
+}
+
 function profileMap() {
   return Object.fromEntries((cache.profiles || []).map(x => [x.id, x]));
 }
@@ -344,6 +549,9 @@ function renderAll() {
   renderMarketplace();
   renderCampaigns();
   renderLogs();
+
+  // Attiva filtri e ordinamento su tutte le tabelle
+  setupTableControls();
 }
 
 async function ensureAdmin() {

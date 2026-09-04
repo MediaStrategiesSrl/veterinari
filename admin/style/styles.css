@@ -461,6 +461,85 @@ input:focus {
   transform: none;
 }
 
+/* =========================================
+   FILTRI E ORDINAMENTO COLONNE TABELLE
+   ========================================= */
+
+.table-wrap th {
+  vertical-align: top;
+}
+
+.th-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-width: 120px;
+  margin-bottom: 7px;
+}
+
+.th-title > span {
+  display: block;
+}
+
+.sort-buttons {
+  display: flex;
+  gap: 2px;
+  flex-shrink: 0;
+}
+
+.sort-btn {
+  width: 25px;
+  height: 24px;
+  padding: 0;
+  border: 1px solid #dfe4ec;
+  border-radius: 5px;
+  background: #fff;
+  color: #64748b;
+  font-size: 13px;
+  font-weight: 800;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.sort-btn:hover {
+  background: #f1f5f9;
+  color: #172033;
+}
+
+.sort-btn.active {
+  background: #111827;
+  color: #fff;
+  border-color: #111827;
+}
+
+.column-controls {
+  width: 100%;
+}
+
+.column-filter {
+  width: 100%;
+  min-width: 100px;
+  padding: 6px 8px;
+  border: 1px solid #dfe4ec;
+  border-radius: 6px;
+  background: #fff;
+  color: #172033;
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 500;
+  outline: none;
+}
+
+.column-filter::placeholder {
+  color: #9aa4b2;
+}
+
+.column-filter:focus {
+  border-color: #7c91ff;
+  box-shadow: 0 0 0 2px #7c91ff22;
+}
+
 @media (max-width: 1000px) {
   .sidebar {
     width: 76px;
