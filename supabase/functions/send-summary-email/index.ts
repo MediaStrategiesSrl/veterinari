@@ -7,6 +7,11 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// Finché non verifichi un dominio tuo su Resend, onboarding@resend.dev consegna
+// SOLO all'indirizzo email registrato sul tuo account Resend. Per ora la mail
+// va sempre lì, indipendentemente da chi è il proprietario reale.
+const EMAIL_REGISTRATA_RESEND = 'mediastrategiessrl@gmail.com';
+
 export default {
   async fetch(req: Request) {
     // 1. Gestione della pre-flight request (CORS) inviata dal browser
@@ -40,8 +45,9 @@ export default {
       // 4. Costruzione del template HTML dell'email con i dati clinici
       const htmlContent = `
         <div style="font-family: Arial, sans-serif; color: #1E293B; max-width: 600px; margin: 0 auto; line-height: 1.6;">
+          <p style="font-size: 12px; color: #94A3B8; margin: 0 0 15px 0;">[Modalità test] Destinatario reale: ${emailProprietario}</p>
           <h2 style="color: #0284C7; border-bottom: 2px solid #E2E8F0; padding-bottom: 10px;">Referto Veterinario: ${nomePet}</h2>
-          <p>Ciao! Ecco il riepilogo dettagliato della visita effettuata con il <strong>${nomeVet}</strong>.</p>
+          <p>Ciao! Ecco il riepilogo dettagliato della visita effettuata con <strong>${nomeVet}</strong>.</p>
           
           <div style="background: #F8FAFC; padding: 20px; border-radius: 12px; border: 1px solid #E2E8F0; margin: 20px 0;">
             <h3 style="color: #1E293B; margin-top: 0; font-size: 1.1rem;">Dettagli della Visita</h3>
@@ -75,8 +81,8 @@ export default {
           'Authorization': `Bearer ${RESEND_API_KEY}`
         },
         body: JSON.stringify({
-          from: 'VeterinariApp <onboarding@resend.dev>', // Assicurati che il dominio sia verificato su Resend
-          to: [emailProprietario],
+          from: 'VeterinariApp <onboarding@resend.dev>',
+          to: [EMAIL_REGISTRATA_RESEND], // TODO: tornare a [emailProprietario] quando verifichi un dominio su Resend
           subject: `Esito visita veterinaria per ${nomePet}`,
           html: htmlContent
         })
