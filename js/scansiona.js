@@ -4,6 +4,7 @@
 // Assicurati che i percorsi (es. ../utils/) puntino alla tua struttura reale
 import { supabase } from '../utils/supabaseClient.js';
 import { logError } from '../utils/logger.js';
+import { checkApprovalStatus, showApprovalPendingOverlay } from '../utils/approvalGuard.js';
 
 let currentUser = null;
 let html5QrCode = null;
@@ -25,6 +26,12 @@ async function initScanner() {
             return;
         }
         currentUser = user;
+
+           const { isApproved, hasProfile } = await checkApprovalStatus(currentUser.id, 'veterinario');
+        if (!isApproved) {
+            showApprovalPendingOverlay(document.querySelector('.app-container'), 'veterinario', hasProfile);
+            return; // Blocca il resto della dashboard: niente disponibilità, niente agenda
+        }
 
         // Avvia la fotocamera (richiede HTTPS o localhost)
         html5QrCode = new Html5Qrcode("reader");

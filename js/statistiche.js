@@ -2,6 +2,8 @@
 // 1. IMPORT CENTRALIZZATI E SETUP
 // ==========================================
 import { supabase } from '../utils/supabaseClient.js';
+import { logError } from '../utils/logger.js';
+import { checkApprovalStatus, showApprovalPendingOverlay } from '../utils/approvalGuard.js';
 
 // Elementi DOM - Header & Statistiche Generali
 const periodoTesto = document.getElementById('periodoTesto');
@@ -23,7 +25,7 @@ async function init() {
         // 1. Controllo Autenticazione
         const { data: { user }, error: authError } = await supabase.auth.getUser();
         if (authError || !user) {
-            window.location.href = 'login.html';
+            window.location.href = 'index.html';
             return;
         }
 
@@ -39,6 +41,17 @@ async function init() {
             window.location.href = 'index.html';
             return;
         }
+const { isApproved, hasProfile } =
+  await checkApprovalStatus(user.id, 'sponsor');
+
+if (!isApproved) {
+  showApprovalPendingOverlay(
+    document.querySelector('.app-container'),
+    'sponsor',
+    hasProfile
+  );
+  return;
+}
 
         // Imposta il periodo (Es. 1-10 giugno 2026)
         impostaTestoData();

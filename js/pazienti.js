@@ -4,6 +4,7 @@
 // Assicurati che i percorsi puntino correttamente alle tue cartelle utils
 import { supabase } from '../utils/supabaseClient.js';
 import { logError } from '../utils/logger.js';
+import { checkApprovalStatus, showApprovalPendingOverlay } from '../utils/approvalGuard.js';
 
 let currentUser = null;
 let allPatients = []; // Salveremo i dati qui per la ricerca locale
@@ -32,6 +33,13 @@ async function initPazienti() {
         }
         
         currentUser = user;
+
+           const { isApproved, hasProfile } = await checkApprovalStatus(currentUser.id, 'veterinario');
+        if (!isApproved) {
+            showApprovalPendingOverlay(document.querySelector('.app-container'), 'veterinario', hasProfile);
+            return; // Blocca il resto della dashboard: niente disponibilità, niente agenda
+        }
+
         await caricaPazienti();
 
     } catch (error) {

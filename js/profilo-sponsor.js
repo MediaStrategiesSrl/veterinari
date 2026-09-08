@@ -3,6 +3,7 @@
 // ==========================================
 import { supabase } from '../utils/supabaseClient.js';
 import { logError } from '../utils/logger.js';
+import { applyPartialApprovalLock } from '../utils/approvalGuard.js';
 
 // Elementi DOM esatti che mi hai passato nell'HTML
 const userNameDisplay = document.getElementById('userNameDisplay');
@@ -18,14 +19,14 @@ async function init() {
         // Controllo Autenticazione
         const { data: { user }, error: authError } = await supabase.auth.getUser();
         if (authError || !user) {
-            window.location.href = 'index.html';
+            window.location.href = '../../index.html';
             return;
         }
 
         // Recupero in parallelo: info anagrafiche (profiles) e info azienda (sponsors)
         const [ { data: profile }, { data: sponsor } ] = await Promise.all([
             supabase.from('profiles').select('nome, cognome, citta').eq('id', user.id).single(),
-            supabase.from('sponsors').select('nome_azienda').eq('user_id', user.id).maybeSingle()
+            supabase.from('sponsors').select('nome_azienda, is_approved').eq('user_id', user.id).maybeSingle()
         ]);
 
         if (!profile) throw new Error("Profilo non trovato nel database");
@@ -39,7 +40,8 @@ async function init() {
 
         // 2. Dettagli (Account verificato · Città)
         const cittaText = profile.citta ? ` · ${profile.citta}` : '';
-        if (userDetailsDisplay) userDetailsDisplay.textContent = `Account verificato${cittaText}`;
+        const statoText = (sponsor && sponsor.is_approved) ? 'Account verificato' : 'In attesa di approvazione';
+        if (userDetailsDisplay) userDetailsDisplay.textContent = `${statoText}${cittaText}`;
 
         // 3. Generazione e stile Iniziali Avatar
         if (profileHeaderContainer) {
@@ -51,6 +53,15 @@ async function init() {
                 avatarDiv.style.color = '#ffffff';
                 avatarDiv.style.boxShadow = '0 8px 20px rgba(243, 156, 18, 0.3)';
             }
+        }
+
+        //lock parziale se lo sponsor non è ancora approvato
+        if (!sponsor || !sponsor.is_approved) {
+            applyPartialApprovalLock({
+                lockSelectors: ['.profile-card', '.menu-action-card'],
+                keepActiveHrefIncludes: 'ruoli.html',
+                bannerTarget: document.querySelector('.section-container')
+            });
         }
 
     } catch (error) {
@@ -97,7 +108,7 @@ if (btnLogout) {
             btnLogout.textContent = "Esci dal profilo";
             btnLogout.disabled = false;
         } else {
-            window.location.href = 'index.html'; // Reindirizza alla landing page o login
+            window.location.href = '../../index.html'; // Reindirizza alla landing page o login
         }
     });
 }

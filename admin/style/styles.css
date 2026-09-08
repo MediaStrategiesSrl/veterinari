@@ -570,6 +570,42 @@ input:focus {
   }
 }
 
+.badge-approved {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.badge-pending {
+  background: #fff7ed;
+  color: #9a3412;
+}
+
+.approval-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.btn-approval {
+  padding: 7px 9px;
+  font-size: 12px;
+}
+
+.btn-approve {
+  border-color: #86efac;
+  color: #166534;
+}
+
+.btn-reject {
+  border-color: #fecaca;
+  color: #b91c1c;
+}
+
+.btn-approval:disabled {
+  cursor: not-allowed;
+  opacity: .45;
+}
+
 @media (max-width: 650px) {
   .main {
     padding: 15px;

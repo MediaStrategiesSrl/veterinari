@@ -3,6 +3,7 @@
 // ==========================================
 import { supabase } from '../utils/supabaseClient.js';
 import { logError } from '../utils/logger.js';
+import { checkApprovalStatus, showApprovalPendingOverlay } from '../utils/approvalGuard.js';
 
 let currentUser = null;
 
@@ -36,6 +37,12 @@ async function init() {
             return;
         }
         currentUser = user;
+
+           const { isApproved, hasProfile } = await checkApprovalStatus(currentUser.id, 'sponsor');
+                if (!isApproved) {
+                    showApprovalPendingOverlay(document.querySelector('.app-container'), 'sponsor', hasProfile);
+                    return; // Blocca il resto della dashboard: niente disponibilità, niente agenda
+                }
 
         // Verifica che l'account sia effettivamente registrato come sponsor
         const { data: sponsor, error: sponsorError } = await supabase

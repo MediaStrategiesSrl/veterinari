@@ -76,6 +76,27 @@ function rows(table, html) {
   if (body) body.innerHTML = html;
 }
 
+function approvalStatus(isApproved) {
+  return isApproved
+    ? '<span class="badge badge-approved">Approvato</span>'
+    : '<span class="badge badge-pending">Non approvato</span>';
+}
+
+function approvalControls(table, userId, isApproved, label) {
+const safeUserId = esc(userId);
+  const safeLabel = esc(label);
+ return `
+   <div class="approval-controls" aria-label="Gestione approvazione ${safeLabel}">
+     <button type="button" class="btn btn-approval btn-approve"
+      data-approval-table="${table}" data-user-id="${safeUserId}"
+       data-approved="true" ${isApproved ? "disabled" : ""}>✓ Approva</button>
+     <button type="button" class="btn btn-approval btn-reject"
+       data-approval-table="${table}" data-user-id="${safeUserId}"
+       data-approved="false" ${!isApproved ? "disabled" : ""}>✕ Rifiuta</button>
+   </div>
+ `;
+}
+
 function normalizeSortValue(value) {
   const text = String(value ?? "").trim();
 
@@ -199,6 +220,8 @@ function createColumnControls(table) {
   const headers = table.querySelectorAll("thead th");
 
   headers.forEach((th, columnIndex) => {
+
+    if (th.dataset.columnControls === "skip") return;
 
     // Evita di creare i controlli più volte
     if (th.querySelector(".column-controls")) return;
@@ -356,12 +379,16 @@ function renderOwners() {
 
 function renderVets() {
   const p = profileMap(), pc = {};
-  (cache.veterinarian_patients || []).filter(x => x.status === "active").forEach(x => {
-    pc[x.veterinarian_id] = (pc[x.veterinarian_id] || 0) + 1;
-  });
+
+  (cache.veterinarian_patients || [])
+    .filter(x => x.status === "active")
+    .forEach(x => {
+      pc[x.veterinarian_id] = (pc[x.veterinarian_id] || 0) + 1;
+    });
 
   rows("vetsTable", (cache.veterinarians || []).map(x => {
-    let u = p[x.user_id];
+    const u = p[x.user_id];
+
     return `
       <tr>
         <td><b>${esc(nameOf(u))}</b></td>
@@ -370,6 +397,8 @@ function renderVets() {
         <td>${esc(x.numero_ordine)}</td>
         <td>${x.is_available_now ? '<span class="badge">Sì</span>' : 'No'}</td>
         <td>${pc[x.user_id] || 0}</td>
+        <td>${approvalStatus(x.is_approved)}</td>
+        <td>${approvalControls("veterinarians", x.user_id, x.is_approved, nameOf(u))}</td>
       </tr>
     `;
   }).join(""));
@@ -397,12 +426,14 @@ function renderProfessionals() {
 
 function renderSponsors() {
   const p = profileMap(), cc = {};
+
   (cache.sponsor_campaigns || []).forEach(x => {
     cc[x.sponsor_id] = (cc[x.sponsor_id] || 0) + 1;
   });
 
   rows("sponsorsTable", (cache.sponsors || []).map(x => {
-    let u = p[x.user_id];
+    const u = p[x.user_id];
+
     return `
       <tr>
         <td><b>${esc(x.nome_azienda)}</b></td>
@@ -410,10 +441,13 @@ function renderSponsors() {
         <td>${esc(nameOf(u))}</td>
         <td>${esc(u?.email)}</td>
         <td>${cc[x.user_id] || 0}</td>
+        <td>${approvalStatus(x.is_approved)}</td>
+        <td>${approvalControls("sponsors", x.user_id, x.is_approved, x.nome_azienda)}</td>
       </tr>
     `;
   }).join(""));
 }
+4.
 
 function renderRelations() {
   const p = profileMap(), pets = Object.fromEntries((cache.pets || []).map(x => [x.id, x]));
@@ -658,7 +692,81 @@ function csvFor(section) {
   URL.revokeObjectURL(a.href);
 }
 
+
 $$("[data-export]").forEach(b => b.addEventListener("click", () => csvFor(b.dataset.export)));
+
+async function setApproval(table, userId, isApproved) {
+  const { data, error } = await sb
+    .from(table)
+    .update({
+      is_approved: isApproved
+    })
+    .eq("user_id", userId)
+    .select("user_id, is_approved")
+    .maybeSingle();
+
+  if (error) {
+    throw error;
+  }
+
+  if (!data) {
+  throw new Error(
+    "Aggiornamento bloccato: la policy Supabase non consente alla dashboard di modificare questo record."
+  );
+}
+
+  if (data.is_approved !== isApproved) {
+    throw new Error("Il database non ha salvato la modifica.");
+  }
+
+  const profile = (cache.profiles || []).find(x => x.id === userId);
+
+const ruolo = table === "veterinarians"
+  ? "veterinario"
+  : "sponsor";
+
+const nome = ruolo === "veterinario"
+  ? nameOf(profile)
+  : (cache.sponsors || []).find(x => x.user_id === userId)?.nome_azienda;
+
+const { error: emailError } = await sb.functions.invoke(
+  "send-account-status-email",
+  {
+    body: {
+      email: profile?.email,
+      nome,
+      ruolo,
+      isApproved
+    }
+  }
+);
+
+if (emailError) {
+  console.error("Profilo aggiornato, ma email non inviata:", emailError);
+}
+
+  await loadAll();
+
+  toast(
+    isApproved
+      ? "Approvazione salvata."
+      : "Rifiuto salvato."
+  );
+}
+
+document.addEventListener("click", async event => {
+  const button = event.target.closest("[data-approval-table]");
+  if (!button || button.disabled) return;
+
+ try {
+    button.disabled = true;
+    await setApproval(button.dataset.approvalTable, button.dataset.userId, button.dataset.approved === "true");
+  } catch (error) {
+   fail(error);
+    button.disabled = false;
+  }
+});
+
 
 $("#resolveAllBtn").addEventListener("click", async () => {
   try {

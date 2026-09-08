@@ -3,6 +3,7 @@
 // ==========================================
 import { supabase } from '../utils/supabaseClient.js';
 import { logError } from '../utils/logger.js';
+import { applyPartialApprovalLock } from '../utils/approvalGuard.js';
 
 let currentUser = null; 
 
@@ -30,6 +31,7 @@ async function initProfile() {
             .select(`
                 numero_ordine,
                 foto_professionale_url,
+                is_approved,
                 profiles (nome, cognome, avatar_url)
             `)
             .eq('user_id', user.id)
@@ -88,6 +90,16 @@ async function initProfile() {
                     vetAvatar.src = fallbackUrl;
                 };
             }
+        }
+
+        // lock parziale se non ancora approvato
+        if (!vetData.is_approved) {
+            applyPartialApprovalLock({
+                lockSelectors: ['.menu-card'],
+                keepActiveHrefIncludes: 'ruoli.html',
+                badgeSelector: '.verified-badge',
+                bannerTarget: document.querySelector('.menu-section')
+            });
         }
 
     } catch (error) {
