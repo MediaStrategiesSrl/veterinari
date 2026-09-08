@@ -140,7 +140,8 @@ async function loadSearchData() {
                     avatar_url, 
                     provider_locations (*)
                 )
-            `); 
+            `)
+            .eq('is_approved',true);
 
         if (vetsError) throw new Error(vetsError.message);
 
