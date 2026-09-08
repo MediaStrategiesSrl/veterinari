@@ -44,6 +44,7 @@
         <button class="nav-item" data-section="appointments">📅 <span>Appuntamenti</span></button>
         <button class="nav-item" data-section="medical">📋 <span>Cartelle mediche</span></button>
         <button class="nav-item" data-section="marketplace">🛍️ <span>Marketplace</span></button>
+        <button class="nav-item" data-section="walks">🐕<span>Passeggiate</span></button>
         <button class="nav-item" data-section="campaigns">📣 <span>Campagne sponsor</span></button>
         <button class="nav-item" data-section="logs">⚠️ <span>Error logs</span></button>
       </nav>
@@ -150,6 +151,12 @@
         <div class="section-head"><div><h3>Campagne sponsor</h3><p>Target, periodo, stato ed eventi di campagna.</p></div><button class="btn btn-secondary" data-export="campaigns">Esporta CSV</button></div>
         <div class="toolbar"><input class="search" data-table-search="campaignsTable" placeholder="Cerca campagna, sponsor, città, stato…"></div>
         <div class="panel table-wrap"><table id="campaignsTable"><thead><tr><th>Campagna</th><th>Sponsor</th><th>Target</th><th>Periodo</th><th>Stato</th><th>Impression</th><th>Click</th></tr></thead><tbody></tbody></table></div>
+      </section>
+
+      <section id="walks" class="section">
+        <div class="section-head"><div><h3>Passeggiate</h3><p>Passeggiate create.</p></div></div>
+        <div class="toolbar"><input class="search" data-table-search="walksTable" placeholder="Cerca walk, proprietario, animale…"></div>
+        <div class="panel table-wrap"><table id="walksTable"><thead><tr><th>Walk</th><th>Proprietario</th><th>Animale</th><th>Data</th><th>Durata</th><th>Distanza</th></tr></thead><tbody></tbody></table></div>
       </section>
 
       <section id="logs" class="section">

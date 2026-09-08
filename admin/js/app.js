@@ -555,6 +555,45 @@ function renderCampaigns() {
   `).join(""));
 }
 
+function renderWalks() {
+  const p = profileMap();
+  const pets = Object.fromEntries((cache.pets || []).map(x => [x.id, x]));
+
+  // Raggruppa i partecipanti per walk_id (walk_participants: walk_id, pet_id, owner_id)
+  const participantsByWalk = {};
+  (cache.walk_participants || []).forEach(wp => {
+    (participantsByWalk[wp.walk_id] ??= []).push(wp);
+  });
+
+  rows(
+    "walksTable",
+    (cache.walks || []).map(x => {
+      const creator = p[x.creator_id];
+      const parts = participantsByWalk[x.id] || [];
+
+      const petEntries = parts
+        .map(wp => {
+          const pet = pets[wp.pet_id];
+          const petOwner = p[wp.owner_id];
+          return pet ? `${pet.nome}${petOwner ? ` (${nameOf(petOwner)})` : ""}` : null;
+        })
+        .filter(Boolean)
+        .join(", ");
+
+      return `
+        <tr>
+          <td><b>${esc(x.titolo || x.id)}</b></td>
+          <td>${esc(nameOf(creator))}</td>
+          <td>${esc(petEntries || "—")}</td>
+          <td>${fmtDateTime(x.data_passeggiata)}</td>
+          <td>${esc(x.livello)}</td>
+          <td>${x.lunghezza_km != null ? `${esc(x.lunghezza_km)} km` : "—"}</td>
+        </tr>
+      `;
+    }).join("")
+  );
+}
+
 function renderLogs() {
   rows("logsTable", (cache.error_logs || [])
     .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
@@ -582,6 +621,7 @@ function renderAll() {
   renderMedical();
   renderMarketplace();
   renderCampaigns();
+  renderWalks();
   renderLogs();
 
   // Attiva filtri e ordinamento su tutte le tabelle
