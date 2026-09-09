@@ -24,7 +24,7 @@ const avatarLabelText = document.getElementById("avatarLabelText");
 const avatarStatus = document.getElementById("avatarStatus");
 
 let currentUser = null;
-let isEditing = false; 
+let isEditing = false;
 
 // ==========================================
 // 2. GESTIONE VISIVA DEGLI UPLOAD
@@ -54,7 +54,7 @@ if (avatarUpload) {
 // ==========================================
 async function uploadFileToStorage(file, bucketName, folderPath) {
     if (!file) return null;
-    
+
     const fileExt = file.name.split('.').pop();
     const fileName = `${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
     const filePath = `${folderPath}/${fileName}`;
@@ -64,15 +64,25 @@ async function uploadFileToStorage(file, bucketName, folderPath) {
         .upload(filePath, file, { upsert: true });
 
     if (uploadError) throw Object.assign(new Error(uploadError.message), { code: uploadError.code || 'STORAGE_UPLOAD_ERROR' });
-    
+
     return filePath;
 }
 
 // ==========================================
-// 4. CARICAMENTO DATI (PROFILES + VETERINARIANS)
+// 4. CARICAMENTO DATI (PROFILES)
 // ==========================================
 async function loadUserData() {
-    const { data: { user } } = await supabase.auth.getUser();
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+
+    if (authError) {
+        await logError({
+            source: 'frontend_dati_personali_pro',
+            action: 'auth_check',
+            errorMessage: authError.message || "Errore lettura token sessione",
+            errorCode: authError.code || 'AUTH_FETCH_ERROR'
+        });
+    }
+
     if (!user) {
         window.location.href = "../../index.html";
         return;
@@ -82,11 +92,12 @@ async function loadUserData() {
     try {
         emailInput.value = user.email;
 
-        // Estrazione dati anagrafici dalla tabella profiles e foto professionale da veterinarians
-        const [{ data: profile, error: profileError }, { data: vetData, error: vetError }] = await Promise.all([
-            supabase.from('profiles').select('nome, cognome, data_nascita, documento_url').eq('id', user.id).single(),
-            supabase.from('veterinarians').select('foto_professionale_url').eq('user_id', user.id).maybeSingle()
-        ]);
+        // Estrazione dati anagrafici dalla tabella profiles
+        const { data: profile, error: profileError } = await supabase
+            .from('profiles')
+            .select('nome, cognome, data_nascita, documento_url, avatar_url')
+            .eq('id', user.id)
+            .single();
 
         if (profileError && profileError.code !== 'PGRST116') {
             throw Object.assign(new Error(profileError.message), { code: profileError.code || 'DB_PROFILE_FETCH_ERROR' });
@@ -96,27 +107,23 @@ async function loadUserData() {
             const nome = profile.nome || "";
             const cognome = profile.cognome || "";
             nomeCognomeInput.value = `${nome} ${cognome}`.trim();
-
-            if (profile.data_nascita) {
-                dataNascitaInput.value = profile.data_nascita;
-            }
+            if (profile.data_nascita) dataNascitaInput.value = profile.data_nascita;
 
             if (profile.documento_url && docStatus && fileLabelText) {
                 docStatus.classList.remove("hidden");
                 fileLabelText.textContent = "Sostituisci documento esistente";
             }
-        }
-
-        if (vetData && vetData.foto_professionale_url && avatarStatus && avatarLabelText) {
-            avatarStatus.classList.remove("hidden");
-            avatarLabelText.textContent = "Sostituisci foto professionale esistente";
+            if (profile.avatar_url && avatarStatus && avatarLabelText) {
+                avatarStatus.classList.remove("hidden");
+                avatarLabelText.textContent = "Sostituisci foto professionale esistente";
+            }
         }
 
         disabilitaCampi(true);
 
     } catch (error) {
         console.error("Errore recupero dati professionista:", error);
-        
+
         await logError({
             source: 'frontend_dati_personali_pro',
             action: 'load_user_profile',
@@ -136,18 +143,24 @@ function disabilitaCampi(disabilita) {
     dataNascitaInput.disabled = disabilita;
     if (documentoFile) documentoFile.disabled = disabilita;
     if (avatarUpload) avatarUpload.disabled = disabilita;
-    
+
+    // Fix: seleziona per classe, non per id inesistenti
+    document.querySelectorAll('.file-upload-label').forEach(label => {
+        label.classList.toggle('locked', disabilita);
+    });
+
     if (disabilita) {
         submitBtn.innerHTML = '<i class="fa-solid fa-pen"></i> Modifica Dati';
         submitBtn.style.backgroundColor = "transparent";
-        submitBtn.style.color = "#0284C7"; // Colore accento associato al profilo professionista
-        submitBtn.style.border = "2px solid #0284C7";
+        submitBtn.style.color = "#F58220";
+        submitBtn.style.border = "2px solid #F58220";
     } else {
         submitBtn.innerHTML = '<i class="fa-solid fa-check"></i> Salva Modifiche';
-        submitBtn.style.backgroundColor = "#0284C7";
+        submitBtn.style.backgroundColor = "#F58220";
         submitBtn.style.color = "white";
     }
 }
+
 
 // ==========================================
 // 5. SALVATAGGIO (TOGGLE MODIFICA -> SALVA)
@@ -158,8 +171,8 @@ form.addEventListener("submit", async (e) => {
     if (!isEditing) {
         isEditing = true;
         disabilitaCampi(false);
-        nomeCognomeInput.focus(); 
-        return; 
+        nomeCognomeInput.focus();
+        return;
     }
 
     submitBtn.disabled = true;
@@ -169,7 +182,7 @@ form.addEventListener("submit", async (e) => {
     try {
         let docPath = null;
         let avatarPath = null;
-        
+
         const docFile = documentoFile ? documentoFile.files[0] : null;
         const avFile = avatarUpload ? avatarUpload.files[0] : null;
 
@@ -188,7 +201,7 @@ form.addEventListener("submit", async (e) => {
         submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Aggiornamento profilo...';
 
         const [nuovoNome, ...restoCognome] = nomeCognomeInput.value.trim().split(' ');
-        const nuovoCognome = restoCognome.join(' '); 
+        const nuovoCognome = restoCognome.join(' ');
 
         // 3. PREPARA DATI E AGGIORNA PROFILES
         const profileUpdateData = {
@@ -196,8 +209,8 @@ form.addEventListener("submit", async (e) => {
             cognome: nuovoCognome || null,
             data_nascita: dataNascitaInput.value || null
         };
-        
         if (docPath) profileUpdateData.documento_url = docPath;
+        if (avatarPath) profileUpdateData.avatar_url = avatarPath;
 
         const { error: updateError } = await supabase
             .from('profiles')
@@ -206,33 +219,23 @@ form.addEventListener("submit", async (e) => {
 
         if (updateError) throw Object.assign(new Error(updateError.message), { code: updateError.code || 'DB_PROFILE_UPDATE_ERROR' });
 
-        // 4. AGGIORNA FOTO PROFESSIONALE NELLA TABELLA VETERINARIANS
-        if (avatarPath) {
-            const { error: vetUpdateError } = await supabase
-                .from('veterinarians')
-                .update({ foto_professionale_url: avatarPath })
-                .eq('user_id', currentUser.id);
-
-            if (vetUpdateError) throw Object.assign(new Error(vetUpdateError.message), { code: vetUpdateError.code || 'DB_VET_UPDATE_ERROR' });
-        }
-
-        // 5. AGGIORNA EMAIL
+        // 4. AGGIORNA EMAIL
         if (emailInput.value !== currentUser.email) {
             const { error: emailError } = await supabase.auth.updateUser({
                 email: emailInput.value
             });
             if (emailError) throw Object.assign(new Error(emailError.message), { code: emailError.code || 'AUTH_EMAIL_UPDATE_ERROR' });
-            
+
             showMessage("Dati salvati! Controlla la tua nuova email per confermare l'indirizzo.", "#059669");
         } else {
             showMessage("Profilo professionale salvato con successo!", "#059669");
         }
-        
-        // 6. RESET INTERFACCIA
+
+        // 5. RESET INTERFACCIA
         if (docPath && docStatus && fileLabelText) {
             docStatus.classList.remove("hidden");
             fileLabelText.textContent = "Sostituisci documento esistente";
-            if (documentoFile) documentoFile.value = ""; 
+            if (documentoFile) documentoFile.value = "";
         }
         if (avatarPath && avatarStatus && avatarLabelText) {
             avatarStatus.classList.remove("hidden");
@@ -245,7 +248,7 @@ form.addEventListener("submit", async (e) => {
 
     } catch (error) {
         console.error("Errore salvataggio professionista:", error);
-        
+
         await logError({
             source: 'frontend_dati_personali_pro',
             action: 'update_user_data',
@@ -281,44 +284,46 @@ function showMessage(text, color) {
 if (deleteRoleBtn) {
     deleteRoleBtn.addEventListener('click', async () => {
         const confermato = confirm("Attenzione: Sei sicuro di voler eliminare il tuo ruolo di Professionista? Perderai la tua scheda professionale e tutte le informazioni correlate. Il tuo account utente principale rimarrà intatto.");
-        
+
         if (confermato) {
             deleteRoleBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Pulizia dati in corso...';
             deleteRoleBtn.style.pointerEvents = 'none';
 
             try {
-                // A. Trova l'ID del ruolo "Veterinario" o "Professionista"
-                const { data: roleData, error: roleError } = await supabase
-                    .from('roles')
-                    .select('id')
-                    .or('nome.ilike.%veterinario%,nome.ilike.%professionista%')
-                    .single();
-                    
-                if (roleError) throw Object.assign(new Error(roleError.message), { code: roleError.code || 'DB_FETCH_ROLE_ERROR' });
+    // A. Trova TUTTI i ruoli assegnati che rientrano nella categoria "professionista"
+    const { data: roleMatches, error: roleError } = await supabase
+        .from('roles')
+        .select('id')
+        .or('nome.ilike.%professionista%,nome.ilike.%sitter%,nome.ilike.%educatore%');
 
-                // B. Elimina i dati del profilo professionale dalla tabella veterinarians
-                const { error: vetError } = await supabase
-                    .from('veterinarians')
-                    .delete()
-                    .eq('user_id', currentUser.id);
+    if (roleError) throw Object.assign(new Error(roleError.message), { code: roleError.code || 'DB_FETCH_ROLE_ERROR' });
+    if (!roleMatches || roleMatches.length === 0) throw new Error('Ruolo professionista non trovato');
 
-                if (vetError) throw Object.assign(new Error(vetError.message), { code: vetError.code || 'DB_DELETE_VET_ERROR' });
+    // B. Elimina i dati del profilo professionale
+    const { error: proError } = await supabase
+        .from('professionals')
+        .delete()
+        .eq('user_id', currentUser.id);
 
-                // C. Sgancia il ruolo dalla tabella user_roles
-                const { error: unlinkError } = await supabase
-                    .from('user_roles')
-                    .delete()
-                    .eq('user_id', currentUser.id)
-                    .eq('role_id', roleData.id);
+    if (proError) throw Object.assign(new Error(proError.message), { code: proError.code || 'DB_DELETE_PRO_ERROR' });
 
-                if (unlinkError) throw Object.assign(new Error(unlinkError.message), { code: unlinkError.code || 'DB_DELETE_USER_ROLE_ERROR' });
+    // C. Sgancia OGNI ruolo trovato dalla tabella user_roles
+    for (const role of roleMatches) {
+        const { error: unlinkError } = await supabase
+            .from('user_roles')
+            .delete()
+            .eq('user_id', currentUser.id)
+            .eq('role_id', role.id);
 
-                alert("Ruolo Professionista e scheda associata rimossi con successo!");
-                window.location.href = "../../ruoli.html";
+        if (unlinkError) throw Object.assign(new Error(unlinkError.message), { code: unlinkError.code || 'DB_DELETE_USER_ROLE_ERROR' });
+    }
 
-            } catch (error) {
+    alert("Ruolo Professionista e scheda associata rimossi con successo!");
+    window.location.href = "../../ruoli.html";
+
+} catch (error) {
                 console.error("Errore durante l'eliminazione del ruolo professionista:", error);
-                
+
                 await logError({
                     source: 'dati_personali_pro',
                     action: 'delete_pro_role',
@@ -328,7 +333,7 @@ if (deleteRoleBtn) {
                 });
 
                 alert("Si è verificato un errore di sistema critico. L'operazione è stata interrotta e i tecnici sono stati avvisati.");
-                
+
                 deleteRoleBtn.innerHTML = 'Elimina Ruolo Professionista';
                 deleteRoleBtn.style.pointerEvents = 'auto';
             }

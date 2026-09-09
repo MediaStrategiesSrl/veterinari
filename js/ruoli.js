@@ -7,6 +7,7 @@ import { logError } from '../utils/logger.js';
 
 const activeRolesList = document.getElementById("activeRolesList");
 const availableRolesList = document.getElementById("availableRolesList");
+const ACTIVE_ROLE_KEY = "ruoloAttivo";
 
 const ALL_ROLES = [
     {
@@ -161,6 +162,7 @@ function renderRoles(activeRoles) {
 
         card.addEventListener("click", () => {
             if (isActive) {
+                sessionStorage.setItem(ACTIVE_ROLE_KEY, roleObj.id); // <-- aggiunto
                 window.location.href = roleObj.dashboardUrl;
             } else {
                 window.location.href = `completeprofile.html?role=${roleObj.id}`;
@@ -179,5 +181,23 @@ function renderRoles(activeRoles) {
     }
 }
 
+//FUNZIONE PER IL BACK BUTTON
+function setupBackButton() {
+    const backBtn = document.getElementById("backBtn");
+    if (!backBtn) return;
+
+    backBtn.addEventListener("click", () => {
+        if (window.history.length > 1) {
+            window.history.back();
+            return;
+        }
+        // Nessuna history disponibile (es. deep link/notifica): usa l'ultimo ruolo attivo
+        const lastRole = sessionStorage.getItem(ACTIVE_ROLE_KEY);
+        const roleObj = ALL_ROLES.find(r => r.id === lastRole);
+        window.location.href = roleObj ? roleObj.dashboardUrl : "index.html";
+    });
+}
+
 // Avvio
+setupBackButton();
 initRuoli();

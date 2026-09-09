@@ -489,3 +489,15 @@ entrypoint = "./functions/send-listing-created-email/index.ts"
 # Specifies static files to be bundled with the function. Supports glob patterns.
 # For example, if you want to serve static HTML pages in your function:
 # static_files = [ "./functions/send-listing-created-email/*.html" ]
+
+[functions.admin-create-record]
+enabled = true
+verify_jwt = true
+import_map = "./functions/admin-create-record/deno.json"
+entrypoint = "./functions/admin-create-record/index.ts"
+
+[functions.admin-delete-record]
+enabled = true
+verify_jwt = true
+import_map = "./functions/admin-delete-record/deno.json"
+entrypoint = "./functions/admin-delete-record/index.ts"

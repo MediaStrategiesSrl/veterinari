@@ -48,7 +48,7 @@
 
 /* Bottone secondario */
 .btn-secondary {
-    background: #E2E8F0; color: #475569; border: none; padding: 16px; border-radius: 30px; font-weight: bold; cursor: pointer;
+    background: #F58220; color: #ffffff; border: none; padding: 16px; border-radius: 30px; font-weight: bold; cursor: pointer;
 }
 
 /* Modal Overlay (Sfondo scuro) */
@@ -65,6 +65,21 @@
     box-shadow: 0 -10px 40px rgba(0,0,0,0.1);
     animation: slideUp 0.3s ease-out;
 }
+
+.btn-save-service {
+    width: 100%;
+    background: linear-gradient(135deg, #38BDF8, #0284C7);
+    color: white;
+    border: none;
+    padding: 16px;
+    border-radius: 30px;
+    font-weight: 800;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: 0.2s;
+}
+.btn-save-service:hover { opacity: 0.9; }
+.btn-save-service:disabled { opacity: 0.6; cursor: not-allowed; }
 
 .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
 .modal-header h3 { margin: 0; font-size: 1.3rem; color: #1E293B; }

@@ -203,15 +203,15 @@ async function checkNotificheAmicizia() {
             const listaNotifiche = document.getElementById("listaNotifiche");
             listaNotifiche.innerHTML = "";
             pendingRequests.forEach(req => {
-                listaNotifiche.innerHTML += `
-                    <div style="background: #F8FAFC; padding: 15px; border-radius: 12px;">
-                        <p style="margin: 0 0 10px 0; color: #1E293B;"><strong>${req.pet1.nome}</strong> vuole fare amicizia!</p>
-                        <div style="display:flex; gap: 10px;">
-                            <button class="btn-primary accetta-btn" data-id="${req.id}" style="padding: 10px; flex:1;">Accetta</button>
-                            <button class="btn-secondary rifiuta-btn" data-id="${req.id}" style="padding: 10px; flex:1; background:#E2E8F0; border:none; border-radius:30px; font-weight:bold; color: #1E293B;">Rifiuta</button>
-                        </div>
-                    </div>
-                `;
+                    listaNotifiche.innerHTML += `
+    <div style="background: #F8FAFC; padding: 15px; border-radius: 12px;">
+        <p style="margin: 0 0 10px 0; color: #1E293B;"><strong>${req.pet1.nome}</strong> vuole fare amicizia!</p>
+        <div class="notif-actions">
+            <button class="btn-accetta accetta-btn" data-id="${req.id}">Accetta</button>
+            <button class="btn-rifiuta rifiuta-btn" data-id="${req.id}">Rifiuta</button>
+            </div>
+        </div>
+    `;
             });
 
             document.querySelectorAll(".accetta-btn").forEach(btn => {

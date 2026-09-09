@@ -47,49 +47,65 @@
                     <input type="date" id="vetDataNascita" class="custom-input">
                 </div>
 
-                <h3 class="section-title">Foto Profilo</h3>
-                <label for="avatarUpload" class="upload-card">
-                    <div class="upload-icon icon-blue"><i class="fa-solid fa-camera"></i></div>
-                    <div class="upload-text">
-                        <h4 id="avatarFileName">Aggiorna foto</h4>
-                        <p id="avatarSubtext">Formato JPG o PNG</p>
-                    </div>
-                    <div class="upload-btn"><i class="fa-solid fa-plus"></i></div>
-                    <input type="file" id="avatarUpload" style="display: none;" accept="image/*">
-                </label>
+              <h3 class="section-title">Foto Profilo</h3>
+<label for="avatarUpload" class="upload-card" id="avatarUploadCard">
+    <div class="upload-icon icon-blue"><i class="fa-solid fa-camera"></i></div>
+    <div class="upload-text">
+        <h4 id="avatarFileName">Aggiorna foto</h4>
+        <p id="avatarSubtext">Formato JPG o PNG</p>
+    </div>
+    <div class="upload-btn"><i class="fa-solid fa-plus"></i></div>
+    <input type="file" id="avatarUpload" style="display: none;" accept="image/*">
+</label>
+<div id="avatarStatusBadge" class="doc-status-badge hidden">
+    <div class="status-icon"><i class="fa-solid fa-check"></i></div>
+    <span class="status-text">Foto presente a sistema</span>
+</div>
 
-                <h3 class="section-title">Documento d'Identità</h3>
-                <label for="ciUpload" class="upload-card">
-                    <div class="upload-icon icon-orange"><i class="fa-regular fa-id-card"></i></div>
-                    <div class="upload-text">
-                        <h4 id="ciFileName">Carica documento</h4>
-                        <p id="ciSubtext">Fronte/Retro in unico file PDF o Foto</p>
-                    </div>
-                    <div class="upload-btn"><i class="fa-solid fa-plus"></i></div>
-                    <input type="file" id="ciUpload" style="display: none;" accept=".pdf,image/*">
-                </label>
+<h3 class="section-title">Documento d'Identità</h3>
+<label for="ciUpload" class="upload-card" id="ciUploadCard">
+    <div class="upload-icon icon-orange"><i class="fa-regular fa-id-card"></i></div>
+    <div class="upload-text">
+        <h4 id="ciFileName">Carica documento</h4>
+        <p id="ciSubtext">Fronte/Retro in unico file PDF o Foto</p>
+    </div>
+    <div class="upload-btn"><i class="fa-solid fa-plus"></i></div>
+    <input type="file" id="ciUpload" style="display: none;" accept=".pdf,image/*">
+</label>
+<div id="ciStatusBadge" class="doc-status-badge hidden" id="ciStatusBadge">
+    <div class="status-icon"><i class="fa-solid fa-check"></i></div>
+    <span class="status-text">Documento presente a sistema</span>
+</div>
 
-                <h3 class="section-title">Tessera dell'Ordine</h3>
-                <label for="tesseraUpload" class="upload-card">
-                    <div class="upload-icon icon-blue"><i class="fa-solid fa-address-card"></i></div>
-                    <div class="upload-text">
-                        <h4 id="tesseraFileName">Carica tessera</h4>
-                        <p id="tesseraSubtext">PDF o Foto nitida</p>
-                    </div>
-                    <div class="upload-btn"><i class="fa-solid fa-plus"></i></div>
-                    <input type="file" id="tesseraUpload" style="display: none;" accept=".pdf,image/*">
-                </label>
+<h3 class="section-title">Tessera dell'Ordine</h3>
+<label for="tesseraUpload" class="upload-card" id="tesseraUploadCard">
+    <div class="upload-icon icon-blue"><i class="fa-solid fa-address-card"></i></div>
+    <div class="upload-text">
+        <h4 id="tesseraFileName">Carica tessera</h4>
+        <p id="tesseraSubtext">PDF o Foto nitida</p>
+    </div>
+    <div class="upload-btn"><i class="fa-solid fa-plus"></i></div>
+    <input type="file" id="tesseraUpload" style="display: none;" accept=".pdf,image/*">
+</label>
+<div id="tesseraStatusBadge" class="doc-status-badge hidden">
+    <div class="status-icon"><i class="fa-solid fa-check"></i></div>
+    <span class="status-text">Tessera presente a sistema</span>
+</div>
 
-                  <h3 class="section-title">Firma</h3>
-                <label for="firmaUpload" class="upload-card">
-                    <div class="upload-icon icon-blue"><i class="fa-solid fa-signature"></i></div>
-                    <div class="upload-text">
-                        <h4 id="firmaFileName">Carica firma</h4>
-                        <p id="firmaSubtext">PDF o Foto nitida</p>
-                    </div>
-                    <div class="upload-btn"><i class="fa-solid fa-plus"></i></div>
-                    <input type="file" id="firmaUpload" style="display: none;" accept=".pdf,image/*">
-                </label>
+<h3 class="section-title">Firma</h3>
+<label for="firmaUpload" class="upload-card" id="firmaUploadCard">
+    <div class="upload-icon icon-blue"><i class="fa-solid fa-signature"></i></div>
+    <div class="upload-text">
+        <h4 id="firmaFileName">Carica firma</h4>
+        <p id="firmaSubtext">PDF o Foto nitida</p>
+    </div>
+    <div class="upload-btn"><i class="fa-solid fa-plus"></i></div>
+    <input type="file" id="firmaUpload" style="display: none;" accept=".pdf,image/*">
+</label>
+<div id="firmaStatusBadge" class="doc-status-badge hidden" id="firmaStatusBadge">
+    <div class="status-icon"><i class="fa-solid fa-check"></i></div>
+    <span class="status-text">Firma presente a sistema</span>
+</div>
 
                 <h3 class="section-title">Numero di Iscrizione</h3>
                 <div class="input-group">

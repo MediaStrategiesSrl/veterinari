@@ -41,7 +41,7 @@
 
             <div class="section-header-flex" style="margin-top: 30px; display: flex; justify-content: space-between; align-items: center;">
                 <h3 class="section-title" style="margin: 0;">Gli amici di <span id="nomePetCorrente">...</span></h3>
-                <a href="#" style="color: #0284C7; font-size: 0.85rem; font-weight: bold; text-decoration: none;">Vedi tutti</a>
+                <a href="amici.html" style="color: #0284C7; font-size: 0.85rem; font-weight: bold; text-decoration: none;">Vedi tutti</a>
             </div>
             
             <div id="friendsList" class="friends-horizontal-scroll">
@@ -83,8 +83,12 @@
 
 <div id="modalNotifiche" class="modal">
     <div class="modal-content">
-        <span class="close-modal-btn">&times;</span>
-        <h3>Richieste di Amicizia</h3>
+        <div class="modal-header">
+            <h3>Richieste di Amicizia</h3>
+            <button class="close-modal-btn" aria-label="Chiudi">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
         <div id="listaNotifiche">
             <p style="text-align: center; color: #94A3B8;">Nessuna nuova richiesta.</p>
         </div>

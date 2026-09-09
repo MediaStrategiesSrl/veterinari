@@ -78,13 +78,13 @@
       </section>
 
       <section id="owners" class="section">
-        <div class="section-head"><div><h3>Proprietari</h3><p>Anagrafica utenti con ruolo proprietario o utenti che possiedono animali.</p></div><button class="btn btn-secondary" data-export="owners">Esporta CSV</button></div>
+        <div class="section-head"><div><h3>Proprietari</h3><p>Anagrafica utenti con ruolo proprietario o utenti che possiedono animali.</p></div><div class="section-actions"><button class="btn btn-icon" data-create="owner" title="Aggiungi proprietario">＋</button><button class="btn btn-secondary" data-export="owners">Esporta CSV</button></div></div>
         <div class="toolbar"><input class="search" data-table-search="ownersTable" placeholder="Cerca nome, email, città, telefono…"></div>
-        <div class="panel table-wrap"><table id="ownersTable"><thead><tr><th>Nome</th><th>Email</th><th>Telefono</th><th>Città</th><th>Animali</th><th>Ruoli</th></tr></thead><tbody></tbody></table></div>
+        <div class="panel table-wrap"><table id="ownersTable"><thead><tr><th>Nome</th><th>Email</th><th>Telefono</th><th>Città</th><th>Animali</th><th>Ruoli</th><th data-column-controls="skip">Azioni</th></tr></thead><tbody></tbody></table></div>
       </section>
 
       <section id="vets" class="section">
-        <div class="section-head"><div><h3>Veterinari</h3><p>Professionisti iscritti all'ordine e disponibilità.</p></div><button class="btn btn-secondary" data-export="vets">Esporta CSV</button></div>
+        <div class="section-head"><div><h3>Veterinari</h3><p>Professionisti iscritti all'ordine e disponibilità.</p></div><div class="section-actions"><button class="btn btn-icon" data-create="vet" title="Aggiungi veterinario">＋</button><button class="btn btn-secondary" data-export="vets">Esporta CSV</button></div></div>
         <div class="toolbar"><input class="search" data-table-search="vetsTable" placeholder="Cerca veterinario, email, numero ordine…"></div>
        <div class="panel table-wrap"><table id="vetsTable"><thead><tr>
   <th>Veterinario</th>
@@ -99,13 +99,13 @@
       </section>
 
       <section id="professionals" class="section">
-        <div class="section-head"><div><h3>Professionisti</h3><p>Tipo professione, nome professionista, tariffa e sedi.</p></div><button class="btn btn-secondary" data-export="professionals">Esporta CSV</button></div>
+        <div class="section-head"><div><h3>Professionisti</h3><p>Tipo professione, nome professionista, tariffa e sedi.</p></div><div class="section-actions"><button class="btn btn-icon" data-create="professional" title="Aggiungi professionista">＋</button><button class="btn btn-secondary" data-export="professionals">Esporta CSV</button></div></div>
         <div class="toolbar"><input class="search" data-table-search="professionalsTable" placeholder="Cerca professionista, professione, città…"></div>
-        <div class="panel table-wrap"><table id="professionalsTable"><thead><tr><th>Professionista</th><th>Tipo professione</th><th>Email</th><th>Tariffa/h</th><th>Sedi</th></tr></thead><tbody></tbody></table></div>
+        <div class="panel table-wrap"><table id="professionalsTable"><thead><tr><th>Professionista</th><th>Tipo professione</th><th>Email</th><th>Tariffa/h</th><th>Sedi</th><th data-column-controls="skip">Azioni</th></tr></thead><tbody></tbody></table></div>
       </section>
 
       <section id="sponsors" class="section">
-        <div class="section-head"><div><h3>Sponsor</h3><p>Aziende, partita IVA e campagne collegate.</p></div><button class="btn btn-secondary" data-export="sponsors">Esporta CSV</button></div>
+        <div class="section-head"><div><h3>Sponsor</h3><p>Aziende, partita IVA e campagne collegate.</p></div><div class="section-actions"><button class="btn btn-icon" data-create="sponsor" title="Aggiungi sponsor">＋</button><button class="btn btn-secondary" data-export="sponsors">Esporta CSV</button></div></div>
         <div class="toolbar"><input class="search" data-table-search="sponsorsTable" placeholder="Cerca azienda, P.IVA, email…"></div>
       <div class="panel table-wrap"><table id="sponsorsTable"><thead><tr>
   <th>Azienda</th>
@@ -124,10 +124,12 @@
           <button class="tab active" data-rel="pet-owner">Animale + Proprietario</button>
           <button class="tab" data-rel="pet-vet">Animale + Veterinario</button>
           <button class="tab" data-rel="pet-prof">Animale + Professionista</button>
+          <button class="tab" data-rel="prop-pet-vet">Proprietario + Animale + Veterinario</button>
         </div>
         <div id="relationPetOwner" class="relation-pane active panel table-wrap"><table><thead><tr><th>Animale</th><th>Specie</th><th>Proprietario</th><th>Email</th></tr></thead><tbody></tbody></table></div>
         <div id="relationPetVet" class="relation-pane panel table-wrap"><table><thead><tr><th>Animale</th><th>Veterinario</th><th>Numero ordine</th><th>Stato accesso</th></tr></thead><tbody></tbody></table></div>
         <div id="relationPetProf" class="relation-pane panel table-wrap"><table><thead><tr><th>Animale</th><th>Professionista</th><th>Professione</th><th>Appuntamenti</th></tr></thead><tbody></tbody></table></div>
+        <div id="relationPropPetVet" class="relation-pane panel table-wrap"><table><thead><tr><th>Proprietario</th><th>Animale</th><th>Veterinario</th></tr></thead><tbody></tbody></table></div>
       </section>
 
       <section id="appointments" class="section">
@@ -165,6 +167,16 @@
         <div class="panel table-wrap"><table id="logsTable"><thead><tr><th>Data</th><th>Severity</th><th>Source</th><th>Action</th><th>Messaggio</th><th>Stato</th></tr></thead><tbody></tbody></table></div>
       </section>
     </main>
+  </div>
+
+  <div id="recordModal" class="modal-overlay hidden">
+    <div class="modal-card">
+      <div class="modal-head">
+        <h3 id="modalTitle">Nuovo record</h3>
+        <button id="modalCloseBtn" class="modal-close" type="button">&times;</button>
+      </div>
+      <form id="recordForm" class="modal-body" novalidate></form>
+    </div>
   </div>
 
   <div id="toast" class="toast"></div>

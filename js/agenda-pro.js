@@ -34,7 +34,7 @@ let viewSwitcherEl, datePrevBtn, dateNextBtn, dateNavLabelEl;
 async function initAgenda() {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
-        window.location.href = "index.html"; // Adatta alla tua pagina di login
+        window.location.href = "../../index.html"; // Adatta alla tua pagina di login
         return;
     }
     currentUser = user;

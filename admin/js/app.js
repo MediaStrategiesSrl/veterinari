@@ -1,4 +1,5 @@
 import { supabase } from '../../utils/supabaseClient.js';
+import { SUPABASE_URL, SUPABASE_ANON_KEY } from '../../js/config.js';
 import { logError } from '../../utils/logger.js'; // Import del sistema di logging centrale
 
 const $ = (s) => document.querySelector(s);
@@ -49,7 +50,7 @@ function toast(msg) {
   const t = $("#toast");
   t.textContent = msg;
   t.classList.add("show");
-  setTimeout(() => t.classList.remove("show"), 2400);
+  setTimeout(() => t.classList.remove("show"), 6000);
 }
 
 function fail(e) {
@@ -80,6 +81,15 @@ function approvalStatus(isApproved) {
   return isApproved
     ? '<span class="badge badge-approved">Approvato</span>'
     : '<span class="badge badge-pending">Non approvato</span>';
+}
+
+function adminDeleteBtn(userId, label) {
+  const safeUserId = esc(userId);
+  const safeLabel = esc(label);
+  return `<button type="button" class="btn btn-approval btn-delete-admin"
+    data-admin-delete="${safeUserId}"
+    data-delete-label="${safeLabel}"
+    title="Elimina record creato dall'admin">✕ Elimina</button>`;
 }
 
 function approvalControls(table, userId, isApproved, label) {
@@ -373,6 +383,7 @@ function renderOwners() {
       <td>${esc(x.citta)}</td>
       <td>${petCount[x.id] || 0}</td>
       <td>${(rolesBy[x.id] || []).map(r => `<span class="badge">${esc(r)}</span>`).join(" ") || "—"}</td>
+      <td>${x.created_via === "admin" ? adminDeleteBtn(x.id, nameOf(x)) : ""}</td>
     </tr>
   `).join(""));
 }
@@ -398,7 +409,7 @@ function renderVets() {
         <td>${x.is_available_now ? '<span class="badge">Sì</span>' : 'No'}</td>
         <td>${pc[x.user_id] || 0}</td>
         <td>${approvalStatus(x.is_approved)}</td>
-        <td>${approvalControls("veterinarians", x.user_id, x.is_approved, nameOf(u))}</td>
+        <td>${approvalControls("veterinarians", x.user_id, x.is_approved, nameOf(u))} ${u?.created_via === "admin" ? adminDeleteBtn(x.user_id, nameOf(u)) : ""}</td>
       </tr>
     `;
   }).join(""));
@@ -419,6 +430,7 @@ function renderProfessionals() {
         <td>${esc(u?.email)}</td>
         <td>${money(x.tariffa_oraria)}</td>
         <td>${loc[x.user_id] || 0}</td>
+        <td>${u?.created_via === "admin" ? adminDeleteBtn(x.user_id, nameOf(u)) : ""}</td>
       </tr>
     `;
   }).join(""));
@@ -442,12 +454,11 @@ function renderSponsors() {
         <td>${esc(u?.email)}</td>
         <td>${cc[x.user_id] || 0}</td>
         <td>${approvalStatus(x.is_approved)}</td>
-        <td>${approvalControls("sponsors", x.user_id, x.is_approved, x.nome_azienda)}</td>
+        <td>${approvalControls("sponsors", x.user_id, x.is_approved, x.nome_azienda)} ${u?.created_via === "admin" ? adminDeleteBtn(x.user_id, x.nome_azienda) : ""}</td>
       </tr>
     `;
   }).join(""));
 }
-4.
 
 function renderRelations() {
   const p = profileMap(), pets = Object.fromEntries((cache.pets || []).map(x => [x.id, x]));
@@ -487,6 +498,21 @@ function renderRelations() {
         </tr>
       `;
     }).join("");
+
+  // Relazione Proprietario + Animale + Veterinario
+  const vetPatients = cache.veterinarian_patients || [];
+  $("#relationPropPetVet tbody").innerHTML = vetPatients.map(x => {
+    const pet = pets[x.pet_id];
+    const owner = p[pet?.owner_id];
+    const vet = p[x.veterinarian_id];
+    return `
+      <tr>
+        <td>${esc(nameOf(owner))}</td>
+        <td>${esc(pet?.nome)}</td>
+        <td>${esc(nameOf(vet))}</td>
+      </tr>
+    `;
+  }).join("");
 }
 
 function renderAppointments() {
@@ -735,6 +761,188 @@ function csvFor(section) {
 
 $$("[data-export]").forEach(b => b.addEventListener("click", () => csvFor(b.dataset.export)));
 
+/* =========================================
+   MODALE INSERIMENTO RECORD
+   ========================================= */
+
+async function callCreateRecord(type, values) {
+  const { data: { session } } = await sb.auth.getSession();
+  const url = `${SUPABASE_URL}/functions/v1/admin-create-record`;
+
+  const response = await fetch(url, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${session?.access_token}`,
+      "apikey": SUPABASE_ANON_KEY,
+    },
+    body: JSON.stringify({ type, values }),
+  });
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data.error || `Errore ${response.status}`);
+  }
+
+  return data;
+}
+
+const formDefs = {
+  owner: {
+    title: "Nuovo proprietario",
+    fields: [
+      { name: "nome", label: "Nome", type: "text", required: true },
+      { name: "cognome", label: "Cognome", type: "text", required: true },
+      { name: "email", label: "Email", type: "email", required: true },
+      { name: "telefono", label: "Telefono", type: "text", required: true },
+      { name: "citta", label: "Città", type: "text", required: true },
+      { name: "data_nascita", label: "Data nascita", type: "date" },
+      { name: "indirizzo", label: "Indirizzo", type: "text" },
+      { name: "cap", label: "CAP", type: "text" }
+    ]
+  },
+  vet: {
+    title: "Nuovo veterinario",
+    fields: [
+      { name: "nome", label: "Nome", type: "text", required: true },
+      { name: "cognome", label: "Cognome", type: "text", required: true },
+      { name: "email", label: "Email", type: "email", required: true },
+      { name: "telefono", label: "Telefono", type: "text", required: true },
+      { name: "citta", label: "Città", type: "text", required: true },
+      { name: "numero_ordine", label: "Numero ordine", type: "text", required: true }
+    ]
+  },
+  professional: {
+    title: "Nuovo professionista",
+    fields: [
+      { name: "nome", label: "Nome", type: "text", required: true },
+      { name: "cognome", label: "Cognome", type: "text", required: true },
+      { name: "email", label: "Email", type: "email", required: true },
+      { name: "telefono", label: "Telefono", type: "text", required: true },
+      { name: "citta", label: "Città", type: "text", required: true },
+      { name: "tipo_professione", label: "Tipo professione", type: "text", required: true },
+      { name: "tariffa_oraria", label: "Tariffa oraria (€)", type: "number" }
+    ]
+  },
+  sponsor: {
+    title: "Nuovo sponsor",
+    fields: [
+      { name: "nome", label: "Nome referente", type: "text", required: true },
+      { name: "cognome", label: "Cognome referente", type: "text", required: true },
+      { name: "email", label: "Email", type: "email", required: true },
+      { name: "telefono", label: "Telefono", type: "text", required: true },
+      { name: "citta", label: "Città", type: "text", required: true },
+      { name: "nome_azienda", label: "Nome azienda", type: "text", required: true },
+      { name: "partita_iva", label: "Partita IVA", type: "text", required: true }
+    ]
+  }
+};
+
+function buildFormFields(type) {
+  const def = formDefs[type];
+  if (!def) return "";
+  let html = "";
+  for (let i = 0; i < def.fields.length; i += 2) {
+    const f1 = def.fields[i];
+    const f2 = def.fields[i + 1];
+    if (f2) {
+      html += `<div class="form-row">`;
+      html += fieldHTML(f1);
+      html += fieldHTML(f2);
+      html += `</div>`;
+    } else {
+      html += fieldHTML(f1);
+    }
+  }
+  return html + `
+    <div id="modalError" class="modal-error hidden"></div>
+    <div class="modal-footer">
+      <button type="button" class="btn" id="modalCancelBtn">Annulla</button>
+      <button type="submit" class="btn btn-primary">Salva</button>
+    </div>`;
+}
+
+function fieldHTML(f) {
+  const req = f.required ? "required" : "";
+  const step = f.type === "number" ? 'step="0.01"' : "";
+  return `<label>${esc(f.label)}
+    <input type="${f.type}" name="${f.name}" ${req} ${step} placeholder="${esc(f.label)}">
+  </label>`;
+}
+
+function openModal(type) {
+  const def = formDefs[type];
+  if (!def) return;
+  $("#modalTitle").textContent = def.title;
+  $("#recordForm").innerHTML = buildFormFields(type);
+  $("#recordForm").dataset.entityType = type;
+  $("#recordModal").classList.remove("hidden");
+  const firstInput = $("#recordForm input");
+  if (firstInput) firstInput.focus();
+}
+
+function closeModal() {
+  $("#recordModal").classList.add("hidden");
+  $("#recordForm").innerHTML = "";
+}
+
+document.addEventListener("click", e => {
+  const btn = e.target.closest("[data-create]");
+  if (btn) openModal(btn.dataset.create);
+});
+
+document.addEventListener("click", e => {
+  if (e.target.id === "modalCloseBtn" || e.target.id === "modalCancelBtn") closeModal();
+});
+
+document.addEventListener("click", e => {
+  if (e.target.id === "recordModal") closeModal();
+});
+
+document.addEventListener("keydown", e => {
+  if (e.key === "Escape" && !$("#recordModal").classList.contains("hidden")) closeModal();
+});
+
+$("#recordForm").addEventListener("submit", async e => {
+  e.preventDefault();
+  const form = e.target;
+  const type = form.dataset.entityType;
+  const def = formDefs[type];
+  if (!def) return;
+
+  const errEl = form.querySelector("#modalError");
+  errEl.classList.add("hidden");
+
+  const values = {};
+  for (const f of def.fields) {
+    const input = form.querySelector(`[name="${f.name}"]`);
+    values[f.name] = input ? input.value.trim() : "";
+    if (f.required && !values[f.name]) {
+      errEl.textContent = `Il campo "${f.label}" è obbligatorio.`;
+      errEl.classList.remove("hidden");
+      input?.focus();
+      return;
+    }
+  }
+
+  const submitBtn = form.querySelector('[type="submit"]');
+  submitBtn.disabled = true;
+  submitBtn.textContent = "Salvataggio…";
+
+  try {
+    const result = await callCreateRecord(type, values);
+    closeModal();
+    await loadAll();
+    toast(`Record creato. Email con credenziali inviata a ${values.email}`);
+  } catch (err) {
+    errEl.textContent = err?.message || "Errore durante il salvataggio.";
+    errEl.classList.remove("hidden");
+    submitBtn.disabled = false;
+    submitBtn.textContent = "Salva";
+  }
+});
+
 async function setApproval(table, userId, isApproved) {
   const { data, error } = await sb
     .from(table)
@@ -804,6 +1012,42 @@ document.addEventListener("click", async event => {
   } catch (error) {
    fail(error);
     button.disabled = false;
+  }
+});
+
+document.addEventListener("click", async event => {
+  const btn = event.target.closest("[data-admin-delete]");
+  if (!btn || btn.disabled) return;
+
+  const userId = btn.dataset.adminDelete;
+  const label = btn.dataset.deleteLabel || "questo record";
+
+  if (!confirm(`Sei sicuro di voler eliminare ${label}? L'azione è irreversibile.`)) return;
+
+  btn.disabled = true;
+  btn.textContent = "Eliminazione…";
+
+  try {
+    const { data: { session } } = await sb.auth.getSession();
+    const response = await fetch(`${SUPABASE_URL}/functions/v1/admin-delete-record`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${session?.access_token}`,
+        "apikey": SUPABASE_ANON_KEY,
+      },
+      body: JSON.stringify({ userId }),
+    });
+
+    const result = await response.json();
+    if (!response.ok) throw new Error(result.error || "Errore eliminazione");
+
+    await loadAll();
+    toast("Record eliminato.");
+  } catch (err) {
+    fail(err);
+    btn.disabled = false;
+    btn.textContent = "✕ Elimina";
   }
 });
 

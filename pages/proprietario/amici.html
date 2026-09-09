@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Amici — Veterinari.it</title>
+    <link rel="stylesheet" href="../../css/global.css">
+    <link rel="stylesheet" href="../../css/passeggiate.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+
+    <main class="app-container">
+        <header class="page-header" style="display: flex; justify-content: space-between; align-items: center; padding: 20px;">
+            <a href="javascript:history.back()" class="back-btn" style="color: #1E293B; font-size: 1.2rem; text-decoration: none;"><i class="fas fa-chevron-left"></i></a>
+            <div class="header-title" style="text-align: center; flex-grow: 1;">
+                <h2 style="margin: 0; font-size: 1.4rem; color: #1E293B;">Amici di <span id="nomePetCorrente">...</span></h2>
+            </div>
+            <div style="width: 24px;"></div>
+        </header>
+
+        <div class="dashboard-content">
+            <div id="listaAmiciCompleta" class="walks-container">
+                <p style="text-align:center; color:#888;">Caricamento amici...</p>
+            </div>
+        </div>
+    </main>
+
+    <script type="module" src="../../js/amici.js"></script>
+</body>
+</html>

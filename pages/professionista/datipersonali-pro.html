@@ -21,19 +21,19 @@
         </header>
 
         <form id="profileForm" class="form-container">
-            
+
             <!-- NUOVA SEZIONE: FOTO PROFILO -->
             <div class="data-section">
                 <h3><i class="fa-solid fa-camera"></i> Foto Profilo</h3>
                 <p class="section-desc">Aggiungi una tua foto per personalizzare il tuo account.</p>
-                
-                <div class="input-group file-upload-group">
+
+                <div class="input-group file-upload-group" id="avatarUploadCard">
                     <label for="avatarUpload" class="file-upload-label">
                         <i class="fa-solid fa-image"></i>
                         <span id="avatarLabelText">Seleziona un'immagine (JPG o PNG)</span>
                     </label>
                     <input type="file" id="avatarUpload" accept="image/jpeg, image/png" style="display: none;">
-                    
+
                     <div id="avatarStatus" class="doc-status-badge hidden">
                         <i class="fa-solid fa-circle-check" style="color: #F58220;"></i> Foto presente a sistema
                     </div>
@@ -42,7 +42,7 @@
 
             <div class="data-section">
                 <h3><i class="fa-regular fa-id-card"></i> Identità Registrata</h3>
-                
+
                 <div class="input-group">
                     <label>Nome e Cognome</label>
                     <input type="text" id="nomeCognome">
@@ -56,7 +56,7 @@
 
             <div class="data-section">
                 <h3><i class="fa-solid fa-cake-candles"></i> Informazioni Personali</h3>
-                
+
                 <div class="input-group">
                     <label for="dataNascita">Data di Nascita</label>
                     <input type="date" id="dataNascita">
@@ -66,14 +66,14 @@
             <div class="data-section">
                 <h3><i class="fa-solid fa-file-shield"></i> Documenti</h3>
                 <p class="section-desc">Carica un documento di identità per verificare il tuo account.</p>
-                
-                <div class="input-group file-upload-group">
+
+                <div class="input-group file-upload-group" id="docUploadCard">
                     <label for="documentoFile" class="file-upload-label">
                         <i class="fa-solid fa-cloud-arrow-up"></i>
                         <span id="fileLabelText">Seleziona un documento (PDF o Immagine)</span>
                     </label>
                     <input type="file" id="documentoFile" accept="image/*,.pdf" style="display: none;">
-                    
+
                     <div id="docStatus" class="doc-status-badge hidden">
                         <i class="fa-solid fa-circle-check" style="color: #059669;"></i> Documento presente a sistema
                     </div>
@@ -89,7 +89,7 @@
          <!-- ZONA PERICOLOSA: ELIMINA RUOLO -->
         <div style="padding: 0 20px 40px 20px;">
             <div id="deleteRoleBtn" style="background-color: #FEF2F2; border-radius: 12px; padding: 16px; margin-top: 20px; text-align: center; color: #EF4444; font-weight: 700; cursor: pointer; border: 1px solid #FEE2E2; transition: all 0.2s;">
-                Elimina Ruolo
+                Elimina Ruolo Professionista
             </div>
         </div>
 

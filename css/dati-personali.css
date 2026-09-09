@@ -104,6 +104,12 @@ html, body, .app-container, .dashboard-content {
 
 .file-upload-label i { font-size: 1.5rem; }
 
+.file-upload-label.locked {
+    opacity: 0.6;
+    pointer-events: none;
+    cursor: not-allowed;
+}
+
 .doc-status-badge {
     margin-top: 10px;
     padding: 10px;

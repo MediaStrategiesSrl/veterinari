@@ -28,27 +28,37 @@ const firmaUpload = document.getElementById("firmaUpload"); // FIX: nuovo campo 
 // ==========================================
 // 2. HELPER PER L'UI DEGLI UPLOAD
 // ==========================================
-function setupFileInput(inputId, nameId, subtextId) {
+function setupFileInput(inputId, nameId, subtextId, badgeId) {
     const input = document.getElementById(inputId);
     const nameDisplay = document.getElementById(nameId);
     const subtextDisplay = document.getElementById(subtextId);
+    const badge = badgeId ? document.getElementById(badgeId) : null;
 
-    if(!input) return;
+    if (!input) return;
 
     input.addEventListener("change", (e) => {
         const file = e.target.files[0];
         if (file) {
             nameDisplay.textContent = file.name;
-            nameDisplay.style.color = "#F58220"; 
+            nameDisplay.style.color = "#F58220";
             subtextDisplay.textContent = "Pronto per l'invio";
+            if (badge) badge.classList.add("hidden");
         }
     });
 }
 
-setupFileInput("avatarUpload", "avatarFileName", "avatarSubtext");
-setupFileInput("ciUpload", "ciFileName", "ciSubtext");
-setupFileInput("tesseraUpload", "tesseraFileName", "tesseraSubtext");
-setupFileInput("firmaUpload", "firmaFileName", "firmaSubtext"); // FIX
+setupFileInput("avatarUpload", "avatarFileName", "avatarSubtext", "avatarStatusBadge");
+setupFileInput("ciUpload", "ciFileName", "ciSubtext", "ciStatusBadge");
+setupFileInput("tesseraUpload", "tesseraFileName", "tesseraSubtext", "tesseraStatusBadge");
+setupFileInput("firmaUpload", "firmaFileName", "firmaSubtext", "firmaStatusBadge");
+
+function showDocBadge(prefix, fileUrl, replaceLabel) {
+    if (!fileUrl) return;
+    const badge = document.getElementById(`${prefix}StatusBadge`);
+    const fileName = document.getElementById(`${prefix}FileName`);
+    if (badge) badge.classList.remove("hidden");
+    if (fileName) fileName.textContent = replaceLabel;
+}
 
 // ==========================================
 // 3. INIZIALIZZAZIONE E CARICAMENTO DATI
@@ -83,20 +93,16 @@ async function initPage() {
             .eq('user_id', user.id)
             .maybeSingle();
 
-        if (vetData) {
-            if (vetData.numero_ordine) {
-                vetNumeroOrdine.value = vetData.numero_ordine;
-            }
-            // Avviso visivo che i file sono già a sistema
-            if (vetData.foto_professionale_url) document.getElementById("avatarSubtext").textContent = "Foto presente a sistema";
-            if (vetData.documento_identita_url) document.getElementById("ciSubtext").textContent = "Documento presente a sistema";
-            if (vetData.tessera_ordine_url) document.getElementById("tesseraSubtext").textContent = "Tessera presente a sistema";
-            if (vetData.firma_url) { // FIX
-                const firmaSubtext = document.getElementById("firmaSubtext");
-                if (firmaSubtext) firmaSubtext.textContent = "Firma presente a sistema";
-            }
-        }
-
+       if (vetData) {
+    if (vetData.numero_ordine) {
+        vetNumeroOrdine.value = vetData.numero_ordine;
+    }
+    // Badge verde "presente a sistema" per ogni file già caricato
+    showDocBadge("avatar", vetData.foto_professionale_url, "Sostituisci foto");
+    showDocBadge("ci", vetData.documento_identita_url, "Sostituisci documento");
+    showDocBadge("tessera", vetData.tessera_ordine_url, "Sostituisci tessera");
+    showDocBadge("firma", vetData.firma_url, "Sostituisci firma");
+}
         disabilitaCampi(true);
 
     } catch (error) {
@@ -112,8 +118,14 @@ function disabilitaCampi(disabilita) {
     avatarUpload.disabled = disabilita;
     ciUpload.disabled = disabilita;
     tesseraUpload.disabled = disabilita;
-    if (firmaUpload) firmaUpload.disabled = disabilita; // FIX
-    
+    if (firmaUpload) firmaUpload.disabled = disabilita;
+
+    // NUOVO: blocco visivo delle card upload finché non si preme "Modifica Profilo"
+    toggleUploadCardLock("avatarUploadCard", disabilita);
+    toggleUploadCardLock("ciUploadCard", disabilita);
+    toggleUploadCardLock("tesseraUploadCard", disabilita);
+    toggleUploadCardLock("firmaUploadCard", disabilita);
+
     if (disabilita) {
         btnModificaSalva.innerHTML = '<i class="fa-solid fa-pen"></i> Modifica Profilo';
         btnModificaSalva.style.backgroundColor = "transparent";
@@ -124,6 +136,11 @@ function disabilitaCampi(disabilita) {
         btnModificaSalva.style.backgroundColor = "#F58220";
         btnModificaSalva.style.color = "white";
     }
+}
+
+function toggleUploadCardLock(cardId, locked) {
+    const card = document.getElementById(cardId);
+    if (card) card.classList.toggle("locked", locked);
 }
 
 // ==========================================

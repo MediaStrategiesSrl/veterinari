@@ -193,7 +193,37 @@
     box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.15);
 }
 
-/* Modale Notifiche - Stile Banner dall'alto */
+/* Notifiche - Bottoni Richiesta Amicizia */
+.notif-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 4px;
+}
+
+.btn-accetta,
+.btn-rifiuta {
+    flex: 1;
+    padding: 10px;
+    border: none;
+    border-radius: 30px;
+    font-weight: 800;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.btn-accetta {
+    color: white;
+    background: linear-gradient(135deg, #38BDF8, #0284C7);
+}
+.btn-accetta:hover { opacity: 0.9; }
+
+.btn-rifiuta {
+    color: #64748B;
+    background: #E2E8F0;
+}
+.btn-rifiuta:hover { background: #CBD5E1; color: #1E293B; }
+
 #modalNotifiche {
     display: none; /* Nascosto di base! */
     position: fixed;
@@ -207,11 +237,9 @@
     box-sizing: border-box;
     border-bottom-left-radius: 24px;
     border-bottom-right-radius: 24px;
-    /* Animazione fluida di discesa */
     animation: slideDown 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
-/* Sistemiamo anche il testo dentro */
 #modalNotifiche h3 {
     margin: 0 0 15px 0;
     font-size: 1.2rem;
@@ -224,8 +252,18 @@
     gap: 10px;
 }
 
-/* Animazione di entrata */
-@keyframes popUp {
-    from { transform: translateY(50px) scale(0.9); opacity: 0; }
-    to { transform: translateY(0) scale(1); opacity: 1; }
+.friend-list-item {
+    background: white; border-radius: 20px; padding: 15px;
+    display: flex; align-items: center; gap: 15px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.03); border: 1px solid #F1F5F9;
+}
+.friend-list-item img {
+    width: 50px; height: 50px; border-radius: 50%; object-fit: cover; flex-shrink: 0;
+}
+.friend-list-item .friend-list-info h4 { margin: 0 0 4px 0; font-size: 1.05rem; color: #1E293B; }
+.friend-list-item .friend-list-info p { margin: 0; font-size: 0.8rem; color: #94A3B8; }
+
+@keyframes slideDown {
+    from { transform: translateY(-100%); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
 }

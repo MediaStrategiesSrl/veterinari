@@ -11,3 +11,46 @@
 
 .btn-demo { display: block; width: 100%; background-color: #fff; border: none; border-radius: 16px; padding: 1.2rem; text-align: center; font-weight: 800; font-size: 1.1rem; color: #1a365d; box-shadow: 0 2px 8px rgba(0,0,0,0.03); margin-top: 1rem; margin-bottom: 2rem; cursor: pointer; transition: transform 0.1s; }
 .btn-demo:active { transform: scale(0.98); }
+
+
+/* Header pagina profilo: trasparente su questa pagina */
+.header-nav { background: transparent; }
+
+/* Placeholder iniziali avatar, prima che il JS applichi il colore reale */
+.avatar-placeholder { background: #e2e8f0; box-shadow: none; }
+
+/* Card di navigazione nel profilo (Dati personali, Ruoli, Notifiche) */
+.profile-card {
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #fff;
+    padding: 15px;
+    border-radius: 12px;
+    margin-bottom: 10px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+}
+.profile-card-left { display: flex; align-items: center; gap: 15px; }
+.profile-card-title { margin: 0; color: #1E293B; font-size: 1rem; }
+.profile-card-desc { margin: 0; color: #64748B; font-size: 0.85rem; }
+.profile-card-chevron { color: #000; }
+
+/* Icona dentro le profile-card */
+.card-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Modificatori di colore riutilizzabili (stessa convenzione di profilo-veterinario.css) */
+.icon-blue { background: #E0F2FE; color: #0284C7; }
+.icon-orange { background: #FEF3C7; color: #D97706; }
+
+.menu-action-card { text-decoration: none; }
+
+/* Colore chevron nelle menu-action-card */
+.menu-action-chevron { color: #ccc; }
