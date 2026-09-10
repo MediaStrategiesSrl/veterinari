@@ -118,7 +118,7 @@
     opacity: 0.9;
 }
 
-.section-header { padding: 0 1.25rem; margin-bottom: 0.75rem; margin-top: 1rem; flex-shrink: 0; }
+.section-header { padding: 0 1.25rem; margin-bottom: 0.75rem; margin-top: 1rem; flex-shrink: 0; display: flex; align-items: center; justify-content: space-between; }
 .section-title { font-size: 0.85rem; font-weight: 800; color: var(--orange-accent); text-transform: uppercase; letter-spacing: 0.5px; }
 
 .actions-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
