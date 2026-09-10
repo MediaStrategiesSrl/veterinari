@@ -92,6 +92,19 @@ function adminDeleteBtn(userId, label) {
     title="Elimina record creato dall'admin">✕ Elimina</button>`;
 }
 
+function adminEditBtn(userId, label) {
+  const safeUserId = esc(userId);
+  const safeLabel = esc(label);
+  return `<button type="button" class="btn btn-approval btn-edit-admin"
+    data-admin-edit="${safeUserId}"
+    data-edit-label="${safeLabel}"
+    title="Modifica record creato dall'admin">✎ Modifica</button>`;
+}
+
+function adminActions(userId, label) {
+  return `<div class="approval-controls">${adminEditBtn(userId, label)} ${adminDeleteBtn(userId, label)}</div>`;
+}
+
 function approvalControls(table, userId, isApproved, label) {
 const safeUserId = esc(userId);
   const safeLabel = esc(label);
@@ -375,7 +388,7 @@ function renderOwners() {
   const petCount = {};
   (cache.pets || []).forEach(x => petCount[x.owner_id] = (petCount[x.owner_id] || 0) + 1);
 
-  rows("ownersTable", (cache.profiles || []).filter(x => petCount[x.id] || rolesBy[x.id]?.length).map(x => `
+  rows("ownersTable", (cache.profiles || []).filter(x => petCount[x.id] || rolesBy[x.id]?.length || x.created_via === "admin").map(x => `
     <tr>
       <td><b>${esc(nameOf(x))}</b></td>
       <td>${esc(x.email)}</td>
@@ -383,7 +396,7 @@ function renderOwners() {
       <td>${esc(x.citta)}</td>
       <td>${petCount[x.id] || 0}</td>
       <td>${(rolesBy[x.id] || []).map(r => `<span class="badge">${esc(r)}</span>`).join(" ") || "—"}</td>
-      <td>${x.created_via === "admin" ? adminDeleteBtn(x.id, nameOf(x)) : ""}</td>
+      <td>${x.created_via === "admin" ? adminActions(x.id, nameOf(x)) : ""}</td>
     </tr>
   `).join(""));
 }
@@ -409,7 +422,8 @@ function renderVets() {
         <td>${x.is_available_now ? '<span class="badge">Sì</span>' : 'No'}</td>
         <td>${pc[x.user_id] || 0}</td>
         <td>${approvalStatus(x.is_approved)}</td>
-        <td>${approvalControls("veterinarians", x.user_id, x.is_approved, nameOf(u))} ${u?.created_via === "admin" ? adminDeleteBtn(x.user_id, nameOf(u)) : ""}</td>
+        <td>${approvalControls("veterinarians", x.user_id, x.is_approved, nameOf(u))} ${u?.created_via ===
+           "admin" ? `<div class="approval-controls">${adminEditBtn(x.user_id, nameOf(u))} ${adminDeleteBtn(x.user_id, nameOf(u))}</div>` : ""}</td>
       </tr>
     `;
   }).join(""));
@@ -430,7 +444,7 @@ function renderProfessionals() {
         <td>${esc(u?.email)}</td>
         <td>${money(x.tariffa_oraria)}</td>
         <td>${loc[x.user_id] || 0}</td>
-        <td>${u?.created_via === "admin" ? adminDeleteBtn(x.user_id, nameOf(u)) : ""}</td>
+        <td>${u?.created_via === "admin" ? adminActions(x.user_id, nameOf(u)) : ""}</td>
       </tr>
     `;
   }).join(""));
@@ -454,7 +468,8 @@ function renderSponsors() {
         <td>${esc(u?.email)}</td>
         <td>${cc[x.user_id] || 0}</td>
         <td>${approvalStatus(x.is_approved)}</td>
-        <td>${approvalControls("sponsors", x.user_id, x.is_approved, x.nome_azienda)} ${u?.created_via === "admin" ? adminDeleteBtn(x.user_id, x.nome_azienda) : ""}</td>
+        <td>${approvalControls("sponsors", x.user_id, x.is_approved, x.nome_azienda)} ${u?.created_via ===
+           "admin" ? `<div class="approval-controls">${adminEditBtn(x.user_id, x.nome_azienda)} ${adminDeleteBtn(x.user_id, x.nome_azienda)}</div>` : ""}</td>
       </tr>
     `;
   }).join(""));
@@ -788,6 +803,29 @@ async function callCreateRecord(type, values) {
   return data;
 }
 
+async function callUpdateRecord(userId, type, values) {
+  const { data: { session } } = await sb.auth.getSession();
+  const url = `${SUPABASE_URL}/functions/v1/admin-update-record`;
+
+  const response = await fetch(url, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${session?.access_token}`,
+      "apikey": SUPABASE_ANON_KEY,
+    },
+    body: JSON.stringify({ userId, type, values }),
+  });
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data.error || `Errore ${response.status}`);
+  }
+
+  return data;
+}
+
 const formDefs = {
   owner: {
     title: "Nuovo proprietario",
@@ -839,7 +877,7 @@ const formDefs = {
   }
 };
 
-function buildFormFields(type) {
+function buildFormFields(type, mode, prefill) {
   const def = formDefs[type];
   if (!def) return "";
   let html = "";
@@ -848,38 +886,78 @@ function buildFormFields(type) {
     const f2 = def.fields[i + 1];
     if (f2) {
       html += `<div class="form-row">`;
-      html += fieldHTML(f1);
-      html += fieldHTML(f2);
+      html += fieldHTML(f1, prefill);
+      html += fieldHTML(f2, prefill);
       html += `</div>`;
     } else {
-      html += fieldHTML(f1);
+      html += fieldHTML(f1, prefill);
     }
   }
+  const btnLabel = mode === "edit" ? "Aggiorna" : "Salva";
   return html + `
     <div id="modalError" class="modal-error hidden"></div>
     <div class="modal-footer">
       <button type="button" class="btn" id="modalCancelBtn">Annulla</button>
-      <button type="submit" class="btn btn-primary">Salva</button>
+      <button type="submit" class="btn btn-primary">${btnLabel}</button>
     </div>`;
 }
 
-function fieldHTML(f) {
+function fieldHTML(f, prefill) {
   const req = f.required ? "required" : "";
   const step = f.type === "number" ? 'step="0.01"' : "";
+  const val = prefill && prefill[f.name] != null ? `value="${esc(String(prefill[f.name]))}"` : "";
   return `<label>${esc(f.label)}
-    <input type="${f.type}" name="${f.name}" ${req} ${step} placeholder="${esc(f.label)}">
+    <input type="${f.type}" name="${f.name}" ${req} ${step} ${val} placeholder="${esc(f.label)}">
   </label>`;
 }
 
-function openModal(type) {
+function openModal(type, mode = "create", prefill = null, editUserId = null) {
   const def = formDefs[type];
   if (!def) return;
-  $("#modalTitle").textContent = def.title;
-  $("#recordForm").innerHTML = buildFormFields(type);
+  const title = mode === "edit"
+    ? "Modifica " + def.title.replace(/^Nuovo /, "")
+    : def.title;
+  $("#modalTitle").textContent = title;
+  $("#recordForm").innerHTML = buildFormFields(type, mode, prefill);
   $("#recordForm").dataset.entityType = type;
+  $("#recordForm").dataset.mode = mode;
+  if (editUserId) $("#recordForm").dataset.editUserId = editUserId;
   $("#recordModal").classList.remove("hidden");
   const firstInput = $("#recordForm input");
   if (firstInput) firstInput.focus();
+}
+
+function openEditModal(userId, type) {
+  const p = profileMap();
+  let profile = p[userId];
+  let extra = {};
+
+  if (type === "vet") {
+    const v = (cache.veterinarians || []).find(x => x.user_id === userId);
+    extra.numero_ordine = v?.numero_ordine || "";
+  } else if (type === "professional") {
+    const pr = (cache.professionals || []).find(x => x.user_id === userId);
+    extra.tipo_professione = pr?.tipo_professione || "";
+    extra.tariffa_oraria = pr?.tariffa_oraria ?? "";
+  } else if (type === "sponsor") {
+    const s = (cache.sponsors || []).find(x => x.user_id === userId);
+    extra.nome_azienda = s?.nome_azienda || "";
+    extra.partita_iva = s?.partita_iva || "";
+  }
+
+  const prefill = {
+    nome: profile?.nome || "",
+    cognome: profile?.cognome || "",
+    email: profile?.email || "",
+    telefono: profile?.telefono || "",
+    citta: profile?.citta || "",
+    data_nascita: profile?.data_nascita || "",
+    indirizzo: profile?.indirizzo || "",
+    cap: profile?.cap || "",
+    ...extra,
+  };
+
+  openModal(type, "edit", prefill, userId);
 }
 
 function closeModal() {
@@ -889,8 +967,23 @@ function closeModal() {
 
 document.addEventListener("click", e => {
   const btn = e.target.closest("[data-create]");
-  if (btn) openModal(btn.dataset.create);
+  if (btn) openModal(btn.dataset.create, "create");
 });
+
+document.addEventListener("click", e => {
+  const btn = e.target.closest("[data-admin-edit]");
+  if (btn) openEditModal(btn.dataset.adminEdit, guessEditType(btn));
+});
+
+function guessEditType(btn) {
+  const section = btn.closest(".section");
+  if (!section) return "owner";
+  const id = section.id;
+  if (id === "vets") return "vet";
+  if (id === "professionals") return "professional";
+  if (id === "sponsors") return "sponsor";
+  return "owner";
+}
 
 document.addEventListener("click", e => {
   if (e.target.id === "modalCloseBtn" || e.target.id === "modalCancelBtn") closeModal();
@@ -931,10 +1024,17 @@ $("#recordForm").addEventListener("submit", async e => {
   submitBtn.textContent = "Salvataggio…";
 
   try {
-    const result = await callCreateRecord(type, values);
-    closeModal();
-    await loadAll();
-    toast(`Record creato. Email con credenziali inviata a ${values.email}`);
+    if (form.dataset.mode === "edit") {
+      await callUpdateRecord(form.dataset.editUserId, type, values);
+      closeModal();
+      await loadAll();
+      toast("Record aggiornato.");
+    } else {
+      await callCreateRecord(type, values);
+      closeModal();
+      await loadAll();
+      toast(`Record creato. Email con credenziali inviata a ${values.email}`);
+    }
   } catch (err) {
     errEl.textContent = err?.message || "Errore durante il salvataggio.";
     errEl.classList.remove("hidden");

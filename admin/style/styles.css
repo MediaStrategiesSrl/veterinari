@@ -615,6 +615,15 @@ input:focus {
   background: #fef2f2;
 }
 
+.btn-edit-admin {
+  border-color: #93c5fd;
+  color: #1e40af;
+}
+
+.btn-edit-admin:hover {
+  background: #eff6ff;
+}
+
 @media (max-width: 650px) {
   .main {
     padding: 15px;
