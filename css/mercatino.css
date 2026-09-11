@@ -183,3 +183,9 @@
     font-size: 0.85rem;
     margin: 0;
 }
+
+.header-icon,
+.header-icon:hover,
+.header-icon:focus {
+    text-decoration: none;
+}

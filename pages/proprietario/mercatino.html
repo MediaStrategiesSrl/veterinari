@@ -18,7 +18,9 @@
                 <h2>Mercatino dell'usato</h2>
                 <p>Cessione gratuita tra privati</p>
             </div>
-            <div class="header-icon"><i class="fa-regular fa-bell"></i></div>
+            <a href="le-mie-attivita.html" class="header-icon" aria-label="Le mie attivita">
+    <i class="fa-regular fa-bell"></i>
+</a>
         </header>
 
         <div class="market-search-container">
@@ -36,6 +38,13 @@
     <button id="scrollRightBtn" class="scroll-arrow"><i class="fas fa-chevron-right"></i></button>
 </div>
         </div>
+
+        <!--
+            Banner sponsor sezione "mercatino" (vedi js/utils/sezioniApp.js
+            e js/utils/bannerSponsor.js). Resta nascosto finché mercatino.js
+            non trova una campagna sponsor attiva per questa sezione.
+        -->
+        <div id="bannerSponsor" hidden></div>
 
         <div class="market-section-header">
             <h3>Vicino a te</h3>
