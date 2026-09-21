@@ -184,8 +184,9 @@
     margin: 0;
 }
 
-.header-icon,
-.header-icon:hover,
-.header-icon:focus {
-    text-decoration: none;
+.header-icon a {
+    color: inherit;         /* Eredita il colore del testo/icona originale */
+    text-decoration: none;  /* Rimuove eventuali sottolineature */
+    display: inline-flex;   /* Mantiene l'allineamento corretto */
+    cursor: pointer;
 }

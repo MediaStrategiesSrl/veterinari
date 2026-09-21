@@ -139,10 +139,10 @@ html, body, .app-container, .dashboard-content {
 }
 
 .add-pet-btn:hover {
-    background-color: #F8FAFC; 
+    background-color: #EE8A2A; 
     border-color: #CBD5E1;     
     transform: translateY(-2px); 
-    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.06); 
+    box-shadow: 0 6px 15px rgba(235, 235, 235, 0.716); 
 }
 
 .add-pet-btn:active {
