@@ -124,12 +124,12 @@ async function caricaStatistiche() {
     mostraDelta(deltaVisualizzazioni, impCorrente, impPrecedente);
     mostraDelta(deltaClic, clicCorrente, clicPrecedente);
 
-    // APPROSSIMAZIONE MVP: "utenti raggiunti questo mese" = numero di
-    // visualizzazioni di questo mese solare. Non deduplichiamo utenti unici
-    // perché oggi non tracciamo l'identità di chi vede il banner.
+        // "Visualizzazioni questo mese" = numero di impression nel mese solare corrente.
+    // Non è un conteggio di utenti unici: non tracciamo l'identità di chi vede il
+    // banner, quindi lo stesso utente può contribuire più volte a questo numero.
     const inizioMese = startOfMonth(new Date());
     const impQuestoMese = (eventi || []).filter(e => e.event_type === 'impression' && new Date(e.created_at) >= inizioMese).length;
-    testoReach.textContent = `Le tue campagne hanno raggiunto ${formattaNumero(impQuestoMese)} utenti questo mese.`;
+    testoReach.textContent = `Le tue campagne hanno totalizzato ${formattaNumero(impQuestoMese)} visualizzazioni questo mese.`;
 }
 
 function mostraDelta(el, valoreCorrente, valorePrecedente) {

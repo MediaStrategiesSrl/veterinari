@@ -2,6 +2,7 @@
 // ==========================================
 import { supabase } from '../utils/supabaseClient.js';
 import { logError } from '../utils/logger.js';
+import { mostraBannerSponsor } from '../utils/bannersponsor.js';
 
 // Elementi DOM
 const profGreeting = document.getElementById('profGreeting');
@@ -9,6 +10,8 @@ const profSubtitle = document.getElementById('profSubtitle');
 const profAvatar = document.getElementById('profAvatar');
 const todayAppointmentsContainer = document.getElementById('todayAppointmentsContainer');
 const btnApriAgenda = document.getElementById('btnApriAgenda');
+// Contenitore banner sponsor sezione "dashboard_professionista" (vedi dashboard-professionista.html)
+const bannerSponsorEl = document.getElementById('bannerSponsor');
 
 if (btnApriAgenda) {
     btnApriAgenda.addEventListener('click', () => window.location.href = 'agenda-pro.html');
@@ -37,6 +40,9 @@ async function loadProfessionalDashboard() {
         }
 
         currentUserId = user.id;
+
+        // Banner sponsor sezione "dashboard_professionista": una riga, fire-and-forget.
+        mostraBannerSponsor(bannerSponsorEl, 'dashboard_professionista');
 
         // 2. Carica Dati Base (Solo nome, cognome e avatar da profiles)
         const { data: profile, error: profError } = await supabase

@@ -4,6 +4,7 @@
 // Assicurati che i percorsi puntino alla cartella corretta (es. ../utils/)
 import { supabase } from '../utils/supabaseClient.js';
 import { logError } from '../utils/logger.js';
+import { mostraBannerSponsor } from '../utils/bannerSponsor.js';
 
 let currentUser = null;
 let currentPetId = null; // ID dell'animale attivo che sta navigando
@@ -12,6 +13,10 @@ let currentPetId = null; // ID dell'animale attivo che sta navigando
 const walksList = document.getElementById("walksList");
 const friendsList = document.getElementById("friendsList");
 const nomePetCorrente = document.getElementById("nomePetCorrente");
+// Contenitore per il banner sponsor di sezione "passeggiate" - va aggiunto
+// nell'HTML (es. subito sotto l'header, prima di "Vicino a te"):
+//   <div id="bannerSponsor" hidden></div>
+const bannerSponsorEl = document.getElementById("bannerSponsor");
 
 // Modals
 const modalCrea = document.getElementById("modalCreaPasseggiata");
@@ -31,6 +36,9 @@ async function init() {
             return; 
         }
         currentUser = user;
+
+        // Banner sponsor sezione "passeggiate": una riga, fire-and-forget.
+        mostraBannerSponsor(bannerSponsorEl, 'passeggiate');
 
         // Recuperiamo il pet attivo salvato dalla Dashboard
         currentPetId = localStorage.getItem("activePetId");

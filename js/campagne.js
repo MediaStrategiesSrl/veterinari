@@ -4,6 +4,8 @@
 import { supabase } from '../utils/supabaseClient.js';
 import { logError } from '../utils/logger.js';
 import { checkApprovalStatus, showApprovalPendingOverlay } from '../utils/approvalGuard.js';
+import { SEZIONI_APP, etichettaSezioni } from '../utils/sezioniApp.js';
+import { OFFERTE_SPONSOR, OFFERTA_DEFAULT, trovaOfferta, formattaEuro } from '../utils/offerteSponsor.js';
 
 let currentUser = null;
 
@@ -17,11 +19,16 @@ const btnNuovaCampagna = document.getElementById('btnNuovaCampagna');
 const btnAnnullaModale = document.getElementById('btnAnnullaModale');
 const formNuovaCampagna = document.getElementById('formNuovaCampagna');
 const inputTitolo = document.getElementById('inputTitolo');
-const selBannerType = document.getElementById('selBannerType');
+const checkboxSezioniContainer = document.getElementById('checkboxSezioni');
+const radioOfferteContainer = document.getElementById('radioOfferte');
+const inputTestoBanner = document.getElementById('inputTestoBanner');
+const inputUrlDestinazione = document.getElementById('inputUrlDestinazione');
 const inputCitta = document.getElementById('inputCitta');
 const inputRaggio = document.getElementById('inputRaggio');
 const inputDataInizio = document.getElementById('inputDataInizio');
 const inputDataFine = document.getElementById('inputDataFine');
+const inputCreativita = document.getElementById('inputCreativita');
+const creativitaFileName = document.getElementById('creativitaFileName');
 const formStatus = document.getElementById('formStatus');
 const btnConfermaCampagna = document.getElementById('btnConfermaCampagna');
 
@@ -64,6 +71,12 @@ async function init() {
         inputDataInizio.value = oggiStr;
         inputDataFine.min = oggiStr;
 
+        // Popola le checkbox delle sezioni target a partire dall'elenco condiviso
+        renderCheckboxSezioni();
+
+        // Popola le 3 offerte fisse di visualizzazioni.
+        renderRadioOfferte();
+
         await caricaCampagne();
 
     } catch (error) {
@@ -81,6 +94,95 @@ async function init() {
 }
 
 // ==========================================
+// ANTEPRIMA FILE CREATIVITÀ SELEZIONATO
+// ==========================================
+inputCreativita.addEventListener('change', () => {
+    const file = inputCreativita.files[0];
+    creativitaFileName.textContent = file ? `${file.name} ✓` : '';
+});
+
+// ==========================================
+// UPLOAD IMMAGINE CREATIVITÀ SU STORAGE
+// ==========================================
+// Salva l'immagine nel bucket "storage_veterinari", nella cartella
+// "campagne_sponsor/<sponsor_id>/<uuid>.<estensione>" - stessa
+// convenzione delle altre cartelle già presenti nel bucket (es.
+// mercatino/, pets_avatar/). Ritorna l'URL pubblico da salvare su
+// sponsor_campaigns.banner_image_url.
+async function caricaImmagineCreativita(file) {
+    const MAX_DIMENSIONE_MB = 5;
+    if (file.size > MAX_DIMENSIONE_MB * 1024 * 1024) {
+        throw Object.assign(new Error(`L'immagine supera i ${MAX_DIMENSIONE_MB}MB.`), { code: 'FILE_TROPPO_GRANDE' });
+    }
+
+    const estensione = file.name.split('.').pop().toLowerCase();
+    const percorso = `campagne_sponsor/${currentUser.id}/${crypto.randomUUID()}.${estensione}`;
+
+    const { error: uploadError } = await supabase.storage
+        .from('storage_veterinari')
+        .upload(percorso, file, { cacheControl: '3600', upsert: false });
+
+    if (uploadError) throw Object.assign(new Error(uploadError.message), { code: uploadError.code || 'STORAGE_UPLOAD_ERROR' });
+
+    const { data } = supabase.storage.from('storage_veterinari').getPublicUrl(percorso);
+    return data.publicUrl;
+}
+
+// ==========================================
+// RENDER CHECKBOX SEZIONI (form "Nuova campagna")
+// ==========================================
+function renderCheckboxSezioni() {
+    checkboxSezioniContainer.innerHTML = SEZIONI_APP.map(sezione => `
+        <label class="checkbox-item">
+            <input type="checkbox" name="sezione" value="${sezione.value}">
+            ${sezione.label}${sezione.richiedeRuoloProprietario ? ' <span class="checkbox-item__nota">(solo proprietari)</span>' : ''}
+        </label>
+    `).join('');
+}
+
+function leggiSezioniSelezionate() {
+    return Array.from(checkboxSezioniContainer.querySelectorAll('input[name="sezione"]:checked'))
+        .map(cb => cb.value);
+}
+
+// ==========================================
+// RENDER OFFERTE FISSE (form "Nuova campagna")
+// ==========================================
+function renderRadioOfferte() {
+    radioOfferteContainer.innerHTML = OFFERTE_SPONSOR.map(offerta => {
+        const consigliata = offerta.value === OFFERTA_DEFAULT;
+        const prezzoPienoHtml = offerta.prezzoPieno
+            ? `<span class="offer-option__prezzo-pieno">${formattaEuro(offerta.prezzoPieno)}</span>`
+            : '';
+        const scontoHtml = offerta.scontoPercentuale
+            ? `<span class="offer-option__badge">-${offerta.scontoPercentuale}%</span>`
+            : '';
+        return `
+            <label class="offer-option ${consigliata ? 'offer-option--consigliata' : ''}">
+                ${consigliata ? '<span class="offer-option__tag">Consigliata</span>' : ''}
+                <input type="radio" name="offerta" value="${offerta.value}" ${consigliata ? 'checked' : ''}>
+                <div class="offer-option__body">
+                    <div class="offer-option__riga-top">
+                        <span class="offer-option__views">${offerta.views.toLocaleString('it-IT')} visualizzazioni</span>
+                        <span class="offer-option__prezzo">${formattaEuro(offerta.prezzo)}</span>
+                    </div>
+                    <div class="offer-option__riga-bottom">
+                        <span class="offer-option__base">€${offerta.costoBase.toFixed(3)} / visualizzazione</span>
+                        ${prezzoPienoHtml}
+                        ${scontoHtml}
+                    </div>
+                </div>
+            </label>
+        `;
+    }).join('');
+}
+
+function leggiOffertaSelezionata() {
+    const radio = radioOfferteContainer.querySelector('input[name="offerta"]:checked');
+    return radio ? radio.value : null;
+}
+
+// ==========================================
 // CARICAMENTO CAMPAGNE + STATISTICHE
 // ==========================================
 async function caricaCampagne() {
@@ -90,7 +192,7 @@ async function caricaCampagne() {
     try {
         const { data: campagne, error } = await supabase
             .from('sponsor_campaigns')
-            .select('id, title, banner_type, target_city, target_radius_km, start_date, end_date, status')
+            .select('id, title, target_sections, target_city, target_radius_km, start_date, end_date, status, banner_image_url, banner_text, click_url, target_views, cost_per_view, total_cost')
             .eq('sponsor_id', currentUser.id)
             .order('created_at', { ascending: false });
 
@@ -120,8 +222,12 @@ async function caricaCampagne() {
         });
 
         const oggiStr = new Date().toISOString().split('T')[0];
-        const attive = campagne.filter(c => c.status === 'ACTIVE' && c.end_date >= oggiStr);
-        const concluse = campagne.filter(c => c.status !== 'ACTIVE' || c.end_date < oggiStr);
+        const isEsaurita = (c) => {
+            const stats = statsPerCampagna.get(c.id) || { impressions: 0 };
+            return c.target_views != null && stats.impressions >= c.target_views;
+        };
+        const attive = campagne.filter(c => c.status === 'ACTIVE' && c.end_date >= oggiStr && !isEsaurita(c));
+        const concluse = campagne.filter(c => c.status !== 'ACTIVE' || c.end_date < oggiStr || isEsaurita(c));
 
         renderLista(listaAttive, attive, statsPerCampagna, true, 'Nessuna campagna attiva. Creane una con "+ Nuova".');
         renderLista(listaConcluse, concluse, statsPerCampagna, false, 'Nessuna campagna conclusa finora.');
@@ -154,18 +260,49 @@ function creaCardCampagna(campagna, stats, mostraProgresso) {
     const div = document.createElement('div');
     div.className = 'campaign-card';
 
-    const badgeClass = campagna.status === 'ACTIVE' && !mostraProgresso ? 'status-badge--paused' : (mostraProgresso ? 'status-badge--active' : 'status-badge--done');
-    const badgeTesto = mostraProgresso ? 'Attiva' : (campagna.status === 'PAUSED' ? 'In pausa' : 'Conclusa');
+    // Esaurita = ha un tetto di visualizzazioni acquistate ed è stato
+    // raggiunto/superato dalle impression effettivamente consegnate.
+    const esaurita = campagna.target_views != null && stats.impressions >= campagna.target_views;
 
-    const etichettaBanner = campagna.banner_type === 'banner_app' ? 'Banner app' : campagna.banner_type;
+    const badgeClass = campagna.status === 'ACTIVE' && !mostraProgresso ? (esaurita ? 'status-badge--esaurita' : 'status-badge--paused') : (mostraProgresso ? 'status-badge--active' : 'status-badge--done');
+    const badgeTesto = mostraProgresso ? 'Attiva' : (campagna.status === 'PAUSED' ? 'In pausa' : (esaurita ? 'Esaurita' : 'Conclusa'));
+
+    // Le vecchie "banner_app" fisse sono sostituite dall'elenco delle
+    // sezioni target scelte in fase di creazione campagna.
+    const etichettaSezioniTesto = etichettaSezioni(campagna.target_sections);
     const raggioTesto = campagna.target_radius_km ? ` · raggio ${campagna.target_radius_km} km` : '';
+
+    // Miniatura della creatività caricata (se assente, campagne create
+    // prima dell'introduzione di questo campo restano senza immagine).
+    const immagineHtml = campagna.banner_image_url
+        ? `<img src="${escapeHtml(campagna.banner_image_url)}" alt="${escapeHtml(campagna.title)}" class="campaign-card__image">`
+        : '';
+
+    // Costo totale pagato (valore storico salvato sulla campagna, non
+    // ricalcolato dal listino attuale che potrebbe nel frattempo essere
+    // cambiato).
+    const costoTesto = campagna.total_cost != null ? ` · ${formattaEuro(campagna.total_cost)}` : '';
+
+    // Testo visualizzazioni: "320 / 1000 visualizzazioni" se la campagna
+    // ha un tetto acquistato, altrimenti solo il conteggio grezzo
+    // (compatibilità con eventuali campagne precedenti a questo campo).
+    const visualizzazioniTesto = campagna.target_views
+        ? `${stats.impressions.toLocaleString('it-IT')} / ${campagna.target_views.toLocaleString('it-IT')} visualizzazioni`
+        : `${stats.impressions.toLocaleString('it-IT')} impression`;
 
     let progressoHtml = '';
     if (mostraProgresso) {
-        const inizio = new Date(campagna.start_date);
-        const fine = new Date(campagna.end_date);
-        const oggi = new Date();
-        const percentuale = Math.min(100, Math.max(0, ((oggi - inizio) / (fine - inizio)) * 100));
+        let percentuale;
+        if (campagna.target_views) {
+            // Progresso basato sulle visualizzazioni acquistate/consumate:
+            // è il vincolo reale del nuovo modello a pagamento.
+            percentuale = Math.min(100, Math.max(0, (stats.impressions / campagna.target_views) * 100));
+        } else {
+            const inizio = new Date(campagna.start_date);
+            const fine = new Date(campagna.end_date);
+            const oggi = new Date();
+            percentuale = Math.min(100, Math.max(0, ((oggi - inizio) / (fine - inizio)) * 100));
+        }
         progressoHtml = `
             <div class="campaign-card__progress">
                 <div class="campaign-card__progress-fill" style="width:${percentuale}%;"></div>
@@ -176,13 +313,27 @@ function creaCardCampagna(campagna, stats, mostraProgresso) {
     const dataInizioStr = new Date(campagna.start_date).toLocaleDateString('it-IT', { day: 'numeric', month: 'short' });
     const dataFineStr = new Date(campagna.end_date).toLocaleDateString('it-IT', { day: 'numeric', month: 'short' });
 
+    // Testo del banner (ciò che vede l'utente finale, diverso dal
+    // titolo che è solo il nome interno della campagna qui in gestione).
+    const testoBannerHtml = campagna.banner_text
+        ? `<p class="campaign-card__banner-text">"${escapeHtml(campagna.banner_text)}"</p>`
+        : '';
+
+    // Link di destinazione impostato per questa campagna (se presente).
+    const linkHtml = campagna.click_url
+        ? `<p class="campaign-card__link"><i class="fa-solid fa-link"></i> ${escapeHtml(campagna.click_url)}</p>`
+        : '';
+
     div.innerHTML = `
+        ${immagineHtml}
         <span class="status-badge ${badgeClass}">${badgeTesto}</span>
         <h3 class="campaign-card__title">${escapeHtml(campagna.title)}</h3>
-        <div class="campaign-card__meta">${escapeHtml(etichettaBanner)} · ${escapeHtml(campagna.target_city)}${raggioTesto} · ${dataInizioStr} - ${dataFineStr}</div>
+        ${testoBannerHtml}
+        ${linkHtml}
+        <div class="campaign-card__meta">${escapeHtml(etichettaSezioniTesto)} · ${escapeHtml(campagna.target_city)}${raggioTesto} · ${dataInizioStr} - ${dataFineStr}${costoTesto}</div>
         ${progressoHtml}
         <div class="campaign-card__stats">
-            <span>${stats.impressions.toLocaleString('it-IT')} impression</span>
+            <span>${visualizzazioniTesto}</span>
             <span>${stats.clicks.toLocaleString('it-IT')} clic</span>
         </div>
     `;
@@ -208,8 +359,9 @@ modalOverlay.addEventListener('click', (e) => { if (e.target === modalOverlay) c
 
 function chiudiModale() {
     modalOverlay.hidden = true;
-    formNuovaCampagna.reset();
+    formNuovaCampagna.reset(); // .reset() deseleziona anche le checkbox/offerte
     formStatus.hidden = true;
+    creativitaFileName.textContent = '';
     const oggiStr = new Date().toISOString().split('T')[0];
     inputDataInizio.value = oggiStr;
 }
@@ -222,13 +374,50 @@ formNuovaCampagna.addEventListener('submit', async (e) => {
     formStatus.hidden = true;
 
     const titolo = inputTitolo.value.trim();
+    const sezioniSelezionate = leggiSezioniSelezionate();
+    const offerta = trovaOfferta(leggiOffertaSelezionata());
+    const testoBanner = inputTestoBanner.value.trim();
+    const urlDestinazione = inputUrlDestinazione.value.trim();
     const citta = inputCitta.value.trim();
     const raggio = inputRaggio.value ? parseInt(inputRaggio.value, 10) : null;
     const dataInizio = inputDataInizio.value;
     const dataFine = inputDataFine.value;
+    const fileCreativita = inputCreativita.files[0];
 
     if (!titolo || !citta || !dataInizio || !dataFine) {
         mostraStatus('Compila tutti i campi obbligatori.', false);
+        return;
+    }
+
+    if (sezioniSelezionate.length === 0) {
+        mostraStatus('Seleziona almeno una sezione target per il banner.', false);
+        return;
+    }
+
+    if (!offerta) {
+        mostraStatus('Seleziona un\'offerta.', false);
+        return;
+    }
+
+    if (!testoBanner) {
+        mostraStatus('Scrivi il testo del banner.', false);
+        return;
+    }
+
+    if (!urlDestinazione) {
+        mostraStatus('Inserisci l\'URL di destinazione del banner.', false);
+        return;
+    }
+
+    try {
+        new URL(urlDestinazione);
+    } catch {
+        mostraStatus('L\'URL di destinazione non è valido (deve iniziare con https://).', false);
+        return;
+    }
+
+    if (!fileCreativita) {
+        mostraStatus('Carica un\'immagine per la creatività del banner.', false);
         return;
     }
 
@@ -238,18 +427,28 @@ formNuovaCampagna.addEventListener('submit', async (e) => {
     }
 
     btnConfermaCampagna.disabled = true;
-    btnConfermaCampagna.textContent = 'Creazione...';
+    btnConfermaCampagna.textContent = 'Caricamento immagine...';
 
     try {
+        const bannerImageUrl = await caricaImmagineCreativita(fileCreativita);
+
+        btnConfermaCampagna.textContent = 'Creazione...';
+
         const { error } = await supabase.from('sponsor_campaigns').insert({
             sponsor_id: currentUser.id,
             title: titolo,
-            banner_type: selBannerType.value,
+            target_sections: sezioniSelezionate,
             target_city: citta,
             target_radius_km: raggio,
             start_date: dataInizio,
             end_date: dataFine,
-            status: 'ACTIVE'
+            status: 'ACTIVE',
+            banner_image_url: bannerImageUrl,
+            banner_text: testoBanner,
+            click_url: urlDestinazione,
+            target_views: offerta.views,
+            cost_per_view: offerta.costoBase,
+            total_cost: offerta.prezzo
         });
 
         if (error) throw Object.assign(new Error(error.message), { code: error.code || 'DB_INSERT_CAMPAIGN_ERROR' });
@@ -259,13 +458,13 @@ formNuovaCampagna.addEventListener('submit', async (e) => {
 
     } catch (error) {
         console.error("Errore creazione campagna:", error);
-        mostraStatus('Errore durante la creazione. Riprova.', false);
+        mostraStatus(error.code === 'FILE_TROPPO_GRANDE' ? error.message : 'Errore durante la creazione. Riprova.', false);
         await logError({
             source: 'campagne_sponsor',
             action: 'crea_campagna',
             errorMessage: error.message || "Errore durante l'inserimento della nuova campagna",
             errorCode: error.code || 'UNKNOWN_DB_ERROR',
-            context: { sponsorId: currentUser.id, titolo, citta }
+            context: { sponsorId: currentUser.id, titolo, citta, sezioniSelezionate, offerta: offerta?.value }
         });
     } finally {
         btnConfermaCampagna.disabled = false;

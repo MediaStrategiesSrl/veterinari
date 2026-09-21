@@ -81,6 +81,16 @@
 .btn-save-service:hover { opacity: 0.9; }
 .btn-save-service:disabled { opacity: 0.6; cursor: not-allowed; }
 
+.btn-primary {
+    background: #F58220;
+    color: #ffffff;
+    border: none;
+    padding: 16px;
+    border-radius: 30px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
 .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
 .modal-header h3 { margin: 0; font-size: 1.3rem; color: #1E293B; }
 .close-btn { background: none; border: none; font-size: 1.5rem; color: #64748B; cursor: pointer; }

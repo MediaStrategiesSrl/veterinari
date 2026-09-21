@@ -72,6 +72,15 @@
                 Conferma prenotazione
             </button>
             <p id="statusMessage" class="status-message" hidden></p>
+
+            <!--
+                Banner sponsor sezione "prenotazione" (vedi
+                js/utils/sezioniApp.js e js/utils/bannerSponsor.js). SEMPRE
+                alla fine della schermata, come da mockup. Resta nascosto
+                finché prenota.js non trova una campagna sponsor attiva
+                per questa sezione (o se isPersonalVisit).
+            -->
+            <div id="bannerSponsor" hidden></div>
         </div>
     </main>
 

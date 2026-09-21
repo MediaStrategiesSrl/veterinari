@@ -79,9 +79,14 @@
                 </a>
             </div>
 
-            <div class="ad-banner">
-                <strong>PETCARE+</strong> Protezione completa da €9,90/mese · <span>Scopri</span>
-            </div>
+            <!--
+                Banner sponsor sezione "dashboard_veterinario" (vedi
+                js/utils/sezioniApp.js e js/utils/bannerSponsor.js).
+                Sostituisce il vecchio banner PETCARE+ fisso hardcoded:
+                resta nascosto finché dashboard-veterinario.js non trova
+                una campagna sponsor attiva per questa sezione.
+            -->
+            <div id="bannerSponsor" hidden></div>
 
         </div>
 

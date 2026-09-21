@@ -4,6 +4,7 @@
 import { supabase } from '../utils/supabaseClient.js';
 import { logError } from '../utils/logger.js';
 import { canUsePlatform } from "../utils/permission.js";
+import { mostraBannerSponsor } from '../utils/bannerSponsor.js';
 
 // ==========================================
 // ELEMENTI DOM E VARIABILI GLOBALI
@@ -11,6 +12,10 @@ import { canUsePlatform } from "../utils/permission.js";
 const marketGrid = document.getElementById("marketGrid");
 const categoryFiltersContainer = document.getElementById("categoryFilters");
 const searchInput = document.getElementById("searchInput");
+// Contenitore per il banner sponsor di sezione "mercatino" - va aggiunto
+// nell'HTML (es. subito sopra marketGrid, sotto i filtri categoria):
+//   <div id="bannerSponsor" hidden></div>
+const bannerSponsorEl = document.getElementById("bannerSponsor");
 
 let currentUser = null; // Aggiunto per tracciare chi sta guardando il mercatino
 let allItems = []; // Salveremo qui tutti gli oggetti per poterli filtrare lato client
@@ -39,6 +44,11 @@ async function initMercatino() {
         }
 
         currentUser = user; // Salviamo l'utente loggato
+
+        // Banner sponsor sezione "mercatino": una riga, fire-and-forget.
+        // mostraBannerSponsor si occupa da sola di utente/città/errori,
+        // quindi non serve più una funzione locale dedicata.
+        mostraBannerSponsor(bannerSponsorEl, 'mercatino');
 
         // 1. Chiediamo la posizione dell'utente
         userLocation = await getUserLocation();

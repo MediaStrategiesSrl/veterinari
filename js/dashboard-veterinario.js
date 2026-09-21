@@ -4,6 +4,7 @@
 import { supabase } from '../utils/supabaseClient.js';
 import { logError } from '../utils/logger.js';
 import { checkApprovalStatus, showApprovalPendingOverlay } from '../utils/approvalGuard.js';
+import { mostraBannerSponsor } from '../utils/bannersponsor.js';
 
 let currentUser = null;
 
@@ -13,6 +14,8 @@ const availabilityText = document.getElementById("availabilityText");
 const waitTimeText = document.getElementById("waitTimeText");
 const oggiDataText = document.getElementById("oggiData");
 const agendaContainer = document.getElementById("agendaContainer");
+// Contenitore banner sponsor sezione "dashboard_veterinario" (vedi dashboard-veterinario.html)
+const bannerSponsorEl = document.getElementById("bannerSponsor");
 
 async function initDashboard() {
     impostaDataOggi();
@@ -43,6 +46,9 @@ async function initDashboard() {
             showApprovalPendingOverlay(document.querySelector('.app-container'), 'veterinario', hasProfile);
             return; // Blocca il resto della dashboard: niente disponibilità, niente agenda
         }
+
+        // Banner sponsor sezione "dashboard_veterinario": una riga, fire-and-forget.
+        mostraBannerSponsor(bannerSponsorEl, 'dashboard_veterinario');
 
         // Eseguiamo i caricamenti in parallelo
         await Promise.all([

@@ -3,9 +3,16 @@
 // ==========================================
 import { supabase } from '../utils/supabaseClient.js';
 import { logError } from '../utils/logger.js';
+import {
+    findScheduleConflict,
+    clearConflictHighlight,
+    highlightConflictDay,
+    fetchAllProviderLocations
+} from '../utils/scheduleOverlap.js';
 
 let currentUser = null;
 let activeLocationId = null;
+let allProviderLocations = []; // TUTTE le sedi del provider, qualsiasi ruolo (per il controllo anti-sovrapposizione)
 
 // Elementi DOM
 let locationCardContainer;
@@ -41,6 +48,22 @@ function showStatus(msg, type) {
     statusMessage.className = `status-msg status-${type}`;
     statusMessage.hidden = false;
     setTimeout(() => { statusMessage.hidden = true; }, 4000);
+}
+
+// ==========================================
+// CONTROLLO ANTI-SOVRAPPOSIZIONE
+// (stessa persona, sedi/ruoli diversi — es. un veterinario
+//  che ha ANCHE una sede da professionista/pet sitter)
+// ==========================================
+async function loadAllProviderLocationsForOverlapCheck() {
+    try {
+        const { data, error } = await fetchAllProviderLocations(supabase, currentUser.id);
+        if (error) throw error;
+        allProviderLocations = data || [];
+    } catch (error) {
+        console.error("Errore caricamento sedi per controllo sovrapposizioni:", error);
+        allProviderLocations = [];
+    }
 }
 
 // ==========================================
@@ -137,10 +160,9 @@ async function saveSchedule() {
         return;
     }
 
-    btnSaveSchedule.disabled = true;
-    const originalText = btnSaveSchedule.innerHTML;
-    btnSaveSchedule.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Salvataggio...';
+    clearConflictHighlight(turniContainer);
 
+    // 1. Costruzione nuovo oggetto orari leggendo il DOM
     const nuoviOrari = {};
     const dayCards = turniContainer.querySelectorAll('.day-card');
 
@@ -163,6 +185,23 @@ async function saveSchedule() {
         }
     });
 
+    // 2. Controllo sovrapposizione con TUTTE le altre sedi del provider,
+    //    anche quelle con un ruolo diverso (es. la sua sede da veterinario)
+    const conflict = findScheduleConflict(activeLocationId, nuoviOrari, allProviderLocations);
+    if (conflict) {
+        const giornoLabel = conflict.giorno.charAt(0).toUpperCase() + conflict.giorno.slice(1);
+        showStatus(
+            `Conflitto di orario il ${giornoLabel}: si sovrappone con il turno già impostato per "${conflict.sedeNome}". Una stessa persona non può essere disponibile in due sedi nello stesso momento.`,
+            "error"
+        );
+        highlightConflictDay(turniContainer, conflict.giorno);
+        return; // blocco il salvataggio
+    }
+
+    btnSaveSchedule.disabled = true;
+    const originalText = btnSaveSchedule.innerHTML;
+    btnSaveSchedule.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Salvataggio...';
+
     try {
         const { error } = await supabase
             .from('provider_locations')
@@ -171,11 +210,26 @@ async function saveSchedule() {
             .eq('provider_id', currentUser.id);
 
         if (error) throw error;
+
+        // Aggiorna la cache locale usata per il controllo sovrapposizioni
+        const idx = allProviderLocations.findIndex(l => l.id === activeLocationId);
+        if (idx !== -1) {
+            allProviderLocations[idx].orari_disponibilita = nuoviOrari;
+        } else {
+            allProviderLocations.push({ id: activeLocationId, nome_struttura: NOME_SEDE_DOMICILIO, orari_disponibilita: nuoviOrari });
+        }
+
         showStatus("Orari salvati con successo!", "success");
 
     } catch (error) {
         console.error("Errore nel salvataggio:", error);
-        showStatus("Errore durante il salvataggio. Riprova.", "error");
+        // Se il DB rifiuta per sovrapposizione (es. race condition tra due tab,
+        // controllo client bypassato), mostriamo il messaggio reale del trigger
+        // invece di un errore generico.
+        const msg = (error && error.message && error.message.includes('sovrappone'))
+            ? error.message
+            : "Errore durante il salvataggio. Riprova.";
+        showStatus(msg, "error");
     } finally {
         btnSaveSchedule.disabled = false;
         btnSaveSchedule.innerHTML = originalText;
@@ -288,6 +342,10 @@ async function initDisponibilitaPro() {
         const { data: { user }, error: authError } = await supabase.auth.getUser();
         if (authError || !user) return window.location.href = "../../index.html";
         currentUser = user;
+
+        // Carica TUTTE le sedi del provider (qualsiasi ruolo) per poter
+        // controllare le sovrapposizioni orarie prima di ogni salvataggio
+        await loadAllProviderLocationsForOverlapCheck();
 
         const { data: proRow, error: proError } = await supabase
             .from('professionals')

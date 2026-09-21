@@ -3,11 +3,14 @@
 // ==========================================
 import { supabase } from '../utils/supabaseClient.js';
 import { logError } from '../utils/logger.js'; 
+import { mostraBannerSponsor } from '../utils/bannerSponsor.js';
 
 const categoriesContainer = document.getElementById("categoriesContainer");
 const professionalsList = document.getElementById("professionalsList");
 const locationBadge = document.getElementById("locationBadge");
 const searchInput = document.getElementById("searchInput"); 
+// Contenitore banner sponsor sezione "ricerca_professionisti" (vedi cerca.html)
+const bannerSponsorEl = document.getElementById("bannerSponsor");
 
 // GESTIONE FILTRO DISTANZA
 const btnApriFiltri = document.getElementById('btnApriFiltri');
@@ -82,6 +85,16 @@ function calcolaDistanza(lat1, lon1, lat2, lon2) {
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
     return parseFloat((R * c).toFixed(1)); 
 }
+
+// ==========================================
+// BANNER SPONSOR (sezione "ricerca_professionisti")
+// ==========================================
+// Una riga: mostraBannerSponsor recupera da sola l'utente loggato (se
+// c'è) e la sua città. Questa pagina è consultabile anche da chi non
+// ha fatto login (niente supabase.auth.getUser() nel resto del file):
+// in quel caso il banner viene comunque mostrato, solo senza priorità
+// geografica.
+mostraBannerSponsor(bannerSponsorEl, 'ricerca_professionisti');
 
 // ==========================================
 // 2. INIZIALIZZAZIONE MAPPA E GPS

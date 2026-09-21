@@ -24,7 +24,7 @@
                 <span id="badgeNotifiche" class="notification-badge" hidden>0</span>
             </button>
         </header>
-        
+
         <div class="dashboard-content">
             
             <div class="hero-walks-card">
@@ -47,6 +47,15 @@
             <div id="friendsList" class="friends-horizontal-scroll">
                 <p style="text-align:center; color:#888; width: 100%;">Nessun amico registrato.</p>
                 </div>
+
+            <!--
+                Banner sponsor sezione "passeggiate" (vedi
+                js/utils/sezioniApp.js e js/utils/bannerSponsor.js). SEMPRE
+                alla fine della schermata, come da mockup. Resta nascosto
+                finché passeggiate.js non trova una campagna sponsor
+                attiva per questa sezione.
+            -->
+            <div id="bannerSponsor" hidden></div>
 
         </div>
     </main>
@@ -80,6 +89,7 @@
             </form>
         </div>
     </div>
+
 
 <div id="modalNotifiche" class="modal">
     <div class="modal-content">

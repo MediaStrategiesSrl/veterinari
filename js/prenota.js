@@ -4,6 +4,7 @@
 import { supabase } from '../utils/supabaseClient.js';
 import { logError } from '../utils/logger.js';
 import { canUsePlatform } from "../utils/permission.js";
+import { mostraBannerSponsor } from "../utils/bannerSponsor.js";
 
 // ==========================================
 // FIX SYNTAX ERROR: "Illegal return statement"
@@ -100,6 +101,10 @@ const confirmBtn = document.getElementById("confirmBtn");
 const totalPrice = document.getElementById("totalPrice");
 const summaryPrice = document.getElementById("summaryPrice");
 const statusMessage = document.getElementById("statusMessage");
+// Contenitore per il banner sponsor di sezione "prenotazione" - va aggiunto
+// nell'HTML, es. subito sopra confirmBtn nel riepilogo prenotazione:
+//   <div id="bannerSponsor" hidden></div>
+const bannerSponsorEl = document.getElementById("bannerSponsor");
 
 async function initPrenota() {
     if (!vetId) {
@@ -120,6 +125,14 @@ async function initPrenota() {
        
         // CONTROLLO AUTOPRENOTAZIONE
         isPersonalVisit = (String(currentUser.id).trim() === String(vetId).trim());
+
+        // Banner sponsor sezione "prenotazione": una riga, fire-and-forget.
+        // Saltato per le visite personali (il professionista che prenota
+        // se stesso) dato che un banner sponsor non ha senso in quel caso -
+        // rimuovi la condizione se preferisci mostrarlo comunque.
+        if (!isPersonalVisit) {
+            mostraBannerSponsor(bannerSponsorEl, 'prenotazione');
+        }
 
         // ==========================================
         // FIX: stabiliamo IL RUOLO che si sta prenotando prima di caricare

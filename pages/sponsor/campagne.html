@@ -71,11 +71,17 @@
                     <input type="text" id="inputTitolo" placeholder="Es. Protezione PetCare+" required>
                 </div>
 
+                <!--
+                    Il vecchio <select id="selBannerType"> con un'unica opzione
+                    "Banner app" è stato sostituito da un multi-select di sezioni:
+                    ogni campagna può ora targettizzare una o più sezioni
+                    specifiche dell'app (vedi js/utils/sezioniApp.js), invece di
+                    essere mostrata ovunque allo stesso modo.
+                -->
                 <div class="campo">
-                    <label for="selBannerType">Posizione banner</label>
-                    <select id="selBannerType">
-                        <option value="banner_app">Banner app</option>
-                    </select>
+                    <label>Sezioni target</label>
+                    <div class="checkbox-group" id="checkboxSezioni"></div>
+                    <p class="campo-hint">Seleziona una o più sezioni dell'app in cui mostrare questo banner. Es. un'azienda di guinzagli può scegliere "Passeggiate" ma non "Mercatino". Su "Dashboard veterinario" e "Dashboard professionista" il banner è visibile solo a chi ha anche il ruolo proprietario (cioè ha animali registrati) — chi ha solo il ruolo veterinario/professionista non lo vede.</p>
                 </div>
 
                 <div class="campo-riga">
@@ -98,6 +104,54 @@
                         <label for="inputDataFine">Data fine</label>
                         <input type="date" id="inputDataFine" required>
                     </div>
+                </div>
+
+                <!--
+                    NUOVO CAMPO: offerta fissa di visualizzazioni
+                    (sostituisce il precedente numero libero). 3 offerte
+                    definite in js/utils/offerteSponsor.js (unico file da
+                    aggiornare per cambiare cifre/sconti).
+                -->
+                <div class="campo">
+                    <label>Offerta visualizzazioni</label>
+                    <div class="offer-group" id="radioOfferte"></div>
+                </div>
+
+                <!--
+                    NUOVO CAMPO: testo del banner mostrato agli utenti
+                    finali, insieme alla creatività caricata sotto. "Titolo
+                    campagna" sopra resta il nome interno per gestirla qui
+                    nel pannello sponsor.
+                -->
+                <div class="campo">
+                    <label for="inputTestoBanner">Testo del banner</label>
+                    <input type="text" id="inputTestoBanner" placeholder="Es. Protezione completa da €9,90/mese · Scopri" maxlength="120" required>
+                </div>
+
+                <!--
+                    NUOVO CAMPO: URL di destinazione. Dove va l'utente
+                    quando tocca il banner (si apre in una nuova scheda,
+                    vedi bannerSponsor.js) - il click viene comunque
+                    sempre registrato anche senza aprire nulla se il
+                    campo restasse vuoto su campagne più vecchie.
+                -->
+                <div class="campo">
+                    <label for="inputUrlDestinazione">URL di destinazione (al click)</label>
+                    <input type="url" id="inputUrlDestinazione" placeholder="https://tuosito.it/promo" required>
+                    <p class="campo-hint">Dove va l'utente quando tocca il banner. Si apre in una nuova scheda.</p>
+                </div>
+
+                <!--
+                    NUOVO CAMPO: creatività del banner. L'immagine caricata
+                    qui viene salvata nel bucket Storage "storage_veterinari",
+                    dentro una cartella dedicata "campagne_sponsor/<sponsor_id>/"
+                    (stessa logica delle altre cartelle già presenti nel bucket,
+                    es. mercatino/, pets_avatar/) - vedi campagne.js.
+                -->
+                <div class="campo">
+                    <label for="inputCreativita">Immagine banner (creatività)</label>
+                    <input type="file" id="inputCreativita" accept="image/png, image/jpeg, image/webp" required>
+                    <p class="campo-hint" id="creativitaFileName"></p>
                 </div>
 
                 <p class="sp-form-status" id="formStatus" hidden></p>

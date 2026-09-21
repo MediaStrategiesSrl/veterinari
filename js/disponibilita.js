@@ -3,10 +3,15 @@
 // ==========================================
 import { supabase } from '../utils/supabaseClient.js';
 import { logError } from '../utils/logger.js';
+import {
+    GIORNI_SETTIMANA as giorniSettimana,
+    findScheduleConflict,
+    clearConflictHighlight,
+    highlightConflictDay
+} from '../utils/scheduleOverlap.js';
 
 let currentUser = null;
 let userLocations = [];
-const giorniSettimana = ["lunedi", "martedi", "mercoledi", "giovedi", "venerdi", "sabato", "domenica"];
 
 // Elementi DOM
 const locationSelect = document.getElementById("locationSelect");
@@ -83,7 +88,7 @@ async function loadLocations() {
 // ==========================================
 function renderWeeklyScheduler(orariJson) {
     daysContainer.innerHTML = '';
-    const orari = typeof orariJson === 'object' && orariJson !== null ? orariJson : {}; 
+    const orari = typeof orariJson === 'object' && orariJson !== null ? orariJson : {};
 
     giorniSettimana.forEach(giorno => {
         // Verifica se ci sono orari salvati per questo giorno (es. orari["lunedi"][0].inizio)
@@ -114,7 +119,7 @@ function renderWeeklyScheduler(orariJson) {
         // Logica visiva del toggle switch
         const toggleBtn = card.querySelector('.day-toggle');
         const inputs = card.querySelectorAll('.time-input');
-        
+
         toggleBtn.addEventListener('change', (e) => {
             const checked = e.target.checked;
             card.classList.toggle('disabled', !checked);
@@ -127,13 +132,15 @@ function renderWeeklyScheduler(orariJson) {
 
 // ==========================================
 // 5. SALVATAGGIO DATI (AGGIORNA IL JSONB)
+//    Include il controllo anti-sovrapposizione con le
+//    altre sedi dello stesso provider (qualsiasi ruolo).
+//    Logica condivisa in utils/scheduleOverlap.js
 // ==========================================
 btnSaveSchedule.addEventListener('click', async () => {
     const selectedId = locationSelect.value;
     if (!selectedId) return;
 
-    btnSaveSchedule.disabled = true;
-    btnSaveSchedule.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Salvataggio...';
+    clearConflictHighlight(daysContainer);
 
     // 1. Costruzione nuovo oggetto JSON leggendo i valori del DOM
     const nuoviOrari = {};
@@ -142,11 +149,11 @@ btnSaveSchedule.addEventListener('click', async () => {
     dayCards.forEach(card => {
         const giorno = card.dataset.day;
         const isActive = card.querySelector('.day-toggle').checked;
-        
+
         if (isActive) {
             const start = card.querySelector('.time-start').value;
             const end = card.querySelector('.time-end').value;
-            
+
             if (start && end) {
                 // Struttura ad Array per supportare multi-fasce in futuro
                 nuoviOrari[giorno] = [{ inizio: start, fine: end }];
@@ -158,8 +165,23 @@ btnSaveSchedule.addEventListener('click', async () => {
         }
     });
 
+    // 2. Controllo sovrapposizione con le altre sedi dello stesso provider
+    const conflict = findScheduleConflict(selectedId, nuoviOrari, userLocations);
+    if (conflict) {
+        const giornoLabel = conflict.giorno.charAt(0).toUpperCase() + conflict.giorno.slice(1);
+        showStatus(
+            `Conflitto di orario il ${giornoLabel}: si sovrappone con il turno già impostato per "${conflict.sedeNome}". Una stessa persona non può essere disponibile in due sedi nello stesso momento.`,
+            "error"
+        );
+        highlightConflictDay(daysContainer, conflict.giorno);
+        return; // blocco il salvataggio
+    }
+
+    btnSaveSchedule.disabled = true;
+    btnSaveSchedule.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Salvataggio...';
+
     try {
-        // 2. UPDATE su Supabase
+        // 3. UPDATE su Supabase
         const { error } = await supabase
             .from('provider_locations')
             .update({ orari_disponibilita: nuoviOrari })
@@ -168,7 +190,7 @@ btnSaveSchedule.addEventListener('click', async () => {
 
         if (error) throw error;
 
-        // 3. Aggiorna Cache Locale
+        // 4. Aggiorna Cache Locale
         const locIndex = userLocations.findIndex(l => l.id === selectedId);
         if (locIndex !== -1) {
             userLocations[locIndex].orari_disponibilita = nuoviOrari;
@@ -178,7 +200,13 @@ btnSaveSchedule.addEventListener('click', async () => {
 
     } catch (error) {
         await logError({ source: 'disponibilita', action: 'saveSchedule', errorMessage: error.message });
-        showStatus("Errore di rete durante il salvataggio.", "error");
+        // Se il DB rifiuta per sovrapposizione (es. race condition tra due tab,
+        // controllo client bypassato), mostriamo il messaggio reale del trigger
+        // invece di un errore generico.
+        const msg = (error && error.message && error.message.includes('sovrappone'))
+            ? error.message
+            : "Errore di rete durante il salvataggio.";
+        showStatus(msg, "error");
     } finally {
         btnSaveSchedule.disabled = false;
         btnSaveSchedule.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Salva disponibilità';

@@ -18,9 +18,7 @@
                 <h2>Mercatino dell'usato</h2>
                 <p>Cessione gratuita tra privati</p>
             </div>
-            <a href="le-mie-attivita.html" class="header-icon" aria-label="Le mie attivita">
-    <i class="fa-regular fa-bell"></i>
-</a>
+            <div class="header-icon"><i class="fa-regular fa-bell"></i></div>
         </header>
 
         <div class="market-search-container">
@@ -39,13 +37,6 @@
 </div>
         </div>
 
-        <!--
-            Banner sponsor sezione "mercatino" (vedi js/utils/sezioniApp.js
-            e js/utils/bannerSponsor.js). Resta nascosto finché mercatino.js
-            non trova una campagna sponsor attiva per questa sezione.
-        -->
-        <div id="bannerSponsor" hidden></div>
-
         <div class="market-section-header">
             <h3>Vicino a te</h3>
             <a href="pubblica-oggetto.html" class="btn-pubblica" id="btnPubblica">Pubblica</a>
@@ -60,6 +51,14 @@
         <div class="market-info-banner">
             <p>Nessun pagamento: gli oggetti vengono ceduti gratuitamente.</p>
         </div>
+
+        <!--
+            Banner sponsor sezione "mercatino" (vedi js/utils/sezioniApp.js
+            e js/utils/bannerSponsor.js). SEMPRE alla fine della schermata,
+            come da mockup. Resta nascosto finché mercatino.js non trova
+            una campagna sponsor attiva per questa sezione.
+        -->
+        <div id="bannerSponsor" hidden></div>
 
     </main>
 

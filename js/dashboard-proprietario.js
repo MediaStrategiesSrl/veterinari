@@ -3,6 +3,7 @@
 // Assicurati che i percorsi puntino alla cartella corretta (es. ../utils/)
 import { supabase } from '../utils/supabaseClient.js';
 import { logError } from '../utils/logger.js';
+import { mostraBannerSponsor } from '../utils/bannersponsor.js';
 
 
 // Elementi DOM da aggiornare
@@ -24,6 +25,8 @@ const petImage = document.getElementById("petImage");
 const btnAddPet = document.getElementById("btnAddPet");
 const btnPrevPet = document.getElementById("btnPrevPet");
 const btnNextPet = document.getElementById("btnNextPet");
+// Contenitore banner sponsor sezione "home_proprietario" (vedi dashboard-proprietario.html)
+const bannerSponsorEl = document.getElementById("bannerSponsor");
 
 // Nuove variabili per la gestione dello scorrimento
 let userPetsList = [];
@@ -48,6 +51,9 @@ supabase.auth.onAuthStateChange((event, session) => {
 
 async function loadDashboardData(user) {
     try {
+        // Banner sponsor sezione "home_proprietario": una riga, fire-and-forget.
+        mostraBannerSponsor(bannerSponsorEl, 'home_proprietario');
+
         // --- 1. CARICA PROFILO UTENTE ---
         const { data: profile } = await supabase.from("profiles").select("nome, avatar_url").eq("id", user.id).single();
         if (profile?.nome) userNameDisplay.textContent = profile.nome;
@@ -170,7 +176,7 @@ async function loadDashboardData(user) {
                         <i class="fa-solid fa-shield-halved"></i>
                     </div>
                     <div class="agenda-info">
-                        <div class="agenda-title">Controllo veterinario <span>></span></div>
+                        <div class="agenda-title">Controllo veterinario <span></span></div>
                         <div class="agenda-desc">${dataFormattata} – ${dottore}</div>
                     </div>
                 </div>
@@ -187,7 +193,7 @@ async function loadDashboardData(user) {
                         <i class="fa-solid fa-tree"></i>
                     </div>
                     <div class="agenda-info">
-                        <div class="agenda-title">Passeggiata ${pass.luogo} <span>></span></div>
+                        <div class="agenda-title">Passeggiata ${pass.luogo} <span></span></div>
                         <div class="agenda-desc">${dataFormattata}</div>
                     </div>
                 </div>
