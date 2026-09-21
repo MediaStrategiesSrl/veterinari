@@ -2,7 +2,7 @@
 // ==========================================
 import { supabase } from '../utils/supabaseClient.js';
 import { logError } from '../utils/logger.js';
-import { mostraBannerSponsor } from '../utils/bannersponsor.js';
+import { mostraBannerSponsor } from '../utils/bannerSponsor.js';
 
 // Elementi DOM
 const profGreeting = document.getElementById('profGreeting');

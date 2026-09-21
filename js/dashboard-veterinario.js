@@ -4,7 +4,7 @@
 import { supabase } from '../utils/supabaseClient.js';
 import { logError } from '../utils/logger.js';
 import { checkApprovalStatus, showApprovalPendingOverlay } from '../utils/approvalGuard.js';
-import { mostraBannerSponsor } from '../utils/bannersponsor.js';
+import { mostraBannerSponsor } from '../utils/bannerSponsor.js';
 
 let currentUser = null;
 
