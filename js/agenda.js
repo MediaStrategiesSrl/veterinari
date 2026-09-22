@@ -401,7 +401,7 @@ function renderMonthView() {
 }
 
 // ==========================================
-// Caricamento e rendering appuntamenti (Invariato)
+// Caricamento e rendering appuntamenti
 // ==========================================
 
 async function caricaAppuntamentiPerData(dateObj) {
@@ -428,7 +428,13 @@ async function caricaAppuntamentiPerData(dateObj) {
                 pets ( nome )
             `)
             .eq('provider_id', currentUser.id) // Sicurezza garantita: cerca solo gli appuntamenti di QUESTO utente
-            // HO RIMOSSO IL FILTRO 'ruolo_provider' CHE BLOCCAVA TUTTO
+            // FIX: account doppio ruolo (veterinario + professionista sullo
+            // stesso user_id) mostravano qui anche gli appuntamenti presi
+            // come professionista. Il filtro era stato tolto in passato
+            // perché "bloccava tutto" - il vero problema erano vecchi
+            // appuntamenti con ruolo_provider = '' (mai valorizzato prima
+            // del fix in prenota.js), non il filtro in sé. Ripristinato.
+            .eq('ruolo_provider', 'veterinario')
             .gte('data_inizio', startOfDayQuery.toISOString())
             .lte('data_inizio', endOfDay.toISOString())
             .order('data_inizio', { ascending: true });

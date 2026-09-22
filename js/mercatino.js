@@ -21,6 +21,7 @@ let currentUser = null; // Aggiunto per tracciare chi sta guardando il mercatino
 let allItems = []; // Salveremo qui tutti gli oggetti per poterli filtrare lato client
 let allCategories = []; // Salveremo qui le categorie del DB
 let userLocation = null; // Posizione dell'utente
+const FALLBACK_IMG = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMDAgMjAwIiB3aWR0aD0iMzAwIiBoZWlnaHQ9IjIwMCI+CiAgPHJlY3Qgd2lkdGg9IjMwMCIgaGVpZ2h0PSIyMDAiIGZpbGw9IiNFMkU4RjAiLz4KICA8cmVjdCB4PSI5MCIgeT0iNjAiIHdpZHRoPSIxMjAiIGhlaWdodD0iOTAiIHJ4PSIxMCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjOTRBM0I4IiBzdHJva2Utd2lkdGg9IjYiLz4KICA8Y2lyY2xlIGN4PSIxMTYiIGN5PSI4NiIgcj0iOSIgZmlsbD0iIzk0QTNCOCIvPgogIDxwb2x5bGluZSBwb2ludHM9Ijk2LDEzOCAxMzIsMTAyIDE1NiwxMjIgMTc2LDk4IDIwNCwxMzgiIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzk0QTNCOCIgc3Ryb2tlLXdpZHRoPSI2IiBzdHJva2UtbGluZWpvaW49InJvdW5kIiBzdHJva2UtbGluZWNhcD0icm91bmQiLz4KPC9zdmc+";
 
 // ==========================================
 // INIZIALIZZAZIONE
@@ -178,15 +179,14 @@ function renderItems(items) {
     }
 
     items.forEach(item => {
-        // Estrazione prima foto disponibile dalla tabella relazionata
-        let imgUrl = "../../assets/default-item.png";
-        
-        if (item.photos && item.photos.length > 0) {
-            const fotoOrdinate = [...item.photos].sort((a, b) => (a.position || 0) - (b.position || 0));
-            imgUrl = fotoOrdinate[0].photo_url;
-        } else if (item.image_url) {
-            imgUrl = item.image_url;
-        }
+    let imgUrl = FALLBACK_IMG; // era: "../../assets/default-item.png"
+    
+    if (item.photos && item.photos.length > 0) {
+        const fotoOrdinate = [...item.photos].sort((a, b) => (a.position || 0) - (b.position || 0));
+        imgUrl = fotoOrdinate[0].photo_url;
+    } else if (item.image_url) {
+        imgUrl = item.image_url;
+    }
 
         const cittaDisplay = item.city ? item.city : "Città ignota";
         let distanceDisplay = "";
@@ -223,14 +223,14 @@ function renderItems(items) {
         card.style.display = "block";
         card.style.opacity = opacity;
 
-        card.innerHTML = `
-            <img src="${imgUrl}" alt="${item.title}" class="market-item-img" onerror="this.onerror=null; this.src='https://via.placeholder.com/300x200/E2E8F0/94A3B8?text=No+Immagine';">
-            <div class="market-item-content">
-                <div class="market-item-title">${item.title}</div>
-                <div class="market-item-location">${cittaDisplay} ${distanceDisplay}</div>
-                ${statoHtml}
-            </div>
-        `;
+  card.innerHTML = `
+    <img src="${imgUrl}" alt="${item.title}" class="market-item-img" onerror="this.onerror=null; this.src='${FALLBACK_IMG}';">
+    <div class="market-item-content">
+        <div class="market-item-title">${item.title}</div>
+        <div class="market-item-location">${cittaDisplay} ${distanceDisplay}</div>
+        ${statoHtml}
+    </div>
+`;
 
         marketGrid.appendChild(card);
     });

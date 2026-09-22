@@ -191,6 +191,7 @@ async function caricaAgendaDinamica() {
                 pets ( nome )
             `)
             .eq('provider_id', currentUser.id)
+            .eq('ruolo_provider', 'veterinario')
             .gte('data_inizio', oggiInizio.toISOString())
             .lte('data_inizio', oggiFine.toISOString())
             .order('data_inizio', { ascending: true });
